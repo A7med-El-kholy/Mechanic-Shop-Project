@@ -1,0 +1,10 @@
+﻿<!-- Implements application abstractions for external systems such as databases. -->
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MechanicShop.Application\MechanicShop.Application.csproj" />
+    <ProjectReference Include="..\MechanicShop.Domain\MechanicShop.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

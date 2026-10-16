@@ -1,0 +1,5 @@
+﻿<!-- Contains core business entities and rules; must not depend on other projects. -->
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+</Project>
