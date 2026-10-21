@@ -13,7 +13,8 @@ namespace MechanicShop.Api.IntegrationTests;
 /// register → login → use the JWT on an authorized endpoint, plus the failure modes.
 /// Each test uses its own email so tests do not depend on each other's rows.
 /// </summary>
-public sealed class AuthEndpointsTests : IClassFixture<ApiDbFactory>
+[Collection("ApiDb")]
+public sealed class AuthEndpointsTests
 {
     private readonly ApiDbFactory _factory;
 

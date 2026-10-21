@@ -40,5 +40,7 @@ public sealed class ApiDbFactory : WebApplicationFactory<Program>, IAsyncLifetim
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:MechanicShop", _container.GetConnectionString());
+        builder.UseSetting("Seed:ManagerEmail", "manager@mechanicshop.test");
+        builder.UseSetting("Seed:ManagerPassword", "ManagerP@ss1");
     }
 }

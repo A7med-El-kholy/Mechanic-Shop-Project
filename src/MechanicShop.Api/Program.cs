@@ -1,6 +1,8 @@
 using System.Text;
 
+using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.Auth;
+using MechanicShop.Api.Features.Users;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.Data;
 using MechanicShop.Infrastructure.Identity;
@@ -63,7 +65,12 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.IsManager, policy => policy.RequireRole(AppRoles.Manager));
+    options.AddPolicy(Policies.IsTechnician, policy => policy.RequireRole(AppRoles.Technician));
+    options.AddPolicy(Policies.IsCustomer, policy => policy.RequireRole(AppRoles.Customer));
+});
 
 // --- Application services.
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
@@ -71,15 +78,16 @@ builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var app = builder.Build();
 
-// Seed the three shop roles (Manager / Technician / Customer) before serving requests.
-// Idempotent: only inserts roles that are not already present.
-await SeedData.EnsureRolesAsync(app.Services);
+// Seed roles and the optional bootstrap manager before serving requests.
+// Idempotent: only inserts what is not already present, and migrates first.
+await SeedData.SeedAsync(app.Services);
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/", () => "Hello World!");
 app.MapAuthEndpoints();
+app.MapUsersEndpoints();
 
 app.Run();
 
