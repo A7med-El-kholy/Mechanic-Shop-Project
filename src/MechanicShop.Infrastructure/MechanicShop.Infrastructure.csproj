@@ -7,4 +7,20 @@
     <ProjectReference Include="..\MechanicShop.Domain\MechanicShop.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- ASP.NET Core Identity stores backed by EF Core (AppUser + IdentityDbContext). -->
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <!-- SQL Server database provider. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <!-- EF Core tooling for design-time migrations; PrivateAssets=all keeps it out of
+         referencing projects (Api/Infrastructure consumers never need it at runtime). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- JWT signing/validation used by TokenProvider. -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <!-- Transitive System.Security.Cryptography.Pkcs 9.0.x carries known advisories
+         (NU1902/NU1903, escalated to errors by TreatWarningsAsErrors). A direct reference
+         to the patched 10.0.13 pins a safe version across the whole graph. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
 </Project>

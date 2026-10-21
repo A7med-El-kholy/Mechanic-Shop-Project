@@ -9,6 +9,8 @@
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <!-- Boots a real SQL Server container for database-backed auth tests. -->
+    <PackageReference Include="Testcontainers.MsSql" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
