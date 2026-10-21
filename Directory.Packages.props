@@ -36,6 +36,16 @@
     <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
   </ItemGroup>
 
-  <!-- Add MediatR and FluentValidation
-       only when they have their first real use; do not add packages just in case. -->
+  <!-- CQRS mediation: commands/queries as first-class messages (Features/*). First real use: F3 customers CRUD.
+       12.5.0 is the final Apache-2.0 line; 13.x moved to a commercial license. -->
+  <ItemGroup>
+    <PackageVersion Include="MediatR" Version="12.5.0" />
+    <!-- FluentValidation validators wired into a MediatR pipeline behavior. Apache 2.0. -->
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
+    <!-- EF Core abstractions only (IAppDbContext, LINQ operators, DbUpdateException).
+         The SQL Server provider stays in Infrastructure — handlers never see the provider. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+  </ItemGroup>
+
+  <!-- Add packages only when they have their first real use; do not add packages just in case. -->
 </Project>

@@ -11,4 +11,7 @@ public static class Policies
     public const string IsTechnician = "IsTechnician";
 
     public const string IsCustomer = "IsCustomer";
+
+    /// <summary>Manager OR Technician — the shop staff who operate customer records.</summary>
+    public const string IsStaff = "IsStaff";
 }

@@ -6,4 +6,13 @@
     <ProjectReference Include="..\MechanicShop.Domain\MechanicShop.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Commands/queries (first real use: F3 customers CRUD). -->
+    <PackageReference Include="MediatR" />
+    <!-- FluentValidation validators + assembly-scan registration extension. -->
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <!-- EF Core abstractions only; the SQL Server provider stays in Infrastructure. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
 </Project>

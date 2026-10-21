@@ -1,11 +1,17 @@
 using System.Text;
 
+using FluentValidation;
+
 using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.Auth;
+using MechanicShop.Api.Features.Customers;
 using MechanicShop.Api.Features.Users;
+using MechanicShop.Application.Common.Behaviors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.Data;
 using MechanicShop.Infrastructure.Identity;
+
+using MediatR;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -70,9 +76,25 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.IsManager, policy => policy.RequireRole(AppRoles.Manager));
     options.AddPolicy(Policies.IsTechnician, policy => policy.RequireRole(AppRoles.Technician));
     options.AddPolicy(Policies.IsCustomer, policy => policy.RequireRole(AppRoles.Customer));
+    options.AddPolicy(Policies.IsStaff, policy => policy.RequireRole(AppRoles.Manager, AppRoles.Technician));
 });
 
+// --- MediatR: commands/queries in Application are dispatched as messages, with a
+// validation pipeline behavior short-circuiting invalid requests before a handler runs.
+builder.Services.AddMediatR(configuration =>
+{
+    configuration.RegisterServicesFromAssembly(typeof(IIdentityService).Assembly);
+    configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
+
+// FluentValidation validators are scanned from the Application assembly; the
+// ValidationBehavior above is handed whichever of them matches the incoming request.
+builder.Services.AddValidatorsFromAssembly(typeof(IIdentityService).Assembly);
+
 // --- Application services.
+// IAppDbContext exposes the DbContext to handlers without leaking Infrastructure types;
+// resolving the SAME scoped AppDbContext instance keeps EF tracking coherent.
+builder.Services.AddScoped<IAppDbContext>(services => services.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
@@ -88,6 +110,7 @@ app.UseAuthorization();
 app.MapGet("/", () => "Hello World!");
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
+app.MapCustomersEndpoints();
 
 app.Run();
 
