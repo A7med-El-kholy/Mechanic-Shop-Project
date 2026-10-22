@@ -3,6 +3,7 @@ using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
+using MechanicShop.Domain.Invoices;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.Infrastructure.Identity;
@@ -26,6 +27,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<WorkOrder> WorkOrders { get; set; }
     public DbSet<Employee> Employees { get; set; }
     public DbSet<AppointmentRequest> AppointmentRequests { get; set; }
+
+    public DbSet<Invoice> Invoices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

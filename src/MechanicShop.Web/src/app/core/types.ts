@@ -100,6 +100,28 @@ export interface RepairDetail extends WorkOrderSummary {
   serviceTasks: ServiceOption[];
 }
 
+/** Row of the invoices book (staff list). */
+export interface InvoiceRow {
+  invoiceId: string;
+  invoiceNumber: string;
+  workOrderId: string;
+  customerName: string;
+  vehicleInfo: string;
+  licensePlate: string;
+  status: number;
+  totalAmount: number;
+  issuedOn: string;
+  paymentMethod: number | null;
+}
+
+/** Full invoice document: frozen lines + the money math. */
+export interface InvoiceDetail extends InvoiceRow {
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  lineItems: { serviceTaskId: string; serviceName: string; amount: number }[];
+}
+
 export interface EmployeeSummary {
   employeeId: string;
   fullName: string;
@@ -116,4 +138,14 @@ export const WORK_ORDER_STATES = [
 
 export function workOrderStateLabel(state: number): string {
   return WORK_ORDER_STATES.find(s => s.value === state)?.label ?? `Unknown (${state})`;
+}
+
+export const INVOICE_STATUSES = [
+  { value: 0, label: 'Unpaid' },
+  { value: 1, label: 'Paid' },
+  { value: 2, label: 'Cash Pending' },
+] as const;
+
+export function invoiceStatusLabel(status: number): string {
+  return INVOICE_STATUSES.find(s => s.value === status)?.label ?? `Unknown (${status})`;
 }

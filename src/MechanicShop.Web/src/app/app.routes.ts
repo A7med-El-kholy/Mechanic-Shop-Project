@@ -4,6 +4,8 @@ import { authGuard, portalGuard } from './core/auth.guard';
 import { CustomerDetailPage } from './pages/customer-detail/customer-detail';
 import { CustomersPage } from './pages/customers/customers';
 import { DashboardPage } from './pages/dashboard/dashboard';
+import { InvoiceDetailPage } from './pages/invoices/invoice-detail';
+import { InvoicesPage } from './pages/invoices/invoices';
 import { LoginPage } from './pages/login/login';
 import { NotYetPage } from './pages/not-yet/not-yet';
 import { ShellPage } from './pages/shell/shell';
@@ -11,6 +13,8 @@ import { VehiclesPage } from './pages/vehicles/vehicles';
 import { PortalShellPage } from './pages/portal/portal-shell';
 import { PortalAppointmentsPage } from './pages/portal/portal-appointments';
 import { PortalDashboardPage } from './pages/portal/portal-dashboard';
+import { PortalInvoiceDetailPage } from './pages/portal/portal-invoice-detail';
+import { PortalInvoicesPage } from './pages/portal/portal-invoices';
 import { PortalRepairDetailPage } from './pages/portal/portal-repair-detail';
 import { PortalRepairsPage } from './pages/portal/portal-repairs';
 import { PortalVehiclesPage } from './pages/portal/portal-vehicles';
@@ -36,6 +40,12 @@ export const routes: Routes = [
         component: PortalRepairDetailPage,
         title: 'Repair · Mechanic Shop',
       },
+      { path: 'invoices', component: PortalInvoicesPage, title: 'Invoices · Mechanic Shop' },
+      {
+        path: 'invoices/:invoiceId',
+        component: PortalInvoiceDetailPage,
+        title: 'Invoice · Mechanic Shop',
+      },
       {
         path: 'appointments',
         component: PortalAppointmentsPage,
@@ -58,6 +68,12 @@ export const routes: Routes = [
         title: 'Customer · Mechanic Shop',
       },
       { path: 'vehicles', component: VehiclesPage, title: 'Vehicles · Mechanic Shop' },
+      { path: 'invoices', component: InvoicesPage, title: 'Invoices · Mechanic Shop' },
+      {
+        path: 'invoices/:invoiceId',
+        component: InvoiceDetailPage,
+        title: 'Invoice · Mechanic Shop',
+      },
       // Screens landing in coming stages land here instead of dead 404s; each
       // tab below gets a real page as its stage completes.
       { path: '**', component: NotYetPage, title: 'Coming up · Mechanic Shop' },
@@ -65,3 +81,4 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' },
 ];
+

@@ -1,0 +1,40 @@
+<h1>Invoices</h1>
+<p class="muted sm">Every repair you were billed for, and how it stands.</p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else if (invoices().length === 0) {
+  <div class="card"><p class="muted">No invoices yet. They appear when a repair is completed.</p></div>
+} @else {
+  <div class="card table-card">
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Invoice</th>
+          <th>Vehicle</th>
+          <th>Issued</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (invoice of invoices(); track invoice.invoiceId) {
+          <tr>
+            <td><b>#{{ invoice.invoiceNumber }}</b></td>
+            <td>
+              <b>{{ invoice.vehicleInfo }}</b>
+              <div class="muted sm">{{ invoice.licensePlate }}</div>
+            </td>
+            <td>{{ fmtDate(invoice.issuedOn) }}</td>
+            <td>{{ money.format(invoice.totalAmount) }}</td>
+            <td><span [class]="'badge ' + badgeKind(invoice.status)">{{ stateLabel(invoice.status) }}</span></td>
+            <td><a [routerLink]="['/portal/invoices', invoice.invoiceId]">{{ invoice.status === 1 ? 'View' : 'Pay / view' }}</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

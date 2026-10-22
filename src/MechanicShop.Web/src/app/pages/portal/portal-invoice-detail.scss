@@ -1,0 +1,31 @@
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.totals {
+  max-width: 340px;
+  margin-left: auto;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+}
+
+.payRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.gap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

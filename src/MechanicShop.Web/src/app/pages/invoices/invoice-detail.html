@@ -1,0 +1,56 @@
+<p><a routerLink="/invoices">← Invoices</a></p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else {
+  <div class="titleRow">
+    <div>
+      <h1>Invoice #{{ invoice()!.invoiceNumber }}</h1>
+      <p class="muted sm">
+        {{ invoice()!.customerName }} · {{ invoice()!.vehicleInfo }} ({{ invoice()!.licensePlate }}) ·
+        work order {{ invoice()!.workOrderId.slice(0, 8) }}… · issued {{ fmtDate(invoice()!.issuedOn) }}
+      </p>
+    </div>
+    <div class="gap">
+      <span [class]="'badge ' + badgeKind(invoice()!.status)">{{ stateLabel(invoice()!.status) }}</span>
+      @if (invoice()!.status !== 1) {
+        <button class="btn btn--brand" type="button" [disabled]="busy()" (click)="recordCash()">Record cash payment</button>
+      }
+    </div>
+  </div>
+
+  @if (alert()) {
+    <p class="al al--ok">{{ alert() }}</p>
+  }
+
+  @if (invoice()!.status === 2) {
+    <p class="al al--warn">Customer chose cash at the shop — confirm receipt here.</p>
+  }
+  @if (invoice()!.status === 1) {
+    <p class="muted sm">Paid{{ invoice()!.paymentMethod === 0 ? ' by card (prototype click)' : ' in cash at the shop' }}.</p>
+  }
+
+  <div class="card">
+    <table class="plain">
+      <thead>
+        <tr><th>Service</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        @for (line of invoice()!.lineItems; track line.serviceTaskId) {
+          <tr>
+            <td>{{ line.serviceName }}</td>
+            <td>{{ money.format(line.amount) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card totals">
+    <p class="row"><span>Subtotal</span><span>{{ money.format(invoice()!.subtotal) }}</span></p>
+    <p class="row"><span>Sales tax ({{ taxRateLabel() }})</span><span>{{ money.format(invoice()!.taxAmount) }}</span></p>
+    <p class="row"><b>Total</b><b>{{ money.format(invoice()!.totalAmount) }}</b></p>
+  </div>
+}

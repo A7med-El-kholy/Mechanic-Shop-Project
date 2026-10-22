@@ -22,10 +22,11 @@ export class PortalShellPage {
     { path: 'portal', label: 'Home', exact: true },
     { path: 'portal/vehicles', label: 'My Vehicles', exact: false },
     { path: 'portal/repairs', label: 'My Repairs', exact: false },
+    { path: 'portal/invoices', label: 'Invoices', exact: false },
     { path: 'portal/appointments', label: 'Appointments', exact: false },
   ];
 
-  protected readonly plannedNav = ['Invoices', 'AI Assistant', 'Notifications'];
+  protected readonly plannedNav = ['AI Assistant', 'Notifications'];
 
   protected readonly firstName = computed(() => {
     const name = this.auth.fullName().trim();

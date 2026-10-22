@@ -2,6 +2,7 @@ using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
+using MechanicShop.Domain.Invoices;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
 
@@ -28,6 +29,8 @@ public interface IAppDbContext
     DbSet<Employee> Employees { get; }
 
     DbSet<AppointmentRequest> AppointmentRequests { get; }
+
+    DbSet<Invoice> Invoices { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

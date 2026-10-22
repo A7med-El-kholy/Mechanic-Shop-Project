@@ -1,0 +1,48 @@
+<h1>Invoices</h1>
+<p class="muted sm">Payment status is shown as a label only — issued when a repair completes.</p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else if (data()!.items.length === 0) {
+  <div class="card"><p class="muted">No invoices yet. They appear when a repair is completed.</p></div>
+} @else {
+  <div class="card table-card">
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Invoice</th>
+          <th>Issued</th>
+          <th>Customer</th>
+          <th>Vehicle</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (invoice of data()!.items; track invoice.invoiceId) {
+          <tr>
+            <td><b>#{{ invoice.invoiceNumber }}</b></td>
+            <td>{{ fmtDate(invoice.issuedOn) }}</td>
+            <td>{{ invoice.customerName }}</td>
+            <td>
+              <b>{{ invoice.vehicleInfo }}</b>
+              <div class="muted sm">{{ invoice.licensePlate }}</div>
+            </td>
+            <td>{{ money.format(invoice.totalAmount) }}</td>
+            <td><span [class]="'badge ' + badgeKind(invoice.status)">{{ stateLabel(invoice.status) }}</span></td>
+            <td><a [routerLink]="['/invoices', invoice.invoiceId]">Open</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pager">
+      <button class="btn" type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">‹ Prev</button>
+      <span>Page {{ page() }} of {{ data()!.totalPages }} · {{ data()!.totalCount }} total</span>
+      <button class="btn" type="button" [disabled]="page() >= data()!.totalPages" (click)="goToPage(page() + 1)">Next ›</button>
+    </div>
+  </div>
+}
