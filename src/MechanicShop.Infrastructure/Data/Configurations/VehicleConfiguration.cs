@@ -43,6 +43,13 @@ public sealed class VehicleConfiguration : IEntityTypeConfiguration<Vehicle>
                .HasDatabaseName(DatabaseErrors.VehicleVinIndexName)
                .IsUnique();
 
+        // The prototype rejects duplicate plates at the form level ("This plate is
+        // already registered."); the index carries that rule into the database.
+        // Plates are stored uppercased by the entity, so the index is case-stable.
+        builder.HasIndex(v => v.LicensePlate)
+               .HasDatabaseName(DatabaseErrors.VehicleLicensePlateIndexName)
+               .IsUnique();
+
         builder.HasOne(v => v.Customer)
                .WithMany(c => c.Vehicles)
                .HasForeignKey(v => v.CustomerId);

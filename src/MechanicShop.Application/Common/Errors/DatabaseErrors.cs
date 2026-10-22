@@ -15,6 +15,8 @@ public static class DatabaseErrors
     /// <summary>Must match the index name configured in VehicleConfiguration.</summary>
     public const string VehicleVinIndexName = "IX_Vehicles_Vin";
 
+    public const string VehicleLicensePlateIndexName = "IX_Vehicles_LicensePlate";
+
     public static bool IsVehicleVinUniqueViolation(DbUpdateException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
@@ -24,9 +26,26 @@ public static class DatabaseErrors
             return false;
         }
 
+        return InnerMessagesMention(exception, VehicleVinIndexName);
+    }
+
+    public static bool IsVehicleLicensePlateUniqueViolation(DbUpdateException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        if (exception.Entries.Any(e => e.Entity is Vehicle) is false)
+        {
+            return false;
+        }
+
+        return InnerMessagesMention(exception, VehicleLicensePlateIndexName);
+    }
+
+    private static bool InnerMessagesMention(DbUpdateException exception, string indexName)
+    {
         for (var inner = exception.InnerException; inner is not null; inner = inner.InnerException)
         {
-            if (inner.Message.Contains(VehicleVinIndexName, StringComparison.OrdinalIgnoreCase))
+            if (inner.Message.Contains(indexName, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

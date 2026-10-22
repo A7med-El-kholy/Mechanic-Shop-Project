@@ -6,6 +6,7 @@ using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.Auth;
 using MechanicShop.Api.Features.Customers;
 using MechanicShop.Api.Features.Users;
+using MechanicShop.Api.Features.Vehicles;
 using MechanicShop.Application.Common.Behaviors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.Data;
@@ -79,6 +80,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.IsStaff, policy => policy.RequireRole(AppRoles.Manager, AppRoles.Technician));
 });
 
+// IHttpContextAccessor lets ApplicationUser reach the request's claims anywhere in
+// the container; ApplicationUser adapts those claims to the Application-side IUser.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUser, CurrentUser>();
+
 // --- MediatR: commands/queries in Application are dispatched as messages, with a
 // validation pipeline behavior short-circuiting invalid requests before a handler runs.
 builder.Services.AddMediatR(configuration =>
@@ -111,6 +117,7 @@ app.MapGet("/", () => "Hello World!");
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapCustomersEndpoints();
+app.MapVehiclesEndpoints();
 
 app.Run();
 

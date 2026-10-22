@@ -30,4 +30,10 @@ public interface IIdentityService
 
     /// <summary>Fetches a user by their identifier.</summary>
     Task<Result<AppUserDto>> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves the identity user id for an email, or null when no user has it.
+    /// Used to link a customer profile to the account registered under the same email.
+    /// </summary>
+    Task<string?> FindUserIdByEmailAsync(string email, CancellationToken cancellationToken = default);
 }

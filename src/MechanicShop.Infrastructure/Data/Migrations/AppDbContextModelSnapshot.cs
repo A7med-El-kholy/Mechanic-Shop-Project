@@ -95,6 +95,10 @@ namespace MechanicShop.Infrastructure.Data.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("LicensePlate")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Vehicles_LicensePlate");
+
                     b.HasIndex("Vin")
                         .IsUnique()
                         .HasDatabaseName("IX_Vehicles_Vin");

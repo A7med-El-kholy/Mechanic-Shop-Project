@@ -48,7 +48,7 @@ public sealed class CustomersEndpointsTests
         customer!.Name.Should().Be("Crash Test");
         customer.Vehicles.Should().ContainSingle();
         customer.Vehicles[0].LicensePlate.Should().StartWith("CRS-40");
-        customer.Vehicles[0].Vin.Should().StartWith("1HGCR2F59JA1").And.HaveLength(17);
+        customer.Vehicles[0].Vin.Should().StartWith("1HGCR2F59JA2").And.HaveLength(17);
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public sealed class CustomersEndpointsTests
             "Crash Test",
             "+201234567890",
             email,
-            [new CreateVehicleRequest("Toyota", "Corolla", 2024, plate ?? $"CRS-40{_vehicleSequence:00}", vin ?? $"1HGCR2F59JA1{_vehicleSequence++:d5}")]);
+            [new CreateVehicleRequest("Toyota", "Corolla", 2024, plate ?? $"CRS-40{_vehicleSequence:00}", vin ?? $"1HGCR2F59JA2{_vehicleSequence++:d5}")]);
 
     private static HttpRequestMessage RequestMessage(HttpMethod method, string uri, object? body, string token)
     {

@@ -104,6 +104,15 @@ public sealed class IdentityService(
         return await BuildDtoAsync(user);
     }
 
+    public async Task<string?> FindUserIdByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        return user?.Id;
+    }
+
     private async Task<AppUserDto> BuildDtoAsync(AppUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);

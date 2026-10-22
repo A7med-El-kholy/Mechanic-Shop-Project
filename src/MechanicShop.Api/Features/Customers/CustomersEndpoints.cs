@@ -1,11 +1,13 @@
 using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.Customers.Contracts;
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Customers.Commands.AddVehicleToCustomer;
 using MechanicShop.Application.Features.Customers.Commands.CreateCustomer;
 using MechanicShop.Application.Features.Customers.Commands.RemoveCustomer;
 using MechanicShop.Application.Features.Customers.Commands.UpdateCustomer;
 using MechanicShop.Application.Features.Customers.Queries.GetCustomerById;
 using MechanicShop.Application.Features.Customers.Queries.GetCustomers;
+using MechanicShop.Application.Features.Customers.Queries.GetMyCustomer;
 using MechanicShop.Domain.Common.Results;
 
 using MediatR;
@@ -29,6 +31,21 @@ public static class CustomersEndpoints
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPost("/{customerId:guid}/vehicles", AddVehicleAsync)
+            .WithName("AddVehicleToCustomer")
+            .RequireAuthorization(Policies.IsStaff)
+            .Produces(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/me", MeAsync)
+            .WithName("GetMyCustomer")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGet("/", ListAsync)
             .WithName("GetCustomers")
@@ -80,6 +97,40 @@ public static class CustomersEndpoints
         return result.IsError
             ? result.TopError.ToProblem(httpContext)
             : Results.Created($"/api/customers/{result.Value.CustomerId}", result.Value);
+    }
+
+    private static async Task<IResult> AddVehicleAsync(
+        Guid customerId,
+        CreateVehicleRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new AddVehicleToCustomerCommand(
+                customerId,
+                request.Make,
+                request.Model,
+                request.Year,
+                request.LicensePlate,
+                request.Vin),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Created($"/api/vehicles/{result.Value.VehicleId}", result.Value);
+    }
+
+    private static async Task<IResult> MeAsync(
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetMyCustomerQuery(), cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
     }
 
     private static async Task<IResult> ListAsync(

@@ -16,10 +16,12 @@ namespace MechanicShop.Application.Features.Customers.Commands.CreateCustomer;
 
 public sealed class CreateCustomerCommandHandler(
     IAppDbContext context,
+    IIdentityService identityService,
     ILogger<CreateCustomerCommandHandler> logger)
     : IRequestHandler<CreateCustomerCommand, Result<CustomerDto>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly IIdentityService _identityService = identityService;
     private readonly ILogger<CreateCustomerCommandHandler> _logger = logger;
 
     public async Task<Result<CustomerDto>> Handle(CreateCustomerCommand command, CancellationToken cancellationToken)
@@ -90,8 +92,41 @@ public sealed class CreateCustomerCommandHandler(
 
             return VehicleErrors.DuplicateVin;
         }
+        catch (DbUpdateException exception) when (DatabaseErrors.IsVehicleLicensePlateUniqueViolation(exception))
+        {
+            _logger.LogWarning(exception, "Customer creation aborted. A vehicle license plate already exists.");
+
+            return VehicleErrors.DuplicateLicensePlate;
+        }
 
         _logger.LogInformation("Customer {CustomerId} created.", customer.Id);
+
+        // The workshop is the source of truth for customer profiles, but accounts are
+        // self-registered. When a profile lands with an email that already belongs to
+        // a Customer-role user and that user has no profile yet, link them immediately
+        // so "my vehicles / my profile" views resolve from the very first login.
+        var linkedUserId = await _identityService.FindUserIdByEmailAsync(email, cancellationToken);
+
+        if (linkedUserId is not null)
+        {
+            var alreadyLinked = await _context.Customers
+                .AnyAsync(c => c.UserId == linkedUserId, cancellationToken);
+
+            if (!alreadyLinked)
+            {
+                var linkResult = customer.LinkUserAccount(linkedUserId);
+
+                if (linkResult.IsSuccess)
+                {
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation(
+                        "Customer {CustomerId} linked to existing user {UserId}.",
+                        customer.Id,
+                        linkedUserId);
+                }
+            }
+        }
 
         return customer.ToDto();
     }
