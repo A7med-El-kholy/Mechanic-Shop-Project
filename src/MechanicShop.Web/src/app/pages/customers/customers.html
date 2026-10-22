@@ -1,0 +1,85 @@
+<div class="head">
+  <div>
+    <h1>Customers</h1>
+    <p class="muted sm">
+      @if (data()) {
+        {{ data()!.totalCount }} customer(s) in the book — search reaches names, emails, phones, and plates.
+      } @else {
+        Search reaches names, emails, phones, and plates.
+      }
+    </p>
+  </div>
+  <button class="btn btn--brand" type="button" (click)="openCreate()">+ New customer</button>
+</div>
+
+@if (alert()) {
+  <p class="al al--err">{{ alert() }}</p>
+}
+
+<div class="card">
+  <div class="toolbar">
+    <input
+      class="input search"
+      type="search"
+      placeholder="Search name, phone, email, plate…"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+      (keyup.enter)="startSearch()"
+    />
+    <button class="btn" type="button" (click)="startSearch()">Search</button>
+  </div>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (pageError()) {
+    <p class="al al--err">{{ pageError() }}</p>
+  } @else if (data()!.items.length === 0) {
+    <p class="muted">No customers match. The search looks at the name, the contact info, and the plates owned.</p>
+  } @else {
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Vehicles</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (customer of data()!.items; track customer.customerId) {
+          <tr>
+            <td><b>{{ customer.name }}</b></td>
+            <td>{{ customer.phoneNumber }}</td>
+            <td>{{ customer.email }}</td>
+            <td>{{ customer.vehicles.length }}</td>
+            <td class="rowActionsCell">
+              <div class="rowActions">
+                <a class="btn" [routerLink]="['/', 'customers', customer.customerId]">Details</a>
+                <button class="btn" type="button" (click)="openEdit(customer)">Edit</button>
+                <button class="btn btn--danger" type="button" (click)="remove(customer)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pager">
+      <button class="btn" type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">‹ Prev</button>
+      <span>Page {{ page() }} of {{ data()!.totalPages }} · {{ data()!.totalCount }} total</span>
+      <button class="btn" type="button" [disabled]="page() >= data()!.totalPages" (click)="goToPage(page() + 1)">Next ›</button>
+    </div>
+  }
+</div>
+
+@if (formOpen()) {
+  <app-customer-form
+    mode="create"
+    [initial]="editingPayload()"
+    [busy]="formBusy()"
+    [error]="formError()"
+    (closed)="closeForm()"
+    (saved)="save($event)"
+  />
+}

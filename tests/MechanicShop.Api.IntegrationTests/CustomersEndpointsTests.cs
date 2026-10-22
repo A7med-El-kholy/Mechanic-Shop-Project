@@ -227,6 +227,132 @@ public sealed class CustomersEndpointsTests
         fetched.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task RemoveCustomer_VehicleWithActiveWorkOrder_ReturnsConflict()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var email = $"guard-active-{Guid.NewGuid():N}@example.com";
+        using var created = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, "/api/customers", CustomerRequest(email), managerToken),
+            TestContext.Current.CancellationToken);
+
+        created.EnsureSuccessStatusCode();
+
+        var customer = await ReadCustomer(created);
+        var vehicleId = customer!.Vehicles[0].VehicleId;
+
+        await CreateWorkOrderForVehicleAsync(client, managerToken, vehicleId);
+
+        using var response = await client.SendAsync(
+            RequestMessage(HttpMethod.Delete, $"/api/customers/{customer.CustomerId}", null, managerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task RemoveCustomer_VehicleWithCompletedHistory_ReturnsConflict()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var email = $"guard-history-{Guid.NewGuid():N}@example.com";
+        using var created = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, "/api/customers", CustomerRequest(email), managerToken),
+            TestContext.Current.CancellationToken);
+
+        created.EnsureSuccessStatusCode();
+
+        var customer = await ReadCustomer(created);
+        var vehicleId = customer!.Vehicles[0].VehicleId;
+
+        using var workOrder = await CreateWorkOrderForVehicleAsync(client, managerToken, vehicleId);
+        var workOrderId = (await workOrder.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("workOrderId").GetGuid();
+
+        using var started = await client.SendAsync(
+            RequestMessage(HttpMethod.Put, $"/api/work-orders/{workOrderId}/status", new { state = 1 }, managerToken),
+            TestContext.Current.CancellationToken);
+
+        started.EnsureSuccessStatusCode();
+
+        using var completed = await client.SendAsync(
+            RequestMessage(HttpMethod.Put, $"/api/work-orders/{workOrderId}/status", new { state = 2 }, managerToken),
+            TestContext.Current.CancellationToken);
+
+        completed.EnsureSuccessStatusCode();
+
+        using var response = await client.SendAsync(
+            RequestMessage(HttpMethod.Delete, $"/api/customers/{customer.CustomerId}", null, managerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task RemoveCustomer_VehicleWithoutWorkOrders_CascadesVehicles()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var email = $"guard-clean-{Guid.NewGuid():N}@example.com";
+        using var created = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, "/api/customers", CustomerRequest(email), managerToken),
+            TestContext.Current.CancellationToken);
+
+        created.EnsureSuccessStatusCode();
+
+        var customer = await ReadCustomer(created);
+
+        using var response = await client.SendAsync(
+            RequestMessage(HttpMethod.Delete, $"/api/customers/{customer!.CustomerId}", null, managerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var vanished = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, $"/api/customers/{customer.CustomerId}", null, managerToken),
+            TestContext.Current.CancellationToken);
+
+        vanished.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    private static async Task<HttpResponseMessage> CreateWorkOrderForVehicleAsync(
+        HttpClient client,
+        string managerToken,
+        Guid vehicleId)
+    {
+        var technician = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, "/api/employees", new { fullName = $"Tech C-{_vehicleSequence++}", role = 0 }, managerToken),
+            TestContext.Current.CancellationToken);
+
+        technician.EnsureSuccessStatusCode();
+
+        var technicianId = (await technician.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("employeeId").GetGuid();
+
+        var task = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, "/api/service-tasks", new { name = $"C Service {_vehicleSequence++}", basePrice = 50.0m, estimatedDurationInMins = 30 }, managerToken),
+            TestContext.Current.CancellationToken);
+
+        task.EnsureSuccessStatusCode();
+
+        var taskId = (await task.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("serviceTaskId").GetGuid();
+
+        var slot = TestSlots.Next();
+
+        return await client.SendAsync(
+            RequestMessage(
+                HttpMethod.Post,
+                "/api/work-orders",
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
+                managerToken),
+            TestContext.Current.CancellationToken);
+    }
+
     private static int _vehicleSequence = 1; // unique VINs per call; the DB unique index is append-only
 
     private static CreateCustomerRequest CustomerRequest(

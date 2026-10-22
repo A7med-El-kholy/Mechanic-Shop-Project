@@ -437,7 +437,7 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.HasOne("MechanicShop.Domain.Customers.Vehicles.Vehicle", "Vehicle")
                         .WithMany()
                         .HasForeignKey("VehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Technician");

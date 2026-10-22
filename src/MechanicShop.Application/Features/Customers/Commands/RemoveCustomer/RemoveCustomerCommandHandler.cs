@@ -4,6 +4,8 @@ using MediatR;
 
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers;
+using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.WorkOrders;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -30,8 +32,23 @@ public sealed class RemoveCustomerCommandHandler(
             return CustomerErrors.NotFound(command.CustomerId);
         }
 
-        // Work-order existence guard arrives with the work-order feature; today the
-        // cascade removes the customer's vehicles with the row itself.
+        // Work orders reference vehicles, not the customer; the customer->vehicles
+        // cascade would otherwise erase service history and active jobs silently.
+        // Deleting a customer is only clean once no vehicle of theirs is cited by
+        // any work order, past or live.
+        var hasWorkOrders = await _context.WorkOrders
+            .AnyAsync(w => _context.Vehicles
+                .Any(v => v.Id == w.VehicleId && v.CustomerId == command.CustomerId),
+                cancellationToken);
+
+        if (hasWorkOrders)
+        {
+            _logger.LogWarning("Customer {CustomerId} removal blocked: their vehicles appear on work orders.", command.CustomerId);
+
+            return CustomerErrors.HasWorkOrders(command.CustomerId);
+        }
+
+        // The cascade removes the customer's remaining vehicles with the row itself.
         _context.Customers.Remove(customer);
 
         await _context.SaveChangesAsync(cancellationToken);

@@ -180,6 +180,79 @@ public sealed class VehiclesEndpointsTests
         fetched.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task ListVehicles_Defaults_ExcludeArchived()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var (_, plate, manager) = await CreateCustomerAsync(client, managerToken);
+
+        var searchUri = $"/api/vehicles?page=1&pageSize=5&search={plate}";
+
+        using var before = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, searchUri, null, manager),
+            TestContext.Current.CancellationToken);
+
+        before.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var items = (await before.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("items");
+
+        items.GetArrayLength().Should().Be(1);
+        items[0].GetProperty("licensePlate").GetString().Should().Be(plate);
+        items[0].GetProperty("customerName").GetString().Should().Be("Vehicle Tester");
+
+        var vehicleId = items[0].GetProperty("vehicleId").GetGuid();
+
+        using var archived = await client.SendAsync(
+            RequestMessage(HttpMethod.Put, $"/api/vehicles/{vehicleId}/archive", null, manager),
+            TestContext.Current.CancellationToken);
+
+        archived.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var after = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, searchUri, null, manager),
+            TestContext.Current.CancellationToken);
+
+        (await after.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("items").GetArrayLength().Should().Be(0);
+
+        using var withArchived = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, $"{searchUri}&includeArchived=true", null, manager),
+            TestContext.Current.CancellationToken);
+
+        var row = (await withArchived.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("items")
+            .EnumerateArray()
+            .Single();
+
+        row.GetProperty("isArchived").GetBoolean().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ListVehicles_CustomerToken_ReturnsForbidden()
+    {
+        using var client = _factory.CreateClient();
+
+        var email = $"no-list-{_sequence++}@mechanicshop.test";
+
+        using var register = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequest(email, "Passw0rd!", "No List"),
+            TestContext.Current.CancellationToken);
+
+        register.EnsureSuccessStatusCode();
+
+        var customerToken = await GetAccessTokenAsync(client, email, "Passw0rd!");
+
+        using var response = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, "/api/vehicles", null, customerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
     private static async Task<(Guid CustomerId, string Plate, string ManagerToken)> CreateCustomerAsync(
         HttpClient client,
         string managerToken)

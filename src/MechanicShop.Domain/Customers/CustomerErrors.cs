@@ -24,4 +24,9 @@ public static class CustomerErrors
 
     public static Error NotFound(Guid customerId) =>
         Error.NotFound("Customer_NotFound", $"Customer '{customerId}' was not found.");
+
+    public static Error HasWorkOrders(Guid customerId) =>
+        Error.Conflict(
+            "Customer_HasWorkOrders",
+            $"Customer '{customerId}' has vehicles with work orders (active jobs or history) and cannot be removed. Remove or archive the vehicles first.");
 }

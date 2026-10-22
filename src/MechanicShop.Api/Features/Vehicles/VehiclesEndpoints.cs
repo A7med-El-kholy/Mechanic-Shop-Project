@@ -6,6 +6,7 @@ using MechanicShop.Application.Features.Vehicles.Commands.RemoveVehicle;
 using MechanicShop.Application.Features.Vehicles.Commands.RestoreVehicle;
 using MechanicShop.Application.Features.Vehicles.Commands.UpdateVehicle;
 using MechanicShop.Application.Features.Vehicles.Queries.GetVehicleById;
+using MechanicShop.Application.Features.Vehicles.Queries.GetVehicles;
 using MechanicShop.Domain.Common.Results;
 
 using MediatR;
@@ -22,6 +23,11 @@ public static class VehiclesEndpoints
     public static IEndpointRouteBuilder MapVehiclesEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/vehicles").WithTags("Vehicles");
+
+        group.MapGet("/", ListAsync)
+            .WithName("GetVehicles")
+            .RequireAuthorization(Policies.IsStaff)
+            .Produces(StatusCodes.Status200OK);
 
         group.MapGet("/{vehicleId:guid}", GetAsync)
             .WithName("GetVehicleById")
@@ -58,6 +64,24 @@ public static class VehiclesEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         return endpoints;
+    }
+
+    private static async Task<IResult> ListAsync(
+        int page = 1,
+        int pageSize = 10,
+        string? search = null,
+        bool includeArchived = false,
+        ISender sender = null!,
+        HttpContext httpContext = null!,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await sender.Send(
+            new GetVehiclesQuery(page, pageSize, search, includeArchived),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
     }
 
     private static async Task<IResult> GetAsync(

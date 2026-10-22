@@ -37,6 +37,39 @@ export interface WorkOrderSummary {
   technicianName: string;
 }
 
+export interface Vehicle {
+  vehicleId: string;
+  make: string;
+  model: string;
+  year: number;
+  licensePlate: string;
+  vin: string;
+  vehicleInfo: string;
+  isArchived: boolean;
+}
+
+export interface Customer {
+  customerId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  /** List/detail responses carry ACTIVE vehicles only; archived ones are invisible. */
+  vehicles: Vehicle[];
+}
+
+/** Row of the Vehicles screen: the car plus who owns it (GET /api/vehicles). */
+export interface VehicleListItem {
+  vehicleId: string;
+  make: string;
+  model: string;
+  year: number;
+  licensePlate: string;
+  vin: string;
+  isArchived: boolean;
+  customerId: string;
+  customerName: string;
+}
+
 export interface EmployeeSummary {
   employeeId: string;
   fullName: string;

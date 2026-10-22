@@ -1,0 +1,15 @@
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.pager {
+  padding-top: 4px;
+}
+
+.rowActionsCell .rowActions {
+  justify-content: flex-end;
+}

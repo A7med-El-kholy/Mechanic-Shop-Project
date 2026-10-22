@@ -1,0 +1,78 @@
+<a class="back muted sm" routerLink="/customers">‹ Back to customers</a>
+
+<div class="head">
+  @if (customer(); as active) {
+    <div>
+      <h1>{{ active.name }}</h1>
+      <p class="muted sm">{{ active.phoneNumber }} · {{ active.email }}</p>
+    </div>
+    <div class="rowActions">
+      <a class="btn" routerLink="/customers">Customers</a>
+      <button class="btn btn--danger" type="button" (click)="removeCustomer()">Delete customer</button>
+    </div>
+  } @else if (loading()) {
+    <div><h1>Loading…</h1></div>
+  }
+</div>
+
+@if (alert()) {
+  <p class="al al--err">{{ alert() }}</p>
+}
+
+@if (pageError()) {
+  <div class="card">
+    <p class="al al--err">{{ pageError() }}</p>
+  </div>
+} @else {
+  <div class="card">
+    <div class="toolbar">
+      <h2>Vehicles</h2>
+      <span class="spacer"></span>
+      <button class="btn btn--brand" type="button" (click)="openNewVehicle()">+ Add vehicle</button>
+    </div>
+
+    @if (loading()) {
+      <p class="muted">Loading…</p>
+    } @else if (customer()!.vehicles.length === 0) {
+      <p class="muted">No vehicles on file yet. Add the first one with "Add vehicle".</p>
+    } @else {
+      <table class="plain">
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Vehicle</th>
+            <th>Year</th>
+            <th>VIN</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (vehicle of customer()!.vehicles; track vehicle.vehicleId) {
+            <tr>
+              <td><b>{{ vehicle.licensePlate }}</b></td>
+              <td>{{ vehicle.make }} {{ vehicle.model }}</td>
+              <td>{{ vehicle.year }}</td>
+              <td class="muted sm">{{ vehicle.vin }}</td>
+              <td class="rowActionsCell">
+                <div class="rowActions">
+                  <button class="btn" type="button" (click)="openEditVehicle(vehicle)">Edit</button>
+                  <button class="btn btn--danger" type="button" (click)="removeVehicle(vehicle)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
+
+@if (vehicleDialog() !== 'closed') {
+  <app-vehicle-form
+    [initial]="editingVehicle()"
+    [busy]="vehicleBusy()"
+    [error]="vehicleError()"
+    (closed)="closeVehicleDialog()"
+    (saved)="saveVehicle($event)"
+  />
+}

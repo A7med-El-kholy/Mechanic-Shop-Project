@@ -20,7 +20,8 @@ public sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrder>
 
         builder.HasOne(w => w.Vehicle)
                .WithMany()
-               .HasForeignKey(w => w.VehicleId);
+               .HasForeignKey(w => w.VehicleId)
+               .OnDelete(DeleteBehavior.Restrict);
 
         // Scheduling vocabulary, per the prototype: date + minute-of-day start on
         // the 15-minute grid, a lift assignment, and a roster technician. Jobs are
