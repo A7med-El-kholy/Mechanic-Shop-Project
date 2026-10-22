@@ -22,6 +22,41 @@ namespace MechanicShop.Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("MechanicShop.Domain.Appointments.AppointmentRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("PreferredDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("ServiceTaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("PreferredDate");
+
+                    b.HasIndex("ServiceTaskId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("AppointmentRequests");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.Customers.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -413,6 +448,32 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.HasIndex("ServiceTaskId");
 
                     b.ToTable("WorkOrderServiceTask");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Appointments.AppointmentRequest", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Customers.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.ServiceTasks.ServiceTask", "ServiceTask")
+                        .WithMany()
+                        .HasForeignKey("ServiceTaskId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MechanicShop.Domain.Customers.Vehicles.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("ServiceTask");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("MechanicShop.Domain.Customers.Vehicles.Vehicle", b =>

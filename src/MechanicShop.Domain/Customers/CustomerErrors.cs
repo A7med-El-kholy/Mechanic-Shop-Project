@@ -29,4 +29,9 @@ public static class CustomerErrors
         Error.Conflict(
             "Customer_HasWorkOrders",
             $"Customer '{customerId}' has vehicles with work orders (active jobs or history) and cannot be removed. Remove or archive the vehicles first.");
+
+    public static Error HasPendingRequests(Guid customerId) =>
+        Error.Conflict(
+            "Customer_HasPendingRequests",
+            $"Customer '{customerId}' has cars with pending appointment requests and cannot be removed. Review the requests first.");
 }

@@ -63,3 +63,35 @@
     </table>
   }
 </div>
+
+@if (loaded() && pending().length > 0) {
+  <div class="card table-card requests">
+    <h2>Appointment requests <span class="count">{{ pending().length }}</span></h2>
+
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Requested for</th>
+          <th>Customer</th>
+          <th>Vehicle</th>
+          <th>Service</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (request of pending(); track request.appointmentRequestId) {
+          <tr>
+            <td>{{ fmtDate(request.preferredDate) }}</td>
+            <td>{{ request.customerName }}</td>
+            <td>
+              <b>{{ request.vehicleInfo }}</b>
+              <div class="muted sm">{{ request.licensePlate }}</div>
+            </td>
+            <td>{{ request.serviceTaskName ?? 'Not sure — inspection' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <p class="muted sm">Confirm by booking the work order on the work-orders screen — a request is not a booking.</p>
+  </div>
+}

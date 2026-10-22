@@ -1,0 +1,69 @@
+<div class="head">
+  <div>
+    <h1>Welcome{{ firstName() ? ', ' + firstName() : '' }}</h1>
+    <p class="muted sm">Your view of the workshop — cars, ongoing repairs, and appointment requests.</p>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card">
+    <p class="al al--err">{{ pageError() }}</p>
+    <p class="muted sm">Ask the workshop to create your profile with the same email you signed up with, then sign in again.</p>
+  </div>
+} @else {
+  <div class="stats">
+    <div class="card stat">
+      <span class="num">{{ activeCount() }}</span>
+      <span class="label">Active repairs</span>
+    </div>
+    <div class="card stat">
+      <span class="num">{{ upcomingCount() }}</span>
+      <span class="label">Scheduled visits</span>
+    </div>
+    <div class="card stat">
+      <span class="num">{{ profile()!.vehicles.length }}</span>
+      <span class="label">Cars on file</span>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>My vehicles</h3>
+      @if (profile()!.vehicles.length === 0) {
+        <p class="muted">No vehicles on file yet — the workshop adds your car when you visit.</p>
+      } @else {
+        @for (vehicle of profile()!.vehicles; track vehicle.vehicleId) {
+          <p class="row">
+            <span><b>{{ vehicle.licensePlate }}</b></span>
+            <span class="muted sm">{{ vehicle.vehicleInfo }}</span>
+          </p>
+        }
+      }
+    </div>
+
+    <div class="card">
+      <h3>{{ spotlightTitle() }}</h3>
+      @if (spotlight(); as repair) {
+        <p><b>{{ repair.vehicleInfo }}</b> · {{ repair.licensePlate }}</p>
+        <p class="muted sm">
+          {{ repair.technicianName }} ·
+          {{ fmtDate(repair.scheduledDate) }} ·
+          {{ fmtMinute(repair.startsAtMinute) }}–{{ fmtMinute(repair.endsAtMinute) }}
+        </p>
+        <a class="btn btn--brand" [routerLink]="['/portal/repairs', repair.workOrderId]">Track repair</a>
+      } @else {
+        <p class="muted">No repairs booked yet. Request an appointment and the workshop will confirm a slot.</p>
+      }
+    </div>
+  </div>
+
+  <div class="card row aiTeaser">
+    <div>
+      <h3>Something wrong with your car?</h3>
+      <span class="muted sm">Describe it to the AI Assistant before you visit — arrives in a later stage.</span>
+    </div>
+    <button class="btn" type="button" disabled>Describe a problem</button>
+  </div>
+}

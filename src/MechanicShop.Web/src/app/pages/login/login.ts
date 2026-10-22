@@ -31,7 +31,11 @@ export class LoginPage {
     try {
       await this.auth.login(this.email(), this.password());
 
-      await this.router.navigateByUrl(this.returnUrl ?? '/dashboard');
+      // Staff head to the workshop; customers get their portal home. A returnUrl
+      // from a guard bounce still wins.
+      const home = this.auth.hasStaffRole() ? '/dashboard' : '/portal';
+
+      await this.router.navigateByUrl(this.returnUrl ?? home);
     } catch (ex) {
       this.error.set(
         ex instanceof HttpErrorResponse && typeof ex.error?.detail === 'string'

@@ -1,3 +1,4 @@
+using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
@@ -25,6 +26,8 @@ public interface IAppDbContext
     DbSet<WorkOrder> WorkOrders { get; }
 
     DbSet<Employee> Employees { get; }
+
+    DbSet<AppointmentRequest> AppointmentRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

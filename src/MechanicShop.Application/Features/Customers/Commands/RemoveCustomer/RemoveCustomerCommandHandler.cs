@@ -48,6 +48,23 @@ public sealed class RemoveCustomerCommandHandler(
             return CustomerErrors.HasWorkOrders(command.CustomerId);
         }
 
+        // Pending appointment requests reference the vehicles path too; with the
+        // requests FK restricted, a customer whose cars are requested cannot
+        // cascade cleanly either.
+        var hasPendingRequests = await _context.AppointmentRequests
+            .AnyAsync(r => _context.Vehicles
+                .Any(v => v.Id == r.VehicleId && v.CustomerId == command.CustomerId),
+                cancellationToken);
+
+        if (hasPendingRequests)
+        {
+            _logger.LogWarning(
+                "Customer {CustomerId} removal blocked: their cars have pending appointment requests.",
+                command.CustomerId);
+
+            return CustomerErrors.HasPendingRequests(command.CustomerId);
+        }
+
         // The cascade removes the customer's remaining vehicles with the row itself.
         _context.Customers.Remove(customer);
 

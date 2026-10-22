@@ -1,0 +1,26 @@
+<div class="portalTop">
+  <a class="brand" routerLink="/portal">🔧 Mechanic Shop</a>
+
+  <nav class="pnav">
+    @for (item of portalNav; track item.path) {
+      <a
+        class="pnavItem"
+        [routerLink]="['/' + item.path]"
+        routerLinkActive="on"
+        [routerLinkActiveOptions]="{ exact: item.exact }"
+      >{{ item.label }}</a>
+    }
+    @for (label of plannedNav; track label) {
+      <span class="pnavItem soon">{{ label }}</span>
+    }
+  </nav>
+
+  <div class="who">
+    <span class="muted sm">Customer · {{ auth.fullName() }}</span>
+    <button class="btn" type="button" (click)="logout()">Sign out</button>
+  </div>
+</div>
+
+<main class="portalMain">
+  <router-outlet />
+</main>

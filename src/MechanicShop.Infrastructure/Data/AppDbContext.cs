@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
@@ -24,6 +25,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<ServiceTask> ServiceTasks { get; set; }
     public DbSet<WorkOrder> WorkOrders { get; set; }
     public DbSet<Employee> Employees { get; set; }
+    public DbSet<AppointmentRequest> AppointmentRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

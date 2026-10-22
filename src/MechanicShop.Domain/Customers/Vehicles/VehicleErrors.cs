@@ -41,4 +41,9 @@ public static class VehicleErrors
 
     public static Error NotArchived =>
         Error.Conflict("Vehicle_NotArchived", "This vehicle is not archived.");
+
+    public static Error HasPendingRequests =>
+        Error.Conflict(
+            "Vehicle_PendingRequests",
+            "This vehicle has pending appointment requests. Review them with the customer first.");
 }

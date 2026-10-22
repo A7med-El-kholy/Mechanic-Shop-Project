@@ -45,3 +45,15 @@
 .bay {
   font-weight: 700;
 }
+
+.requests .count {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fdf1d6;
+  color: #8a5b00;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}

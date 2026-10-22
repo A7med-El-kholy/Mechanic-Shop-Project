@@ -64,6 +64,13 @@ export class AuthStore {
 
   readonly fullName = computed(() => this.userSignal()?.fullName ?? '');
 
+  /** Staff = the workshop side; customers get the portal shell instead. */
+  readonly hasStaffRole = computed(() => {
+    const roles = this.userSignal()?.roles ?? [];
+
+    return roles.includes('Manager') || roles.includes('Technician');
+  });
+
   async login(email: string, password: string): Promise<void> {
     this.busySignal.set(true);
 

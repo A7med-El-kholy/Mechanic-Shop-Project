@@ -70,6 +70,36 @@ export interface VehicleListItem {
   customerName: string;
 }
 
+/** One appointment request row (mine + the staff review list). */
+export interface AppointmentRequestRow {
+  appointmentRequestId: string;
+  customerId: string;
+  customerName: string;
+  vehicleId: string;
+  vehicleInfo: string;
+  licensePlate: string;
+  serviceTaskId: string | null;
+  serviceTaskName: string | null;
+  serviceTaskPrice: number | null;
+  preferredDate: string;
+  status: number;
+}
+
+/** Catalog read for the request form (GET /api/portal/service-options). */
+export interface ServiceOption {
+  serviceTaskId: string;
+  name: string;
+  basePrice: number;
+  estimatedDurationInMins: number;
+}
+
+/** WorkOrderDto as the portal binds it (customer's own repair). */
+export interface RepairDetail extends WorkOrderSummary {
+  totalPrice: number;
+  estimatedDurationTotalInMins: number;
+  serviceTasks: ServiceOption[];
+}
+
 export interface EmployeeSummary {
   employeeId: string;
   fullName: string;

@@ -65,6 +65,22 @@ public sealed class RemoveVehicleCommandHandler(
             return Result.Deleted;
         }
 
+        // Third gate: a pending appointment request is future intent on this car.
+        // Cars with service history get archived anyway, and archived cars may
+        // keep their requests (nothing was ever booked); a HARD delete, though,
+        // only happens for history-free cars, and those must not strand a request.
+        var hasPendingRequests = await _context.AppointmentRequests
+            .AnyAsync(r => r.VehicleId == command.VehicleId, cancellationToken);
+
+        if (hasPendingRequests)
+        {
+            _logger.LogWarning(
+                "Vehicle {VehicleId} removal blocked: cited on appointment requests.",
+                command.VehicleId);
+
+            return VehicleErrors.HasPendingRequests;
+        }
+
         _context.Vehicles.Remove(vehicle);
 
         await _context.SaveChangesAsync(cancellationToken);

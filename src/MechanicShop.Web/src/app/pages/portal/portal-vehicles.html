@@ -1,0 +1,33 @@
+<h1>My Vehicles</h1>
+<p class="muted sm">The garage the workshop keeps on file for you.</p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else if (profile()!.vehicles.length === 0) {
+  <div class="card">
+    <p class="muted">No cars on file yet. The workshop registers your vehicle when your first appointment is confirmed.</p>
+  </div>
+} @else {
+  <div class="card">
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Plate</th>
+          <th>Vehicle</th>
+          <th>VIN</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (vehicle of profile()!.vehicles; track vehicle.vehicleId) {
+          <tr>
+            <td><b>{{ vehicle.licensePlate }}</b></td>
+            <td>{{ vehicle.vehicleInfo }}</td>
+            <td class="muted sm">{{ vehicle.vin }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

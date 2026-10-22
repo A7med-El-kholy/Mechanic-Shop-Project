@@ -1,0 +1,50 @@
+<h1>My Repairs</h1>
+<p class="muted sm">Every visit the workshop booked for your cars — open one to see the details.</p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else if (data()!.items.length === 0) {
+  <div class="card">
+    <p class="muted">No repairs yet. Head to <a routerLink="/portal/appointments">Appointments</a> and request one.</p>
+  </div>
+} @else {
+  <div class="card table-card">
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Block</th>
+          <th>Bay</th>
+          <th>Vehicle</th>
+          <th>Technician</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (repair of data()!.items; track repair.workOrderId) {
+          <tr>
+            <td>{{ fmtDate(repair.scheduledDate) }}</td>
+            <td>{{ fmtMinute(repair.startsAtMinute) }}–{{ fmtMinute(repair.endsAtMinute) }}</td>
+            <td class="bay">{{ 'ABC'[repair.spot] }}</td>
+            <td>
+              <b>{{ repair.vehicleInfo }}</b>
+              <div class="muted sm">{{ repair.licensePlate }}</div>
+            </td>
+            <td>{{ repair.technicianName }}</td>
+            <td><span [class]="'badge badge--' + repair.state">{{ stateLabel(repair.state) }}</span></td>
+            <td><a [routerLink]="['/portal/repairs', repair.workOrderId]">View</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pager">
+      <button class="btn" type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">‹ Prev</button>
+      <span>Page {{ page() }} of {{ data()!.totalPages }} · {{ data()!.totalCount }} total</span>
+      <button class="btn" type="button" [disabled]="page() >= data()!.totalPages" (click)="goToPage(page() + 1)">Next ›</button>
+    </div>
+  </div>
+}

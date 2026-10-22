@@ -2,6 +2,7 @@ using MechanicShop.Application.Common.Interfaces;
 
 using MediatR;
 
+using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.ServiceTasks;
 
@@ -38,6 +39,20 @@ public sealed class RemoveServiceTaskCommandHandler(
                 command.ServiceTaskId);
 
             return ServiceTaskErrors.InUseByWorkOrders;
+        }
+
+        // Pending customer requests cite the catalog too; deleting the task would
+        // strand the request's meaning.
+        var requested = await _context.AppointmentRequests
+            .AnyAsync(r => r.ServiceTaskId == command.ServiceTaskId, cancellationToken);
+
+        if (requested)
+        {
+            _logger.LogWarning(
+                "Service task {ServiceTaskId} removal blocked: cited on appointment requests.",
+                command.ServiceTaskId);
+
+            return ServiceTaskErrors.InUseByAppointmentRequests;
         }
 
         _context.ServiceTasks.Remove(serviceTask);

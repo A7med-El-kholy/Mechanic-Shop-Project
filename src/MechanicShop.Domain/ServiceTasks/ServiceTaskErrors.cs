@@ -29,4 +29,9 @@ public static class ServiceTaskErrors
         Error.Conflict(
             "ServiceTask_InUse",
             "This service is referenced by work orders. Retiring catalog items lands later; keep it for now.");
+
+    public static Error InUseByAppointmentRequests =>
+        Error.Conflict(
+            "ServiceTask_InUseByRequests",
+            "This service is cited on pending appointment requests from customers.");
 }
