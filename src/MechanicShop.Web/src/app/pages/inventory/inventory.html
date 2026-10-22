@@ -1,0 +1,98 @@
+<div class="row">
+  <h1>Inventory</h1>
+  @if (lowCount() > 0) {
+    <span class="mu">{{ lowCount() }} item(s) need restocking</span>
+  }
+</div>
+
+@if (alert()) {
+  <p class="al al--ok">{{ alert() }}</p>
+}
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else {
+
+  <div class="card table-card">
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Part</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>In stock</th>
+          <th>Minimum</th>
+          <th>Status</th>
+          <th>Adjust</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (part of parts(); track part.partId) {
+          <tr>
+            <td><b>{{ part.name }}</b></td>
+            <td>{{ partCategoryLabel(part.category) }}</td>
+            <td>{{ money.format(part.price) }}</td>
+            <td>{{ part.quantity }}</td>
+            <td>{{ part.minimumQuantity }}</td>
+            <td><span [class]="'badge ' + badgeKind(part.stockState)">{{ stockLabel(part.stockState) }}</span></td>
+            <td>
+              <div class="gap">
+                <button class="btn" type="button" [disabled]="busyPart() !== null"
+                        (click)="adjust(part, -1)">−1</button>
+                <button class="btn" type="button" [disabled]="busyPart() !== null"
+                        (click)="adjust(part, 1)">+1</button>
+                <button class="btn" type="button" [disabled]="busyPart() !== null"
+                        (click)="adjust(part, 5)">Restock +5</button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <p class="muted sm">Completing a work order deducts one unit of its main part automatically.</p>
+  </div>
+
+  <h2>Shop orders</h2>
+
+  @if (orders().length === 0) {
+    <div class="card"><p class="muted">No shop orders yet. Customer orders from the Parts Shop appear here.</p></div>
+  } @else {
+    <div class="card table-card">
+      <table class="plain">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.orderId) {
+            <tr>
+              <td><b>#{{ order.orderNumber }}</b></td>
+              <td>{{ order.customerName }}</td>
+              <td>
+                @for (line of order.lines; track line.partId) {
+                  <div>{{ line.quantity }} × {{ line.partName }}</div>
+                }
+              </td>
+              <td>{{ money.format(order.totalAmount) }}</td>
+              <td><span [class]="'badge ' + orderBadgeKind(order.status)">{{ order.status === 0 ? 'Paid' : 'Cash Pending' }}</span></td>
+              <td>
+                @if (order.status === 1) {
+                  <button class="btn btn--brand" type="button" [disabled]="busyOrder() !== null"
+                          (click)="recordCash(order)">Record cash</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

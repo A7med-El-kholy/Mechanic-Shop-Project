@@ -25,6 +25,7 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
     {
         var workOrder = await _context.WorkOrders
             .Include(w => w.ServiceTasks)
+                .ThenInclude(t => t.Part)
             .FirstOrDefaultAsync(w => w.Id == command.WorkOrderId, cancellationToken);
 
         if (workOrder is null)
@@ -69,6 +70,28 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
                     "Invoice {InvoiceNumber} issued for completed work order {WorkOrderId}.",
                     invoice.Value.Number,
                     workOrder.Id);
+            }
+
+            // The prototype's consumption rule: each completed task eats one
+            // unit of its main part, off the same save — job result, invoice
+            // and shelf all change together or not at all.
+            foreach (var task in workOrder.ServiceTasks)
+            {
+                if (task.Part is not null)
+                {
+                    var consumed = task.Part.Adjust(-1);
+
+                    if (consumed.IsError)
+                    {
+                        return consumed.Errors;
+                    }
+
+                    _logger.LogInformation(
+                        "Part {PartId} ({State}) deducted for completed task {TaskId}.",
+                        task.Part.Id,
+                        task.Part.StockState,
+                        task.Id);
+                }
             }
         }
 

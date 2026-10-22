@@ -3,7 +3,10 @@ using MechanicShop.Api.Common;
 using MechanicShop.Application.Features.Invoices.Commands.PayInvoice;
 using MechanicShop.Application.Features.Invoices.Queries.GetMyInvoiceById;
 using MechanicShop.Application.Features.Invoices.Queries.GetMyInvoices;
+using MechanicShop.Application.Features.Parts.Queries.GetParts;
 using MechanicShop.Application.Features.ServiceTasks.Queries.GetServiceOptions;
+using MechanicShop.Application.Features.ShopOrders.Commands.PlaceShopOrder;
+using MechanicShop.Application.Features.ShopOrders.Queries.GetMyShopOrders;
 using MechanicShop.Application.Features.WorkOrders.Queries.GetMyRepairs;
 using MechanicShop.Application.Features.WorkOrders.Queries.GetMyRepairById;
 
@@ -17,6 +20,12 @@ namespace MechanicShop.Api.Features.Portal;
 /// <summary>The pay choice as the client sends it: 0 = card, 1 = cash. No card
 /// details exist — the prototype agrees ("no card data is stored").</summary>
 public sealed record PayMyInvoiceRequest(int Method);
+
+/// <summary>Parts checkout: the cart lines and the payment choice (0 card,
+/// 1 cash). Quantities are validated server-side; the cart itself is UI state.</summary>
+public sealed record PlaceMyShopOrderRequest(List<ShopOrderItemPayload> Items, int Method);
+
+public sealed record ShopOrderItemPayload(Guid PartId, int Quantity);
 
 /// <summary>
 /// The customer portal's data surface. Every route resolves from the token's user
@@ -66,6 +75,23 @@ public static class PortalEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/parts", ShopPartsAsync)
+            .WithName("GetShopParts")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status200OK);
+
+        group.MapPost("/shop/orders", PlaceShopOrderAsync)
+            .WithName("PlaceMyShopOrder")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/shop/orders", MyShopOrdersAsync)
+            .WithName("GetMyShopOrders")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status200OK);
 
         return endpoints;
     }
@@ -148,5 +174,46 @@ public static class PortalEndpoints
         return result.IsError
             ? result.TopError.ToProblem(httpContext)
             : Results.NoContent();
+    }
+
+    private static async Task<IResult> ShopPartsAsync(
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetPartsQuery(), cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> PlaceShopOrderAsync(
+        PlaceMyShopOrderRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new PlaceShopOrderCommand(
+                [.. request.Items.Select(i => new ShopOrderItemRequest(i.PartId, i.Quantity))],
+                (PaymentMethod)request.Method),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Created($"/api/portal/shop/orders", result.Value);
+    }
+
+    private static async Task<IResult> MyShopOrdersAsync(
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetMyShopOrdersQuery(), cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
     }
 }

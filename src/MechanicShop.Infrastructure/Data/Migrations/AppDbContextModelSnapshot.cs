@@ -167,6 +167,119 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.Part", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinimumQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Parts");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.PartOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<int?>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("PlacedOn")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(4, 3)
+                        .HasColumnType("decimal(4,3)");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ShopOrders");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.PartOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PartName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("PartOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("PartId");
+
+                    b.HasIndex("PartOrderId");
+
+                    b.ToTable("PartOrderLine");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.Invoices.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -260,6 +373,9 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<Guid?>("PartId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
@@ -267,6 +383,8 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasDatabaseName("IX_ServiceTasks_Name");
+
+                    b.HasIndex("PartId");
 
                     b.ToTable("ServiceTasks");
                 });
@@ -563,6 +681,32 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.PartOrder", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Customers.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.PartOrderLine", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Inventory.Part", null)
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.Inventory.PartOrder", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("PartOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.Invoices.Invoice", b =>
                 {
                     b.HasOne("MechanicShop.Domain.WorkOrders.WorkOrder", "WorkOrder")
@@ -581,6 +725,16 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.ServiceTasks.ServiceTask", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Inventory.Part", "Part")
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Part");
                 });
 
             modelBuilder.Entity("MechanicShop.Domain.WorkOrders.WorkOrder", b =>
@@ -671,6 +825,11 @@ namespace MechanicShop.Infrastructure.Data.Migrations
             modelBuilder.Entity("MechanicShop.Domain.Customers.Customer", b =>
                 {
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Inventory.PartOrder", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("MechanicShop.Domain.Invoices.Invoice", b =>

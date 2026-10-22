@@ -5,6 +5,7 @@ using MediatR;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.Inventory;
 using MechanicShop.Domain.WorkOrders;
 
 using Microsoft.EntityFrameworkCore;
@@ -63,6 +64,20 @@ public sealed class RemoveCustomerCommandHandler(
                 command.CustomerId);
 
             return CustomerErrors.HasPendingRequests(command.CustomerId);
+        }
+
+        // Shop orders FK straight to the customer with Restrict: buying history
+        // anchors the profile the same way service history does.
+        var hasShopOrders = await _context.ShopOrders
+            .AnyAsync(o => o.CustomerId == command.CustomerId, cancellationToken);
+
+        if (hasShopOrders)
+        {
+            _logger.LogWarning(
+                "Customer {CustomerId} removal blocked: they hold parts shop orders.",
+                command.CustomerId);
+
+            return CustomerErrors.HasShopOrders(command.CustomerId);
         }
 
         // The cascade removes the customer's remaining vehicles with the row itself.

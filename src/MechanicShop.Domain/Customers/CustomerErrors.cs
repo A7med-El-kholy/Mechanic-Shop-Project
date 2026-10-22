@@ -34,4 +34,9 @@ public static class CustomerErrors
         Error.Conflict(
             "Customer_HasPendingRequests",
             $"Customer '{customerId}' has cars with pending appointment requests and cannot be removed. Review the requests first.");
+
+    public static Error HasShopOrders(Guid customerId) =>
+        Error.Conflict(
+            "Customer_HasShopOrders",
+            $"Customer '{customerId}' holds parts shop orders and cannot be removed.");
 }

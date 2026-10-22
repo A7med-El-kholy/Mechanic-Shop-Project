@@ -149,3 +149,59 @@ export const INVOICE_STATUSES = [
 export function invoiceStatusLabel(status: number): string {
   return INVOICE_STATUSES.find(s => s.value === status)?.label ?? `Unknown (${status})`;
 }
+
+export const PART_CATEGORIES = [
+  { value: 0, label: 'Engine' },
+  { value: 1, label: 'Brakes' },
+  { value: 2, label: 'Electrical' },
+  { value: 3, label: 'Fluids' },
+] as const;
+
+export function partCategoryLabel(category: number): string {
+  return PART_CATEGORIES.find(c => c.value === category)?.label ?? `Unknown (${category})`;
+}
+
+export const PART_STOCK_STATES = [
+  { value: 0, label: 'In stock' },
+  { value: 1, label: 'Low stock' },
+  { value: 2, label: 'Out of stock' },
+] as const;
+
+export function partStockLabel(state: number): string {
+  return PART_STOCK_STATES.find(s => s.value === state)?.label ?? `Unknown (${state})`;
+}
+
+/** One shelf row — the storeroom table and the customer shop share it. */
+export interface PartRow {
+  partId: string;
+  name: string;
+  category: number;
+  price: number;
+  quantity: number;
+  minimumQuantity: number;
+  stockState: number;
+}
+
+/** One purchased line: name/price as charged (snapshots), quantity. */
+export interface PartOrderLineRow {
+  partId: string;
+  partName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+/** The parts receipt, both customer and manager views. */
+export interface PartOrderRow {
+  orderId: string;
+  orderNumber: string;
+  customerId: string;
+  customerName: string;
+  placedOn: string;
+  status: number;
+  paymentMethod: number | null;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  lines: PartOrderLineRow[];
+}

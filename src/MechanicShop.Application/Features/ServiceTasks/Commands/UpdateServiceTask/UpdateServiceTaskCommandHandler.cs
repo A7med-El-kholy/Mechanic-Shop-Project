@@ -4,6 +4,7 @@ using MechanicShop.Application.Common.Interfaces;
 using MediatR;
 
 using MechanicShop.Domain.Common.Results;
+using MechanicShop.Domain.Inventory;
 using MechanicShop.Domain.ServiceTasks;
 
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,28 @@ public sealed class UpdateServiceTaskCommandHandler(
         if (updateResult.IsError)
         {
             return updateResult.Errors;
+        }
+
+        // Optional part link: absent -> keep the existing one; present ->
+        // validate it, then point the task at it (Guid.Empty clears).
+        if (command.PartId is { } partId)
+        {
+            if (partId == Guid.Empty)
+            {
+                serviceTask.SetPart(null);
+            }
+            else
+            {
+                var partExists = await _context.Parts
+                    .AnyAsync(p => p.Id == partId, cancellationToken);
+
+                if (!partExists)
+                {
+                    return PartErrors.NotFound(partId);
+                }
+
+                serviceTask.SetPart(partId);
+            }
         }
 
         try

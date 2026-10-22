@@ -6,8 +6,11 @@ public sealed record CreateServiceTaskRequest(
     decimal BasePrice,
     int EstimatedDurationInMins);
 
-/// <summary>Body for PUT /api/service-tasks/{id}.</summary>
+/// <summary>Body for PUT /api/service-tasks/{id}. PartId is OPTIONAL:
+/// absent keeps the current link, an explicit null (or Guid.Empty) clears it,
+/// a real id re-points the task at another shelf.</summary>
 public sealed record UpdateServiceTaskRequest(
     string Name,
     decimal BasePrice,
-    int EstimatedDurationInMins);
+    int EstimatedDurationInMins,
+    Guid? PartId = null);

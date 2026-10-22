@@ -1,5 +1,6 @@
 using MechanicShop.Domain.Common;
 using MechanicShop.Domain.Common.Results;
+using MechanicShop.Domain.Inventory;
 using MechanicShop.Domain.ServiceTasks.Enums;
 
 namespace MechanicShop.Domain.ServiceTasks;
@@ -7,7 +8,8 @@ namespace MechanicShop.Domain.ServiceTasks;
 /// <summary>
 /// A catalog entry: what the workshop can do, for how long, at what starting price.
 /// Work orders (F4) will reference these instead of free-typing names, which keeps
-/// reporting and scheduling consistent.
+/// reporting and scheduling consistent. Optionally consumes ONE kind of part —
+/// completing a job that cites it deducts a unit from the shelf (stock rules F9).
 /// </summary>
 public sealed class ServiceTask : Entity
 {
@@ -16,6 +18,12 @@ public sealed class ServiceTask : Entity
     public decimal BasePrice { get; private set; }
 
     public ServiceDurationInMinutes EstimatedDurationInMins { get; private set; }
+
+    /// <summary>The "main part" this job consumes. Nullable — labor-only jobs
+    /// exist. Lives on the task because the CONSUMPTION is the job's property.</summary>
+    public Guid? PartId { get; private set; }
+
+    public Part? Part { get; private set; }
 
 #pragma warning disable CS8618
 
@@ -90,6 +98,15 @@ public sealed class ServiceTask : Entity
         Name = name.Trim();
         BasePrice = basePrice;
         EstimatedDurationInMins = (ServiceDurationInMinutes)estimatedDurationInMins;
+
+        return Result.Updated;
+    }
+
+    /// <summary>Points the task at the part it consumes (null clears it).
+    /// Existence of the part is the handler's check, not the entity's.</summary>
+    public Result<Updated> SetPart(Guid? partId)
+    {
+        PartId = partId;
 
         return Result.Updated;
     }

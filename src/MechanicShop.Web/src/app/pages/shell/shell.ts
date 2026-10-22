@@ -25,6 +25,7 @@ export class ShellPage {
     { path: 'appointments', label: 'Appointments', icon: '◷' },
     { path: 'technicians', label: 'Technicians', icon: '⚒' },
     { path: 'invoices', label: 'Invoices', icon: '$' },
+    { path: 'inventory', label: 'Inventory', icon: '⬡' },
   ];
 
   protected readonly plannedNav = [

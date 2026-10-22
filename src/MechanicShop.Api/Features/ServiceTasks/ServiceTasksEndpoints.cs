@@ -119,7 +119,8 @@ public static class ServiceTasksEndpoints
                 serviceTaskId,
                 request.Name,
                 request.BasePrice,
-                request.EstimatedDurationInMins),
+                request.EstimatedDurationInMins,
+                request.PartId),
             cancellationToken);
 
         return result.IsError

@@ -6,8 +6,10 @@ import { CustomersPage } from './pages/customers/customers';
 import { DashboardPage } from './pages/dashboard/dashboard';
 import { InvoiceDetailPage } from './pages/invoices/invoice-detail';
 import { InvoicesPage } from './pages/invoices/invoices';
+import { InventoryPage } from './pages/inventory/inventory';
 import { LoginPage } from './pages/login/login';
 import { NotYetPage } from './pages/not-yet/not-yet';
+import { PortalShopPage } from './pages/portal/shop';
 import { ShellPage } from './pages/shell/shell';
 import { VehiclesPage } from './pages/vehicles/vehicles';
 import { PortalShellPage } from './pages/portal/portal-shell';
@@ -47,6 +49,11 @@ export const routes: Routes = [
         title: 'Invoice · Mechanic Shop',
       },
       {
+        path: 'shop',
+        component: PortalShopPage,
+        title: 'Parts Shop · Mechanic Shop',
+      },
+      {
         path: 'appointments',
         component: PortalAppointmentsPage,
         title: 'Appointments · Mechanic Shop',
@@ -73,6 +80,11 @@ export const routes: Routes = [
         path: 'invoices/:invoiceId',
         component: InvoiceDetailPage,
         title: 'Invoice · Mechanic Shop',
+      },
+      {
+        path: 'inventory',
+        component: InventoryPage,
+        title: 'Inventory · Mechanic Shop',
       },
       // Screens landing in coming stages land here instead of dead 404s; each
       // tab below gets a real page as its stage completes.

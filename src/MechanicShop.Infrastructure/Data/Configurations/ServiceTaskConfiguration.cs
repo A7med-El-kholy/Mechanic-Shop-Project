@@ -36,5 +36,12 @@ public sealed class ServiceTaskConfiguration : IEntityTypeConfiguration<ServiceT
         builder.HasIndex(t => t.Name)
                .HasDatabaseName(DatabaseErrors.ServiceTaskNameIndexName)
                .IsUnique();
+
+        // The consumed part: Restrict so a shelf with citing tasks can never
+        // silently vanish (the same refuse-deletion family as work orders).
+        builder.HasOne(t => t.Part)
+               .WithMany()
+               .HasForeignKey(t => t.PartId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

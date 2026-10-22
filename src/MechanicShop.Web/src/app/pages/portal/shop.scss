@@ -1,0 +1,117 @@
+.viewHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.cartPill {
+  border: 1px solid var(--bd, #2a2a2a);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  opacity: .75;
+
+  &.has-items {
+    opacity: 1;
+    border-color: currentColor;
+  }
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.prod {
+  padding: 0;
+  overflow: hidden;
+}
+
+.prod__body {
+  padding: 14px 16px;
+}
+
+.prod__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.prod__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.price {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cartCard {
+  margin-top: 8px;
+}
+
+.cartLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.lineTotal {
+  min-width: 78px;
+  text-align: right;
+}
+
+.totals {
+  max-width: 320px;
+  margin-left: auto;
+
+  p {
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0;
+  }
+}
+
+.payChoice {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.checkoutRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.ordersHead {
+  margin-top: 26px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--bd, #2a2a2a);
+  margin: 12px 0;
+}

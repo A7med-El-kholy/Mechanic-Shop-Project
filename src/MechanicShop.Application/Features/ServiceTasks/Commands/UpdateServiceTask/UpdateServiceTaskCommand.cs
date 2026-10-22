@@ -8,5 +8,6 @@ public sealed record UpdateServiceTaskCommand(
     Guid ServiceTaskId,
     string Name,
     decimal BasePrice,
-    int EstimatedDurationInMins)
+    int EstimatedDurationInMins,
+    Guid? PartId = null)
     : IRequest<Result<Updated>>;

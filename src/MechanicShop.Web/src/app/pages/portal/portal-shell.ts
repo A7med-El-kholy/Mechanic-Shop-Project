@@ -23,6 +23,7 @@ export class PortalShellPage {
     { path: 'portal/vehicles', label: 'My Vehicles', exact: false },
     { path: 'portal/repairs', label: 'My Repairs', exact: false },
     { path: 'portal/invoices', label: 'Invoices', exact: false },
+    { path: 'portal/shop', label: 'Parts Shop', exact: false },
     { path: 'portal/appointments', label: 'Appointments', exact: false },
   ];
 

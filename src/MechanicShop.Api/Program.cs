@@ -8,7 +8,9 @@ using MechanicShop.Api.Features.Auth;
 using MechanicShop.Api.Features.Customers;
 using MechanicShop.Api.Features.Employees;
 using MechanicShop.Api.Features.Invoices;
+using MechanicShop.Api.Features.Parts;
 using MechanicShop.Api.Features.Portal;
+using MechanicShop.Api.Features.ShopOrders;
 using MechanicShop.Api.Features.Users;
 using MechanicShop.Api.Features.ServiceTasks;
 using MechanicShop.Api.Features.Vehicles;
@@ -129,6 +131,8 @@ app.MapWorkOrdersEndpoints();
 app.MapEmployeesEndpoints();
 app.MapAppointmentRequestsEndpoints();
 app.MapInvoicesEndpoints();
+app.MapPartsEndpoints();
+app.MapShopOrdersEndpoints();
 app.MapPortalEndpoints();
 
 app.Run();
