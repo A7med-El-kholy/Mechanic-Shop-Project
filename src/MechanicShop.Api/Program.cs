@@ -8,6 +8,7 @@ using MechanicShop.Api.Features.Customers;
 using MechanicShop.Api.Features.Users;
 using MechanicShop.Api.Features.ServiceTasks;
 using MechanicShop.Api.Features.Vehicles;
+using MechanicShop.Api.Features.WorkOrders;
 using MechanicShop.Application.Common.Behaviors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.Data;
@@ -120,6 +121,7 @@ app.MapUsersEndpoints();
 app.MapCustomersEndpoints();
 app.MapVehiclesEndpoints();
 app.MapServiceTasksEndpoints();
+app.MapWorkOrdersEndpoints();
 
 app.Run();
 

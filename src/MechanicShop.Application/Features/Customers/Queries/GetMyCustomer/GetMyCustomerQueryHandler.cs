@@ -27,7 +27,7 @@ public sealed class GetMyCustomerQueryHandler(
         }
 
         var customer = await _context.Customers
-            .Include(c => c.Vehicles)
+            .Include(c => c.Vehicles.Where(v => !v.IsArchived))
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == _user.UserId, cancellationToken);
 

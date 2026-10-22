@@ -4,6 +4,7 @@ using MediatR;
 
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.WorkOrders.Enums;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -28,8 +29,42 @@ public sealed class RemoveVehicleCommandHandler(
             return VehicleErrors.NotFound(command.VehicleId);
         }
 
-        // The prototype blocks removing vehicles with active or completed work orders
-        // (archive instead). That guard lands with the work-order feature.
+        // Prototype rule, first gate: active jobs (scheduled or in progress) block
+        // removal entirely. Statements are spelled out because the entity's computed
+        // IsActive property cannot be translated to SQL.
+        var hasActiveJobs = await _context.WorkOrders
+            .AnyAsync(w =>
+                w.VehicleId == command.VehicleId &&
+                (w.State == WorkOrderState.Scheduled || w.State == WorkOrderState.InProgress),
+                cancellationToken);
+
+        if (hasActiveJobs)
+        {
+            _logger.LogWarning(
+                "Vehicle {VehicleId} removal blocked: active work orders exist.",
+                command.VehicleId);
+
+            return VehicleErrors.HasActiveWorkOrders;
+        }
+
+        var hasHistory = await _context.WorkOrders
+            .AnyAsync(w => w.VehicleId == command.VehicleId, cancellationToken);
+
+        if (hasHistory)
+        {
+            // Prototype rule, second gate: history means the vehicle is archived,
+            // not deleted — it leaves lists and new bookings, restorable any time.
+            vehicle.Archive();
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Vehicle {VehicleId} archived (has service history) instead of deleted.",
+                command.VehicleId);
+
+            return Result.Deleted;
+        }
+
         _context.Vehicles.Remove(vehicle);
 
         await _context.SaveChangesAsync(cancellationToken);

@@ -19,7 +19,7 @@ public sealed class GetCustomerByIdQueryHandler(IAppDbContext context)
     public async Task<Result<CustomerDto>> Handle(GetCustomerByIdQuery query, CancellationToken cancellationToken)
     {
         var customer = await _context.Customers
-            .Include(c => c.Vehicles)
+            .Include(c => c.Vehicles.Where(v => !v.IsArchived))
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == query.CustomerId, cancellationToken);
 

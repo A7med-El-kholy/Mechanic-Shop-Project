@@ -33,7 +33,8 @@ public static class CustomerMapper
             vehicle.Year,
             vehicle.LicensePlate!,
             vehicle.Vin,
-            vehicle.VehicleInfo);
+            vehicle.VehicleInfo,
+            vehicle.IsArchived);
     }
 
     public static List<VehicleDto> ToDtos(this IEnumerable<Vehicle> vehicles)

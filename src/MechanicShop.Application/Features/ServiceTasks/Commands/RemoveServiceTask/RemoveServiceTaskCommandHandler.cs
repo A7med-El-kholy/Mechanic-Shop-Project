@@ -28,8 +28,18 @@ public sealed class RemoveServiceTaskCommandHandler(
             return ServiceTaskErrors.NotFound(command.ServiceTaskId);
         }
 
-        // Catalog retire-vs-delete policy lands with work orders (F4): once service
-        // tasks are referenced by jobs, hard delete must be blocked or archived.
+        var inUse = await _context.WorkOrders
+            .AnyAsync(w => w.ServiceTasks.Any(t => t.Id == command.ServiceTaskId), cancellationToken);
+
+        if (inUse)
+        {
+            _logger.LogWarning(
+                "Service task {ServiceTaskId} removal blocked: referenced by work orders.",
+                command.ServiceTaskId);
+
+            return ServiceTaskErrors.InUseByWorkOrders;
+        }
+
         _context.ServiceTasks.Remove(serviceTask);
 
         await _context.SaveChangesAsync(cancellationToken);

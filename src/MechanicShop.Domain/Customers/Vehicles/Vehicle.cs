@@ -16,6 +16,7 @@ public sealed class Vehicle : Entity
     public int Year { get; private set; }
     public string LicensePlate { get; private set; } = string.Empty;
     public string Vin { get; private set; } = string.Empty;
+    public bool IsArchived { get; private set; }
     public Customer? Customer { get; set; }
 
     public string VehicleInfo => $"{Make} {Model} {Year}";
@@ -108,5 +109,19 @@ public sealed class Vehicle : Entity
         Vin = normalizedVin;
 
         return Result.Updated;
+    }
+
+    /// <summary>
+    /// The prototype's archive rule: a vehicle with service history is never hard
+    /// deleted — it leaves lists and new bookings but its history stays restorable.
+    /// </summary>
+    public void Archive()
+    {
+        IsArchived = true;
+    }
+
+    public void Restore()
+    {
+        IsArchived = false;
     }
 }

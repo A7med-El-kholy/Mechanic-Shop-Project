@@ -30,4 +30,15 @@ public static class VehicleErrors
 
     public static Error NotFound(Guid vehicleId) =>
         Error.NotFound("Vehicle_NotFound", $"Vehicle '{vehicleId}' was not found.");
+
+    public static Error HasActiveWorkOrders =>
+        Error.Conflict(
+            "Vehicle_ActiveWorkOrders",
+            "This vehicle has active work orders (scheduled or in progress). Complete or cancel them first.");
+
+    public static Error AlreadyArchived =>
+        Error.Conflict("Vehicle_AlreadyArchived", "This vehicle is already archived.");
+
+    public static Error NotArchived =>
+        Error.Conflict("Vehicle_NotArchived", "This vehicle is not archived.");
 }

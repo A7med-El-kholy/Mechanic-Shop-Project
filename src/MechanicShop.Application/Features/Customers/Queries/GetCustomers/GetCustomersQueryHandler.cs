@@ -24,7 +24,7 @@ public sealed class GetCustomersQueryHandler(IAppDbContext context)
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
 
         var customersQuery = _context.Customers
-            .Include(c => c.Vehicles)
+            .Include(c => c.Vehicles.Where(v => !v.IsArchived))
             .AsNoTracking()
             .AsQueryable();
 

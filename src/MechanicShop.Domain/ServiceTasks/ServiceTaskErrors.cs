@@ -24,4 +24,9 @@ public static class ServiceTaskErrors
 
     public static Error NotFound(Guid serviceTaskId) =>
         Error.NotFound("ServiceTask_NotFound", $"Service task '{serviceTaskId}' was not found.");
+
+    public static Error InUseByWorkOrders =>
+        Error.Conflict(
+            "ServiceTask_InUse",
+            "This service is referenced by work orders. Retiring catalog items lands later; keep it for now.");
 }

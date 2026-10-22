@@ -8,4 +8,5 @@ public sealed record VehicleDto(
     int Year,
     string LicensePlate,
     string Vin,
-    string VehicleInfo);
+    string VehicleInfo,
+    bool IsArchived);

@@ -66,6 +66,9 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -132,6 +135,28 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                         .HasDatabaseName("IX_ServiceTasks_Name");
 
                     b.ToTable("ServiceTasks");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.WorkOrders.WorkOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("State");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("WorkOrders");
                 });
 
             modelBuilder.Entity("MechanicShop.Infrastructure.Identity.AppUser", b =>
@@ -336,6 +361,21 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("WorkOrderServiceTask", b =>
+                {
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ServiceTaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("WorkOrderId", "ServiceTaskId");
+
+                    b.HasIndex("ServiceTaskId");
+
+                    b.ToTable("WorkOrderServiceTask");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.Customers.Vehicles.Vehicle", b =>
                 {
                     b.HasOne("MechanicShop.Domain.Customers.Customer", "Customer")
@@ -345,6 +385,17 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.WorkOrders.WorkOrder", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Customers.Vehicles.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -394,6 +445,21 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.HasOne("MechanicShop.Infrastructure.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkOrderServiceTask", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.ServiceTasks.ServiceTask", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceTaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MechanicShop.Domain.WorkOrders.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
