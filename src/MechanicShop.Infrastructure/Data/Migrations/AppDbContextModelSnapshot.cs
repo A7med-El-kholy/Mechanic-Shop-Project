@@ -109,6 +109,29 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("MechanicShop.Domain.Employees.Employee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("FullName")
+                        .IsUnique();
+
+                    b.ToTable("Employees");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.ServiceTasks.ServiceTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -142,8 +165,20 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateOnly>("ScheduledDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Spot")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StartsAtMinute")
+                        .HasColumnType("int");
+
                     b.Property<int>("State")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("TechnicianId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("VehicleId")
                         .HasColumnType("uniqueidentifier");
@@ -152,7 +187,11 @@ namespace MechanicShop.Infrastructure.Data.Migrations
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
 
+                    b.HasIndex("ScheduledDate");
+
                     b.HasIndex("State");
+
+                    b.HasIndex("TechnicianId");
 
                     b.HasIndex("VehicleId");
 
@@ -389,11 +428,19 @@ namespace MechanicShop.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("MechanicShop.Domain.WorkOrders.WorkOrder", b =>
                 {
+                    b.HasOne("MechanicShop.Domain.Employees.Employee", "Technician")
+                        .WithMany()
+                        .HasForeignKey("TechnicianId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("MechanicShop.Domain.Customers.Vehicles.Vehicle", "Vehicle")
                         .WithMany()
                         .HasForeignKey("VehicleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Technician");
 
                     b.Navigation("Vehicle");
                 });

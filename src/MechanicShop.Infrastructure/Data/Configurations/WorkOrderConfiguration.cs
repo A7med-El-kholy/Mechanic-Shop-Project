@@ -22,6 +22,25 @@ public sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrder>
                .WithMany()
                .HasForeignKey(w => w.VehicleId);
 
+        // Scheduling vocabulary, per the prototype: date + minute-of-day start on
+        // the 15-minute grid, a lift assignment, and a roster technician. Jobs are
+        // named after roster entries; deleting an entry with assignments must not
+        // cascade into work history.
+        builder.Property(w => w.ScheduledDate)
+               .HasColumnType("date")
+               .IsRequired();
+
+        builder.Property(w => w.StartsAtMinute)
+               .IsRequired();
+
+        builder.Property(w => w.Spot)
+               .IsRequired();
+
+        builder.HasOne(w => w.Technician)
+               .WithMany()
+               .HasForeignKey(w => w.TechnicianId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         // A work order references catalog services without owning them — deleting a
         // catalog item can never cascade into signed-off jobs.
         builder.HasMany(w => w.ServiceTasks)
@@ -38,5 +57,8 @@ public sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrder>
 
         // Vehicles are always read with their work orders for guards and history.
         builder.HasIndex(w => w.VehicleId);
+
+        // The day-scoped conflict query filters by scheduled date first.
+        builder.HasIndex(w => w.ScheduledDate);
     }
 }

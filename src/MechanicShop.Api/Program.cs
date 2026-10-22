@@ -5,6 +5,7 @@ using FluentValidation;
 using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.Auth;
 using MechanicShop.Api.Features.Customers;
+using MechanicShop.Api.Features.Employees;
 using MechanicShop.Api.Features.Users;
 using MechanicShop.Api.Features.ServiceTasks;
 using MechanicShop.Api.Features.Vehicles;
@@ -122,6 +123,7 @@ app.MapCustomersEndpoints();
 app.MapVehiclesEndpoints();
 app.MapServiceTasksEndpoints();
 app.MapWorkOrdersEndpoints();
+app.MapEmployeesEndpoints();
 
 app.Run();
 

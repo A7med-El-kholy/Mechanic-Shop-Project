@@ -1,4 +1,5 @@
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.Employees;
 using MechanicShop.Domain.ServiceTasks;
 
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ public static class DatabaseErrors
 
     public const string ServiceTaskNameIndexName = "IX_ServiceTasks_Name";
 
+    public const string EmployeeNameIndexName = "IX_Employees_FullName";
+
     /// <summary>Detects a race that lost a unique ServiceTask name insert.</summary>
     public static bool IsServiceTaskNameUniqueViolation(DbUpdateException exception)
     {
@@ -31,6 +34,19 @@ public static class DatabaseErrors
         }
 
         return InnerMessagesMention(exception, ServiceTaskNameIndexName);
+    }
+
+    /// <summary>Detects a race that lost a unique Employee name insert.</summary>
+    public static bool IsEmployeeNameUniqueViolation(DbUpdateException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        if (exception.Entries.Any(e => e.Entity is Employee) is false)
+        {
+            return false;
+        }
+
+        return InnerMessagesMention(exception, EmployeeNameIndexName);
     }
 
     public static bool IsVehicleVinUniqueViolation(DbUpdateException exception)

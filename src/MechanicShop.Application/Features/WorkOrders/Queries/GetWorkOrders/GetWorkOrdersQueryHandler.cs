@@ -27,6 +27,7 @@ public sealed class GetWorkOrdersQueryHandler(IAppDbContext context)
             .Include(w => w.Vehicle)
                 .ThenInclude(v => v!.Customer)
             .Include(w => w.ServiceTasks)
+            .Include(w => w.Technician)
             .AsNoTracking()
             .AsQueryable();
 
@@ -45,10 +46,11 @@ public sealed class GetWorkOrdersQueryHandler(IAppDbContext context)
                 w.Vehicle.LicensePlate.ToLower().Contains(normalized));
         }
 
-        // Active jobs are what staff acts on now; deterministic ordering keeps
-        // Skip/Take paging stable across requests.
+        // Timeline order: the day's flow as a reader scans it, then stable ids for
+        // Skip/Take paging.
         ordersQuery = ordersQuery
-            .OrderBy(w => w.State)
+            .OrderBy(w => w.ScheduledDate)
+            .ThenBy(w => w.StartsAtMinute)
             .ThenBy(w => w.Id);
 
         var count = await ordersQuery.CountAsync(cancellationToken);

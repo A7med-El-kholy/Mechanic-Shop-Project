@@ -22,6 +22,7 @@ public sealed class GetWorkOrderByIdQueryHandler(IAppDbContext context)
             .Include(w => w.Vehicle)
                 .ThenInclude(v => v!.Customer)
             .Include(w => w.ServiceTasks)
+            .Include(w => w.Technician)
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == query.WorkOrderId, cancellationToken);
 

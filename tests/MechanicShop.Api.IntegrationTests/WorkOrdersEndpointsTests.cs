@@ -41,8 +41,10 @@ public sealed class WorkOrdersEndpointsTests
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId1 = await CreateTaskAsync(client, managerToken, $"Oil Change WO-{attempt}", 85m, 60);
         var taskId2 = await CreateTaskAsync(client, managerToken, $"Diag WO-{attempt}", 140m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
-        var createBody = new { vehicleId, serviceTaskIds = new[] { taskId1, taskId2 } };
+        var createBody = new { vehicleId, serviceTaskIds = new[] { taskId1, taskId2 }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId };
 
         using var created = await SendAsync(client, HttpMethod.Post, "/api/work-orders", createBody, managerToken);
 
@@ -66,8 +68,10 @@ public sealed class WorkOrdersEndpointsTests
 
         var attempt = _sequence++;
         var taskId = await CreateTaskAsync(client, managerToken, $"Lone Task WO-{attempt}", 50m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
-        var createBody = new { vehicleId = Guid.NewGuid(), serviceTaskIds = new[] { taskId } };
+        var createBody = new { vehicleId = Guid.NewGuid(), serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId };
 
         using var created = await SendAsync(client, HttpMethod.Post, "/api/work-orders", createBody, managerToken);
 
@@ -83,13 +87,15 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"Lifecycle Task {attempt}", 95m, 45);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         var created = (await ReadWorkOrder(
             await SendAsync(
                 client,
                 HttpMethod.Post,
                 "/api/work-orders",
-                new { vehicleId, serviceTaskIds = new[] { taskId } },
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
                 managerToken)))!;
 
         using var start = await SendAsync(
@@ -132,13 +138,15 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"Skip Task {attempt}", 60m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         var created = (await ReadWorkOrder(
             await SendAsync(
                 client,
                 HttpMethod.Post,
                 "/api/work-orders",
-                new { vehicleId, serviceTaskIds = new[] { taskId } },
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
                 managerToken)))!;
 
         using var skipped = await SendAsync(
@@ -157,13 +165,15 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"Delete Task {attempt}", 35m, 15);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         var created = (await ReadWorkOrder(
             await SendAsync(
                 client,
                 HttpMethod.Post,
                 "/api/work-orders",
-                new { vehicleId, serviceTaskIds = new[] { taskId } },
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
                 managerToken)))!;
 
         using var removed = await SendAsync(
@@ -186,12 +196,14 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"Guard Task {attempt}", 45m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         await SendAsync(
             client,
             HttpMethod.Post,
             "/api/work-orders",
-            new { vehicleId, serviceTaskIds = new[] { taskId } },
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
             managerToken);
 
         using var deleteAttempt = await SendAsync(
@@ -209,13 +221,15 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, customerId) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"History Task {attempt}", 45m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         var workOrder = (await ReadWorkOrder(
             await SendAsync(
                 client,
                 HttpMethod.Post,
                 "/api/work-orders",
-                new { vehicleId, serviceTaskIds = new[] { taskId } },
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
                 managerToken)))!;
 
         // Cancel to clear the active state, leaving pure history.
@@ -251,7 +265,7 @@ public sealed class WorkOrdersEndpointsTests
             client,
             HttpMethod.Post,
             "/api/work-orders",
-            new { vehicleId, serviceTaskIds = new[] { taskId } },
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
             managerToken);
 
         bookingAttempt.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -279,13 +293,15 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"Filter Task {attempt}", 65m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         var scheduled = (await ReadWorkOrder(
             await SendAsync(
                 client,
                 HttpMethod.Post,
                 "/api/work-orders",
-                new { vehicleId, serviceTaskIds = new[] { taskId } },
+                new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
                 managerToken)))!;
 
         await SendAsync(
@@ -314,12 +330,14 @@ public sealed class WorkOrdersEndpointsTests
         var attempt = _sequence++;
         var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
         var taskId = await CreateTaskAsync(client, managerToken, $"InUse Task {attempt}", 45m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
 
         await SendAsync(
             client,
             HttpMethod.Post,
             "/api/work-orders",
-            new { vehicleId, serviceTaskIds = new[] { taskId } },
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
             managerToken);
 
         using var removed = await SendAsync(
@@ -393,6 +411,22 @@ public sealed class WorkOrdersEndpointsTests
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
 
         return json.GetProperty("serviceTaskId").GetGuid();
+    }
+
+    private static async Task<Guid> CreateTechnicianAsync(
+        HttpClient client,
+        string managerToken,
+        int attempt)
+    {
+        var body = new { fullName = $"Technician WO-{attempt}", role = 0 };
+
+        using var response = await SendAsync(client, HttpMethod.Post, "/api/employees", body, managerToken);
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+
+        return json.GetProperty("employeeId").GetGuid();
     }
 
     private static async Task<WorkOrderDto?> ReadWorkOrder(HttpResponseMessage response)

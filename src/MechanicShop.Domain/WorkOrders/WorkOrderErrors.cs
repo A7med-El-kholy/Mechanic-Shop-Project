@@ -26,6 +26,36 @@ public static class WorkOrderErrors
             "WorkOrder_NotDeletable",
             $"Only scheduled work orders can be deleted. Cancel or keep work order in state '{state}'.");
 
+    public static Error ScheduledDateRequired =>
+        Error.Validation(
+            "WorkOrder_ScheduleDate_Required",
+            "A work order needs a scheduled date.");
+
+    public static Error StartNotOnGrid(int minute) =>
+        Error.Validation(
+            "WorkOrder_Start_NotOnGrid",
+            $"Start time {(minute >= 0 ? WorkDay.FormatMinute(minute) : minute.ToString())} is not a valid slot. Starts run 08:00–19:45 every 15 minutes.");
+
+    public static Error InvalidSpot(int spot) =>
+        Error.Validation(
+            "WorkOrder_Spot_Invalid",
+            $"Lift '{spot}' is not one of: A (0), B (1), C (2).");
+
+    public static Error TechnicianRequired =>
+        Error.Validation(
+            "WorkOrder_Technician_Required",
+            "A work order must name its technician.");
+
+    public static Error NotSchedulable(WorkOrderState state) =>
+        Error.Conflict(
+            "WorkOrder_NotSchedulable",
+            $"Only scheduled work orders can be rescheduled. Work order is in state '{state}'.");
+
+    public static Error SchedulingConflict(string conflicts) =>
+        Error.Conflict(
+            "WorkOrder_SchedulingConflict",
+            conflicts);
+
     public static Error VehicleMissing(Guid vehicleId) =>
         Error.NotFound("WorkOrder_Vehicle_NotFound", $"Vehicle '{vehicleId}' was not found.");
 

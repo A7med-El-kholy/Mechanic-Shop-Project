@@ -2,6 +2,7 @@ using MechanicShop.Api.Common;
 using MechanicShop.Api.Features.WorkOrders.Contracts;
 using MechanicShop.Application.Features.WorkOrders.Commands.CreateWorkOrder;
 using MechanicShop.Application.Features.WorkOrders.Commands.RemoveWorkOrder;
+using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderSchedule;
 using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderStatus;
 using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderTasks;
 using MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrderById;
@@ -57,6 +58,14 @@ public static class WorkOrdersEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        group.MapPut("/{workOrderId:guid}/schedule", UpdateScheduleAsync)
+            .WithName("UpdateWorkOrderSchedule")
+            .RequireAuthorization(Policies.IsStaff)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         group.MapDelete("/{workOrderId:guid}", DeleteAsync)
             .WithName("RemoveWorkOrder")
             .RequireAuthorization(Policies.IsStaff)
@@ -107,7 +116,13 @@ public static class WorkOrdersEndpoints
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new CreateWorkOrderCommand(request.VehicleId, request.ServiceTaskIds),
+            new CreateWorkOrderCommand(
+                request.VehicleId,
+                request.ServiceTaskIds,
+                request.ScheduledDate,
+                request.StartsAtMinute,
+                request.Spot,
+                request.TechnicianId),
             cancellationToken);
 
         return result.IsError
@@ -140,6 +155,27 @@ public static class WorkOrdersEndpoints
     {
         var result = await sender.Send(
             new UpdateWorkOrderTasksCommand(workOrderId, request.ServiceTaskIds),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.NoContent();
+    }
+
+    private static async Task<IResult> UpdateScheduleAsync(
+        Guid workOrderId,
+        UpdateWorkOrderScheduleRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateWorkOrderScheduleCommand(
+                workOrderId,
+                request.ScheduledDate,
+                request.StartsAtMinute,
+                request.Spot,
+                request.TechnicianId),
             cancellationToken);
 
         return result.IsError

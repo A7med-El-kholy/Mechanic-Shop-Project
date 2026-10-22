@@ -20,12 +20,16 @@ public sealed class WorkOrderTests
     private static List<ServiceTask> SomeTasks() =>
         [SomeTask(), SomeTask("Brake Replacement", 245m, 90)];
 
+    private static readonly DateOnly ScheduledDate = new(2026, 10, 26);
+
+    private static Guid TechnicianId() => Guid.NewGuid();
+
     [Fact]
     public void Create_WithValidInput_StartsScheduledAndHoldsTasks()
     {
         var tasks = SomeTasks();
 
-        var result = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), tasks);
+        var result = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), tasks, ScheduledDate, 480, Spot.A, TechnicianId());
 
         result.IsError.Should().BeFalse();
         result.Value.State.Should().Be(WorkOrderState.Scheduled);
@@ -38,7 +42,7 @@ public sealed class WorkOrderTests
     [Fact]
     public void Create_WithEmptyVehicleId_ReturnsVehicleIdRequired()
     {
-        var result = WorkOrder.Create(Guid.NewGuid(), Guid.Empty, SomeTasks());
+        var result = WorkOrder.Create(Guid.NewGuid(), Guid.Empty, SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId());
 
         result.TopError.Should().Be(WorkOrderErrors.VehicleIdRequired);
     }
@@ -46,7 +50,7 @@ public sealed class WorkOrderTests
     [Fact]
     public void Create_WithoutTasks_ReturnsServiceTasksRequired()
     {
-        var result = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), []);
+        var result = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), [], ScheduledDate, 480, Spot.A, TechnicianId());
 
         result.TopError.Should().Be(WorkOrderErrors.ServiceTasksRequired);
     }
@@ -58,7 +62,7 @@ public sealed class WorkOrderTests
     [InlineData(WorkOrderState.InProgress, WorkOrderState.Cancelled)]
     public void UpdateState_FromActiveStates_AllowsLegalMoves(WorkOrderState from, WorkOrderState to)
     {
-        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks()).Value;
+        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId()).Value;
 
         if (from is WorkOrderState.InProgress)
         {
@@ -79,7 +83,7 @@ public sealed class WorkOrderTests
     [InlineData(WorkOrderState.Completed, WorkOrderState.Completed)]
     public void UpdateState_FromInactiveOrSkippingStates_RejectsIllegalMoves(WorkOrderState from, WorkOrderState to)
     {
-        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks()).Value;
+        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId()).Value;
 
         WalkTo(workOrder, from);
 
@@ -93,7 +97,7 @@ public sealed class WorkOrderTests
     [Fact]
     public void UpdateServiceTasks_WhileScheduled_ReplacesList()
     {
-        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks()).Value;
+        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId()).Value;
 
         var replacement = new List<ServiceTask> { SomeTask("Tire Rotation", 45m, 45) };
 
@@ -107,7 +111,7 @@ public sealed class WorkOrderTests
     [Fact]
     public void UpdateServiceTasks_WhenInProgress_IsRejected()
     {
-        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks()).Value;
+        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId()).Value;
         workOrder.UpdateState(WorkOrderState.InProgress);
 
         var result = workOrder.UpdateServiceTasks(SomeTasks());
@@ -121,7 +125,7 @@ public sealed class WorkOrderTests
     [Fact]
     public void UpdateServiceTasks_WithEmptyList_ReturnsServiceTasksRequired()
     {
-        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks()).Value;
+        var workOrder = WorkOrder.Create(Guid.NewGuid(), Guid.NewGuid(), SomeTasks(), ScheduledDate, 480, Spot.A, TechnicianId()).Value;
 
         var result = workOrder.UpdateServiceTasks([]);
 

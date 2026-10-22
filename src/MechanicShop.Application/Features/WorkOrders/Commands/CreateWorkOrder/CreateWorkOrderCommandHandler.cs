@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Employees;
 using MechanicShop.Application.Features.WorkOrders.Dtos;
 using MechanicShop.Application.Features.WorkOrders.Mappers;
 
@@ -6,8 +7,10 @@ using MediatR;
 
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.Employees;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
+using MechanicShop.Domain.WorkOrders.Enums;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -41,6 +44,14 @@ public sealed class CreateWorkOrderCommandHandler(
             return WorkOrderErrors.VehicleArchived(command.VehicleId);
         }
 
+        var technician = await _context.Employees
+            .FirstOrDefaultAsync(e => e.Id == command.TechnicianId, cancellationToken);
+
+        if (technician is null)
+        {
+            return EmployeeErrors.NotFound(command.TechnicianId);
+        }
+
         var distinctTaskIds = command.ServiceTaskIds.Distinct().ToList();
 
         var tasks = await _context.ServiceTasks
@@ -55,11 +66,40 @@ public sealed class CreateWorkOrderCommandHandler(
             return WorkOrderErrors.ServiceTaskMissing(missingTaskId);
         }
 
-        var workOrderResult = WorkOrder.Create(Guid.NewGuid(), command.VehicleId, tasks);
+        var workOrderResult = WorkOrder.Create(
+            Guid.NewGuid(),
+            command.VehicleId,
+            tasks,
+            command.ScheduledDate,
+            command.StartsAtMinute,
+            (Spot)command.Spot,
+            command.TechnicianId);
 
         if (workOrderResult.IsError)
         {
             return workOrderResult.Errors;
+        }
+
+        // Prototype conf(): the new booking may not overlap any live job on its
+        // day, by bay or by technician. Historic states can't conflict.
+        var sameDayActiveJobs = await _context.WorkOrders
+            .Include(w => w.Technician)
+            .Include(w => w.ServiceTasks)
+            .Where(w =>
+                w.ScheduledDate == command.ScheduledDate &&
+                (w.State == WorkOrderState.Scheduled || w.State == WorkOrderState.InProgress))
+            .ToListAsync(cancellationToken);
+
+        var conflicts = workOrderResult.Value.FindTimeConflicts(sameDayActiveJobs);
+
+        if (conflicts.Count > 0)
+        {
+            _logger.LogWarning(
+                "Work order create rejected: scheduling conflicts on {ScheduledDate} at {StartsAtMinute}.",
+                command.ScheduledDate,
+                command.StartsAtMinute);
+
+            return WorkOrderErrors.SchedulingConflict(string.Join(" ", conflicts));
         }
 
         _context.WorkOrders.Add(workOrderResult.Value);
@@ -67,15 +107,18 @@ public sealed class CreateWorkOrderCommandHandler(
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Work order {WorkOrderId} created for vehicle {VehicleId} with {TaskCount} service(s).",
+            "Work order {WorkOrderId} scheduled on {ScheduledDate} at {StartsAtMinute} in bay {Spot} with {TaskCount} service(s).",
             workOrderResult.Value.Id,
-            command.VehicleId,
+            command.ScheduledDate,
+            command.StartsAtMinute,
+            (Spot)command.Spot,
             tasks.Count);
 
         var dto = await _context.WorkOrders
             .Include(w => w.Vehicle)
                 .ThenInclude(v => v!.Customer)
             .Include(w => w.ServiceTasks)
+            .Include(w => w.Technician)
             .AsNoTracking()
             .FirstAsync(w => w.Id == workOrderResult.Value.Id, cancellationToken);
 

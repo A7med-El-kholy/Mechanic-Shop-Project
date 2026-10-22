@@ -9,6 +9,11 @@ public sealed record WorkOrderDto(
     string LicensePlate,
     string CustomerName,
     int State,
+    DateOnly ScheduledDate,
+    int StartsAtMinute,
+    int EndsAtMinute,
+    int Spot,
+    string TechnicianName,
     decimal TotalPrice,
     int EstimatedDurationTotalInMins,
     List<ServiceTaskDto> ServiceTasks);

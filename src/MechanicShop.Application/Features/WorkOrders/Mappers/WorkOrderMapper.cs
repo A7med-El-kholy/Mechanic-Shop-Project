@@ -17,6 +17,11 @@ public static class WorkOrderMapper
             vehicle?.LicensePlate ?? string.Empty,
             vehicle?.Customer?.Name ?? string.Empty,
             (int)workOrder.State,
+            workOrder.ScheduledDate,
+            workOrder.StartsAtMinute,
+            workOrder.EndsAtMinute,
+            (int)workOrder.Spot,
+            workOrder.Technician?.FullName ?? string.Empty,
             workOrder.TotalPrice,
             workOrder.ServiceTasks.Sum(t => (int)t.EstimatedDurationInMins),
             [.. workOrder.ServiceTasks.Select(t => t.ToDto())]);

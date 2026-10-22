@@ -7,5 +7,9 @@ namespace MechanicShop.Application.Features.WorkOrders.Commands.CreateWorkOrder;
 
 public sealed record CreateWorkOrderCommand(
     Guid VehicleId,
-    List<Guid> ServiceTaskIds)
+    List<Guid> ServiceTaskIds,
+    DateOnly ScheduledDate,
+    int StartsAtMinute,
+    int Spot,
+    Guid TechnicianId)
     : IRequest<Result<WorkOrderDto>>;
