@@ -1,0 +1,45 @@
+<div class="shell">
+  <aside class="side">
+    <div class="sideHead">
+      <div class="logo">MS</div>
+      <div>
+        <b>Mechanic Shop</b>
+        <div class="muted sm">Staff workspace</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      @for (item of liveNav; track item.path) {
+        <a class="navItem" [routerLink]="['/', item.path]" routerLinkActive="on">
+          <span class="ico">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <div class="soonHead muted sm">Later stages</div>
+      @for (item of plannedNav; track item.label) {
+        <div class="navItem soon">
+          <span class="ico">◌</span>
+          <span>{{ item.label }}</span>
+        </div>
+      }
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div class="user">
+        <div class="avatar">{{ initials() }}</div>
+        <div>
+          <b>{{ auth.fullName() }}</b>
+          <div class="muted sm">{{ auth.primaryRole() }}</div>
+        </div>
+      </div>
+      <button class="btn" type="button" (click)="logout()">Sign out</button>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<div class="head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted sm">Live counters straight from the shop API.</p>
+  </div>
+</div>
+
+<div class="stats">
+  <a class="card stat" [routerLink]="['work-orders']">
+    <span class="num">{{ workOrderCount() }}</span>
+    <span class="label">Work orders</span>
+  </a>
+  <a class="card stat" [routerLink]="['appointments']">
+    <span class="num">{{ technicianCount() }}</span>
+    <span class="label">Technicians</span>
+  </a>
+  <a class="card stat" [routerLink]="['services']">
+    <span class="num">{{ serviceCount() }}</span>
+    <span class="label">Service tasks</span>
+  </a>
+  <a class="card stat" [routerLink]="['customers']">
+    <span class="num">{{ customerCount() }}</span>
+    <span class="label">Customers</span>
+  </a>
+</div>
+
+<div class="card table-card">
+  <h2>Next scheduled jobs</h2>
+
+  @if (!loaded()) {
+    <p class="muted">Loading…</p>
+  } @else if (recent().length === 0) {
+    <p class="muted">No work orders yet — they appear here the moment one is booked.</p>
+  } @else {
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Block</th>
+          <th>Bay</th>
+          <th>Vehicle</th>
+          <th>Customer</th>
+          <th>Technician</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (wo of recent(); track wo.workOrderId) {
+          <tr>
+            <td>{{ fmtDate(wo.scheduledDate) }}</td>
+            <td>{{ fmtMinute(wo.startsAtMinute) }}–{{ fmtMinute(wo.endsAtMinute) }}</td>
+            <td class="bay">{{ 'ABC'[wo.spot] }}</td>
+            <td>
+              <b>{{ wo.vehicleInfo }}</b>
+              <div class="muted sm">{{ wo.licensePlate }}</div>
+            </td>
+            <td>{{ wo.customerName }}</td>
+            <td>{{ wo.technicianName }}</td>
+            <td><span class="badge" [class]="'badge badge--' + wo.state">{{ stateLabel(wo.state) }}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
