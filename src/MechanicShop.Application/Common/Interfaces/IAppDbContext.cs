@@ -1,5 +1,6 @@
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.ServiceTasks;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,8 @@ public interface IAppDbContext
     DbSet<Customer> Customers { get; }
 
     DbSet<Vehicle> Vehicles { get; }
+
+    DbSet<ServiceTask> ServiceTasks { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

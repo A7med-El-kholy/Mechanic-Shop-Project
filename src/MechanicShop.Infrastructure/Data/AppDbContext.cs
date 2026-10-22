@@ -1,6 +1,7 @@
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Infrastructure.Identity;
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -18,6 +19,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 {
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
+    public DbSet<ServiceTask> ServiceTasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -106,6 +106,34 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("MechanicShop.Domain.ServiceTasks.ServiceTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("EstimatedDurationInMins")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ServiceTasks_Name");
+
+                    b.ToTable("ServiceTasks");
+                });
+
             modelBuilder.Entity("MechanicShop.Infrastructure.Identity.AppUser", b =>
                 {
                     b.Property<string>("Id")

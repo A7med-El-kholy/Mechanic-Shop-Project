@@ -1,4 +1,5 @@
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.ServiceTasks;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,21 @@ public static class DatabaseErrors
     public const string VehicleVinIndexName = "IX_Vehicles_Vin";
 
     public const string VehicleLicensePlateIndexName = "IX_Vehicles_LicensePlate";
+
+    public const string ServiceTaskNameIndexName = "IX_ServiceTasks_Name";
+
+    /// <summary>Detects a race that lost a unique ServiceTask name insert.</summary>
+    public static bool IsServiceTaskNameUniqueViolation(DbUpdateException exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        if (exception.Entries.Any(e => e.Entity is ServiceTask) is false)
+        {
+            return false;
+        }
+
+        return InnerMessagesMention(exception, ServiceTaskNameIndexName);
+    }
 
     public static bool IsVehicleVinUniqueViolation(DbUpdateException exception)
     {
