@@ -1,0 +1,60 @@
+<h1>Reports</h1>
+<p class="muted">Operational summary · computed from live data</p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else {
+  @if (summary(); as s) {
+    <div class="kpiGrid">
+      <div class="card kpi">
+        <span class="muted sm">Completion rate</span>
+        <b>{{ s.completionRatePercent !== null ? s.completionRatePercent + '%' : '—' }}</b>
+        <span class="muted sm">{{ s.workOrderCompleted }} of {{ s.workOrderTotal }} work orders completed</span>
+      </div>
+      <div class="card kpi">
+        <span class="muted sm">Avg. value per order</span>
+        <b>{{ s.averageOrderValue !== null ? money.format(s.averageOrderValue) : '—' }}</b>
+        <span class="muted sm">incl. 15% tax · {{ s.valueBasisOrders }} order(s)</span>
+      </div>
+      <div class="card kpi">
+        <span class="muted sm">Invoices paid / total</span>
+        <b>{{ s.invoicesPaid }} / {{ s.invoicesTotal }}</b>
+        <span class="muted sm">{{ s.estimatedValueSum !== null ? money.format(s.estimatedValueSum) : '' }} estimated, pre-tax</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h3>Estimated value by service</h3>
+        @if (s.valueByService.length === 0) {
+          <p class="muted">No live work orders yet — bars appear once jobs are scheduled.</p>
+        } @else {
+          @for (row of s.valueByService; track row.serviceName) {
+            <div class="barRow">
+              <span class="barRow__label">{{ row.serviceName }}</span>
+              <b class="barRow__value">{{ money.format(row.estimatedValue) }}</b>
+            </div>
+            <div class="bar"><div class="bar__fill" [style.width]="serviceWidth(row.estimatedValue)"></div></div>
+          }
+        }
+      </div>
+
+      <div class="card">
+        <h3>Technician workload (minutes booked)</h3>
+        @if (s.technicianWorkload.length === 0) {
+          <p class="muted">No technicians on the roster yet.</p>
+        } @else {
+          @for (row of s.technicianWorkload; track row.technicianName) {
+            <div class="barRow">
+              <span class="barRow__label">{{ row.technicianName }}</span>
+              <b class="barRow__value">{{ row.bookedMinutes }} min</b>
+            </div>
+            <div class="bar"><div class="bar__fill" [style.width]="workloadWidth(row.bookedMinutes)"></div></div>
+          }
+        }
+      </div>
+    </div>
+  }
+}

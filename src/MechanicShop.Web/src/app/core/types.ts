@@ -205,3 +205,29 @@ export interface PartOrderRow {
   totalAmount: number;
   lines: PartOrderLineRow[];
 }
+
+/** One service's estimated value across non-cancelled work orders. */
+export interface ReportServiceRow {
+  serviceName: string;
+  estimatedValue: number;
+}
+
+/** One technician's booked minutes (idle techs appear with zero). */
+export interface ReportTechRow {
+  technicianName: string;
+  bookedMinutes: number;
+}
+
+/** The manager's operational summary — every figure derived on read. */
+export interface ReportSummary {
+  workOrderTotal: number;
+  workOrderCompleted: number;
+  completionRatePercent: number | null;
+  valueBasisOrders: number;
+  estimatedValueSum: number;
+  averageOrderValue: number | null;
+  invoicesTotal: number;
+  invoicesPaid: number;
+  valueByService: ReportServiceRow[];
+  technicianWorkload: ReportTechRow[];
+}

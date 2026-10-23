@@ -10,6 +10,7 @@ using MechanicShop.Api.Features.Employees;
 using MechanicShop.Api.Features.Invoices;
 using MechanicShop.Api.Features.Parts;
 using MechanicShop.Api.Features.Portal;
+using MechanicShop.Api.Features.Reports;
 using MechanicShop.Api.Features.ShopOrders;
 using MechanicShop.Api.Features.Users;
 using MechanicShop.Api.Features.ServiceTasks;
@@ -133,6 +134,7 @@ app.MapAppointmentRequestsEndpoints();
 app.MapInvoicesEndpoints();
 app.MapPartsEndpoints();
 app.MapShopOrdersEndpoints();
+app.MapReportsEndpoints();
 app.MapPortalEndpoints();
 
 app.Run();

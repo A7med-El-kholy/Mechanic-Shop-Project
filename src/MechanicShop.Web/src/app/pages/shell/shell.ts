@@ -26,10 +26,10 @@ export class ShellPage {
     { path: 'technicians', label: 'Technicians', icon: '⚒' },
     { path: 'invoices', label: 'Invoices', icon: '$' },
     { path: 'inventory', label: 'Inventory', icon: '⬡' },
+    { path: 'reports', label: 'Reports', icon: 'Σ' },
   ];
 
   protected readonly plannedNav = [
-    { label: 'Reports' },
     { label: 'Notifications' },
   ];
 

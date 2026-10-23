@@ -10,6 +10,7 @@ import { InventoryPage } from './pages/inventory/inventory';
 import { LoginPage } from './pages/login/login';
 import { NotYetPage } from './pages/not-yet/not-yet';
 import { PortalShopPage } from './pages/portal/shop';
+import { ReportsPage } from './pages/reports/reports';
 import { ShellPage } from './pages/shell/shell';
 import { VehiclesPage } from './pages/vehicles/vehicles';
 import { PortalShellPage } from './pages/portal/portal-shell';
@@ -85,6 +86,11 @@ export const routes: Routes = [
         path: 'inventory',
         component: InventoryPage,
         title: 'Inventory · Mechanic Shop',
+      },
+      {
+        path: 'reports',
+        component: ReportsPage,
+        title: 'Reports · Mechanic Shop',
       },
       // Screens landing in coming stages land here instead of dead 404s; each
       // tab below gets a real page as its stage completes.
