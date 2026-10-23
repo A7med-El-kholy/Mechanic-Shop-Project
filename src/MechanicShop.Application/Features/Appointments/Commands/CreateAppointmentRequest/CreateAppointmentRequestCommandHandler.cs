@@ -6,6 +6,8 @@ using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.Notifications;
+using MechanicShop.Domain.Notifications.Enums;
 using MechanicShop.Domain.ServiceTasks;
 
 using Microsoft.EntityFrameworkCore;
@@ -60,12 +62,14 @@ public sealed class CreateAppointmentRequestCommandHandler(
             return AppointmentRequestErrors.VehicleNotOwned;
         }
 
+        ServiceTask? serviceTask = null;
+
         if (command.ServiceTaskId is not null)
         {
-            var taskExists = await _context.ServiceTasks
-                .AnyAsync(t => t.Id == command.ServiceTaskId, cancellationToken);
+            serviceTask = await _context.ServiceTasks
+                .FirstOrDefaultAsync(t => t.Id == command.ServiceTaskId, cancellationToken);
 
-            if (!taskExists)
+            if (serviceTask is null)
             {
                 return ServiceTaskErrors.NotFound(command.ServiceTaskId.Value);
             }
@@ -84,6 +88,24 @@ public sealed class CreateAppointmentRequestCommandHandler(
         }
 
         _context.AppointmentRequests.Add(created.Value);
+
+        // Prototype: a submitted request lands in the staff inbox as a Requests
+        // row — the workshop decides; the request itself books nothing.
+        var requestNotice = Notification.ForStaff(
+            Guid.NewGuid(),
+            "Appointment request",
+            $"{customer.Name} requested {serviceTask?.Name ?? "an inspection"} " +
+            $"for {vehicle.LicensePlate} on {command.PreferredDate:yyyy-MM-dd}. Needs confirmation.",
+            NotificationCategory.Requests,
+            null,
+            DateTimeOffset.UtcNow);
+
+        if (requestNotice.IsError)
+        {
+            return requestNotice.Errors;
+        }
+
+        _context.Notifications.Add(requestNotice.Value);
 
         await _context.SaveChangesAsync(cancellationToken);
 

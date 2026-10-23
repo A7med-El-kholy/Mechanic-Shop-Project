@@ -1,11 +1,14 @@
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.Features.Invoices;
+using MechanicShop.Application.Features.Notifications;
 using MechanicShop.Application.Features.Parts.Dtos;
 using MechanicShop.Application.Features.Parts.Mappers;
 using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Invoices;
 using MechanicShop.Domain.Inventory;
+using MechanicShop.Domain.Notifications;
+using MechanicShop.Domain.Notifications.Enums;
 
 using MediatR;
 
@@ -134,6 +137,64 @@ public sealed class PlaceShopOrderCommandHandler(
         }
 
         _context.ShopOrders.Add(order.Value);
+
+        var now = DateTimeOffset.UtcNow;
+        var placed = order.Value;
+        var paidNow = command.Method == PaymentMethod.Card;
+
+        var staffOrder = Notification.ForStaff(
+            Guid.NewGuid(),
+            "New shop order",
+            $"{placed.Number} from {customer.Name}, {NotificationFormat.Money(placed.TotalAmount)} " +
+            $"({(paidNow ? "paid by card" : "cash at pickup")}).",
+            NotificationCategory.Orders,
+            null,
+            now);
+
+        if (staffOrder.IsError)
+        {
+            return staffOrder.Errors;
+        }
+
+        _context.Notifications.Add(staffOrder.Value);
+
+        var customerOrder = Notification.ForCustomer(
+            Guid.NewGuid(),
+            customer.Id,
+            "Order confirmed",
+            paidNow
+                ? $"{placed.Number} is paid — collect your parts at the shop."
+                : $"{placed.Number} is reserved — pay in cash when you collect your parts.",
+            NotificationCategory.Orders,
+            null,
+            now);
+
+        if (customerOrder.IsError)
+        {
+            return customerOrder.Errors;
+        }
+
+        _context.Notifications.Add(customerOrder.Value);
+
+        // Same low-stock rule as a work order's part consumption: a purchase
+        // that leaves a shelf at/below its minimum raises the staff alert.
+        foreach (var part in parts.Where(p => p.Quantity <= p.MinimumQuantity))
+        {
+            var lowStock = Notification.ForStaff(
+                Guid.NewGuid(),
+                "Low stock",
+                $"{part.Name} is down to {part.Quantity} (minimum {part.MinimumQuantity}).",
+                NotificationCategory.Inventory,
+                null,
+                now);
+
+            if (lowStock.IsError)
+            {
+                return lowStock.Errors;
+            }
+
+            _context.Notifications.Add(lowStock.Value);
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 

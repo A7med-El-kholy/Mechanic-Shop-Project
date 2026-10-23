@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
+import { NotificationBadgeService } from '../../core/notifications';
 
 /** The customer-facing side. Lighter than the staff shell by design — customers
  * watch their cars and repairs and ask the workshop for appointments; they do
@@ -17,6 +18,7 @@ export class PortalShellPage {
   private readonly router = inject(Router);
 
   protected readonly auth = inject(AuthStore);
+  protected readonly badge = inject(NotificationBadgeService);
 
   protected readonly portalNav = [
     { path: 'portal', label: 'Home', exact: true },
@@ -25,15 +27,20 @@ export class PortalShellPage {
     { path: 'portal/invoices', label: 'Invoices', exact: false },
     { path: 'portal/shop', label: 'Parts Shop', exact: false },
     { path: 'portal/appointments', label: 'Appointments', exact: false },
+    { path: 'portal/notifications', label: 'Notifications', exact: false },
   ];
 
-  protected readonly plannedNav = ['AI Assistant', 'Notifications'];
+  protected readonly plannedNav = ['AI Assistant'];
 
   protected readonly firstName = computed(() => {
     const name = this.auth.fullName().trim();
 
     return name.split(/\s+/)[0] || name;
   });
+
+  ngOnInit(): void {
+    this.badge.refresh('portal');
+  }
 
   protected logout(): void {
     this.auth.logout();

@@ -8,6 +8,8 @@ using MediatR;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
+using MechanicShop.Domain.Notifications;
+using MechanicShop.Domain.Notifications.Enums;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.Domain.WorkOrders.Enums;
@@ -27,18 +29,15 @@ public sealed class CreateWorkOrderCommandHandler(
 
     public async Task<Result<WorkOrderDto>> Handle(CreateWorkOrderCommand command, CancellationToken cancellationToken)
     {
-        var vehicleExists = await _context.Vehicles
-            .AnyAsync(v => v.Id == command.VehicleId, cancellationToken);
+        var vehicle = await _context.Vehicles
+            .FirstOrDefaultAsync(v => v.Id == command.VehicleId, cancellationToken);
 
-        if (!vehicleExists)
+        if (vehicle is null)
         {
             return WorkOrderErrors.VehicleMissing(command.VehicleId);
         }
 
-        var vehicleArchived = await _context.Vehicles
-            .AnyAsync(v => v.Id == command.VehicleId && v.IsArchived, cancellationToken);
-
-        if (vehicleArchived)
+        if (vehicle.IsArchived)
         {
             // Archived vehicles leave "new bookings" per the prototype.
             return WorkOrderErrors.VehicleArchived(command.VehicleId);
@@ -103,6 +102,25 @@ public sealed class CreateWorkOrderCommandHandler(
         }
 
         _context.WorkOrders.Add(workOrderResult.Value);
+
+        // The prototype pushes a staff "New assignment" the moment a booking
+        // exists — same save, so no scheduling exists without its notification.
+        var assignment = Notification.ForStaff(
+            Guid.NewGuid(),
+            "New assignment",
+            $"{vehicle.LicensePlate} ({vehicle.Make} {vehicle.Model}) scheduled for " +
+            $"{technician.FullName} at {WorkDay.FormatMinute(command.StartsAtMinute)} " +
+            $"in bay {(Spot)command.Spot}.",
+            NotificationCategory.Assignments,
+            workOrderResult.Value.Id,
+            DateTimeOffset.UtcNow);
+
+        if (assignment.IsError)
+        {
+            return assignment.Errors;
+        }
+
+        _context.Notifications.Add(assignment.Value);
 
         await _context.SaveChangesAsync(cancellationToken);
 

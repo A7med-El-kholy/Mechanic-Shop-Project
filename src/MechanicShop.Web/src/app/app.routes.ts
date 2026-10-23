@@ -9,6 +9,7 @@ import { InvoicesPage } from './pages/invoices/invoices';
 import { InventoryPage } from './pages/inventory/inventory';
 import { LoginPage } from './pages/login/login';
 import { NotYetPage } from './pages/not-yet/not-yet';
+import { NotificationsPage } from './pages/notifications/notifications';
 import { PortalShopPage } from './pages/portal/shop';
 import { ReportsPage } from './pages/reports/reports';
 import { ShellPage } from './pages/shell/shell';
@@ -59,6 +60,12 @@ export const routes: Routes = [
         component: PortalAppointmentsPage,
         title: 'Appointments · Mechanic Shop',
       },
+      {
+        path: 'notifications',
+        component: NotificationsPage,
+        data: { portal: true },
+        title: 'Notifications · Mechanic Shop',
+      },
     ],
   },
   // The staff side.
@@ -91,6 +98,11 @@ export const routes: Routes = [
         path: 'reports',
         component: ReportsPage,
         title: 'Reports · Mechanic Shop',
+      },
+      {
+        path: 'notifications',
+        component: NotificationsPage,
+        title: 'Notifications · Mechanic Shop',
       },
       // Screens landing in coming stages land here instead of dead 404s; each
       // tab below gets a real page as its stage completes.

@@ -8,7 +8,12 @@
         [routerLink]="['/' + item.path]"
         routerLinkActive="on"
         [routerLinkActiveOptions]="{ exact: item.exact }"
-      >{{ item.label }}</a>
+      >
+        {{ item.label }}
+        @if (item.path === 'portal/notifications' && badge.unread() > 0) {
+          <span class="navBadge">{{ badge.unread() }}</span>
+        }
+      </a>
     }
     @for (label of plannedNav; track label) {
       <span class="pnavItem soon">{{ label }}</span>

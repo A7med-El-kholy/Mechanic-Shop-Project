@@ -20,3 +20,42 @@ export function fmtDate(dateOnly: string): string {
 export function fmtMinute(minute: number): string {
   return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 }
+
+/** ISO timestamp → "just now" / "5m ago" / "3h ago" / "Yesterday" / a date.
+ * The prototype seeded human strings ("2 min ago"); real rows carry the real
+ * timestamp, so the label is derived at render time. */
+export function fmtRelative(iso: string): string {
+  const then = new Date(iso).getTime();
+
+  if (!Number.isFinite(then)) {
+    return iso;
+  }
+
+  const seconds = Math.max(0, Math.floor((Date.now() - then) / 1000));
+
+  if (seconds < 60) {
+    return 'just now';
+  }
+
+  const minutes = Math.floor(seconds / 60);
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  if (hours < 48) {
+    return 'Yesterday';
+  }
+
+  return new Date(then).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
+import { NotificationBadgeService } from '../../core/notifications';
 
-/** Staff navigation, mirroring the prototype's manager tab list. "Soon" tabs
- * arrive with later roadmap stages and stay visibly disabled meanwhile. */
+/** Staff navigation, mirroring the prototype's manager tab list. */
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
@@ -16,6 +16,7 @@ export class ShellPage {
   private readonly router = inject(Router);
 
   protected readonly auth = inject(AuthStore);
+  protected readonly badge = inject(NotificationBadgeService);
 
   protected readonly liveNav = [
     { path: 'dashboard', label: 'Dashboard', icon: '▦' },
@@ -27,10 +28,7 @@ export class ShellPage {
     { path: 'invoices', label: 'Invoices', icon: '$' },
     { path: 'inventory', label: 'Inventory', icon: '⬡' },
     { path: 'reports', label: 'Reports', icon: 'Σ' },
-  ];
-
-  protected readonly plannedNav = [
-    { label: 'Notifications' },
+    { path: 'notifications', label: 'Notifications', icon: '◔' },
   ];
 
   protected readonly initials = computed(() => {
@@ -42,6 +40,10 @@ export class ShellPage {
       .map(part => part[0]?.toUpperCase() ?? '')
       .join('');
   });
+
+  ngOnInit(): void {
+    this.badge.refresh('staff');
+  }
 
   protected logout(): void {
     this.auth.logout();

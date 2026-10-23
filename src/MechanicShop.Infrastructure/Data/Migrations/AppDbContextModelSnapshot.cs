@@ -356,6 +356,57 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                     b.ToTable("InvoiceLineItem");
                 });
 
+            modelBuilder.Entity("MechanicShop.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Audience")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("nvarchar(600)");
+
+                    b.Property<DateTimeOffset?>("ReadOn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<Guid?>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("Audience", "CustomerId", "CreatedOn");
+
+                    b.HasIndex("Audience", "CustomerId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("MechanicShop.Domain.ServiceTasks.ServiceTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -725,6 +776,23 @@ namespace MechanicShop.Infrastructure.Data.Migrations
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MechanicShop.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("MechanicShop.Domain.Customers.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("MechanicShop.Domain.WorkOrders.WorkOrder", "WorkOrder")
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("WorkOrder");
                 });
 
             modelBuilder.Entity("MechanicShop.Domain.ServiceTasks.ServiceTask", b =>

@@ -1,4 +1,6 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Domain.Notifications;
+using MechanicShop.Domain.Notifications.Enums;
 
 using MediatR;
 
@@ -19,6 +21,8 @@ public sealed class RecordCashPaymentCommandHandler(IAppDbContext context, ILogg
     public async Task<Result<Updated>> Handle(RecordCashPaymentCommand command, CancellationToken cancellationToken)
     {
         var invoice = await _context.Invoices
+            .Include(invoice => invoice.WorkOrder)
+                .ThenInclude(w => w!.Vehicle)
             .FirstOrDefaultAsync(invoice => invoice.Id == command.InvoiceId, cancellationToken);
 
         if (invoice is null)
@@ -32,6 +36,24 @@ public sealed class RecordCashPaymentCommandHandler(IAppDbContext context, ILogg
         {
             return received.Errors;
         }
+
+        var customerId = invoice.WorkOrder!.Vehicle!.CustomerId;
+
+        var receipt = Notification.ForCustomer(
+            Guid.NewGuid(),
+            customerId,
+            "Payment received",
+            $"Invoice {invoice.Number} is paid in cash.",
+            NotificationCategory.Billing,
+            invoice.WorkOrderId,
+            DateTimeOffset.UtcNow);
+
+        if (receipt.IsError)
+        {
+            return receipt.Errors;
+        }
+
+        _context.Notifications.Add(receipt.Value);
 
         await _context.SaveChangesAsync(cancellationToken);
 

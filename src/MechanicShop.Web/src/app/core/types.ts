@@ -231,3 +231,30 @@ export interface ReportSummary {
   valueByService: ReportServiceRow[];
   technicianWorkload: ReportTechRow[];
 }
+
+/** One inbox row — staff and customer copies share this shape; the API scopes. */
+export interface NotificationRow {
+  notificationId: string;
+  audience: number;
+  title: string;
+  message: string;
+  category: number;
+  workOrderId: string | null;
+  isRead: boolean;
+  createdOn: string;
+  readOn: string | null;
+}
+
+/** Category badges (the prototype's cat): only categories real events produce. */
+export const NOTIFICATION_CATEGORIES = [
+  { value: 0, label: 'Repairs' },
+  { value: 1, label: 'Billing' },
+  { value: 2, label: 'Inventory' },
+  { value: 3, label: 'Orders' },
+  { value: 4, label: 'Requests' },
+  { value: 5, label: 'Assignments' },
+] as const;
+
+export function notificationCategoryLabel(category: number): string {
+  return NOTIFICATION_CATEGORIES.find(c => c.value === category)?.label ?? `Unknown (${category})`;
+}

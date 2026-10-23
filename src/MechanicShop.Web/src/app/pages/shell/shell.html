@@ -13,15 +13,10 @@
         <a class="navItem" [routerLink]="['/', item.path]" routerLinkActive="on">
           <span class="ico">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
+          @if (item.path === 'notifications' && badge.unread() > 0) {
+            <span class="navBadge">{{ badge.unread() }}</span>
+          }
         </a>
-      }
-
-      <div class="soonHead muted sm">Later stages</div>
-      @for (item of plannedNav; track item.label) {
-        <div class="navItem soon">
-          <span class="ico">◌</span>
-          <span>{{ item.label }}</span>
-        </div>
       }
     </nav>
   </aside>

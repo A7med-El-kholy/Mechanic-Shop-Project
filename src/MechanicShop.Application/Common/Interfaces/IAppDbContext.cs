@@ -4,6 +4,7 @@ using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
 using MechanicShop.Domain.Invoices;
 using MechanicShop.Domain.Inventory;
+using MechanicShop.Domain.Notifications;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
 
@@ -36,6 +37,8 @@ public interface IAppDbContext
     DbSet<Part> Parts { get; }
 
     DbSet<PartOrder> ShopOrders { get; }
+
+    DbSet<Notification> Notifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

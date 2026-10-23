@@ -1,0 +1,65 @@
+<div class="viewHead">
+  <h1>Notifications</h1>
+  <button class="btn" type="button" (click)="markAllRead()" [disabled]="busy()">
+    Mark all as read
+  </button>
+</div>
+
+<div class="chips">
+  <button
+    class="chip"
+    type="button"
+    [class.active]="filter() === 'all'"
+    (click)="setFilter('all')"
+  >All</button>
+  <button
+    class="chip"
+    type="button"
+    [class.active]="filter() === 'unread'"
+    (click)="setFilter('unread')"
+  >Unread</button>
+</div>
+
+@if (pageError()) {
+  <p class="al al--err">{{ pageError() }}</p>
+}
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (rows().length === 0) {
+  <div class="card">
+    <h3>You are all caught up</h3>
+    <p class="muted">
+      {{ filter() === 'unread'
+        ? 'No unread notifications.'
+        : 'Nothing has happened yet — workshop events will appear here.' }}
+    </p>
+  </div>
+} @else {
+  @for (row of rows(); track row.notificationId) {
+    <div class="card notice" [class.notice--unread]="!row.isRead">
+      <div class="notice__head">
+        @if (!row.isRead) {
+          <span class="dot" aria-label="Unread"></span>
+        }
+        <b>{{ row.title }}</b>
+        <span class="cat">{{ categoryLabel(row.category) }}</span>
+        <span class="muted sm notice__time">{{ fmtRelative(row.createdOn) }}</span>
+      </div>
+
+      <p class="notice__msg">{{ row.message }}</p>
+
+      <div class="notice__actions">
+        @if (portal && row.workOrderId) {
+          <button class="btn" type="button" (click)="open(row)">Open</button>
+        }
+        <button
+          class="btn"
+          type="button"
+          [disabled]="busy()"
+          (click)="setRead(row, !row.isRead)"
+        >{{ row.isRead ? 'Mark unread' : 'Mark read' }}</button>
+      </div>
+    </div>
+  }
+}

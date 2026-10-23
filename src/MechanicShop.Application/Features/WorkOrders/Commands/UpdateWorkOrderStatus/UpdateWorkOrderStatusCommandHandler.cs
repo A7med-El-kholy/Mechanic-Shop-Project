@@ -5,6 +5,8 @@ using MediatR;
 using MechanicShop.Application.Features.Invoices;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Invoices;
+using MechanicShop.Domain.Notifications;
+using MechanicShop.Domain.Notifications.Enums;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.Domain.WorkOrders.Enums;
 
@@ -26,6 +28,7 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
         var workOrder = await _context.WorkOrders
             .Include(w => w.ServiceTasks)
                 .ThenInclude(t => t.Part)
+            .Include(w => w.Vehicle)
             .FirstOrDefaultAsync(w => w.Id == command.WorkOrderId, cancellationToken);
 
         if (workOrder is null)
@@ -39,6 +42,36 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
         {
             return updateResult.Errors;
         }
+
+        var now = DateTimeOffset.UtcNow;
+        var vehicle = workOrder.Vehicle!;
+
+        // The prototype's mail(): every transition sends the owner a "Repair
+        // update". The state label is the display form ("In Progress"), not
+        // the enum name — the stored message is what the customer reads.
+        var stateLabel = workOrder.State switch
+        {
+            WorkOrderState.InProgress => "In Progress",
+            WorkOrderState.Completed => "Completed",
+            WorkOrderState.Cancelled => "Cancelled",
+            _ => workOrder.State.ToString()
+        };
+
+        var customerUpdate = Notification.ForCustomer(
+            Guid.NewGuid(),
+            vehicle.CustomerId,
+            "Repair update",
+            $"Your vehicle {vehicle.LicensePlate} ({vehicle.Make} {vehicle.Model}) is now {stateLabel}.",
+            NotificationCategory.Repairs,
+            workOrder.Id,
+            now);
+
+        if (customerUpdate.IsError)
+        {
+            return customerUpdate.Errors;
+        }
+
+        _context.Notifications.Add(customerUpdate.Value);
 
         // Completing a job issues its invoice in the SAME persistence unit: the
         // prototype's rule ("they appear when a repair is completed") without a
@@ -66,6 +99,21 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
 
                 _context.Invoices.Add(invoice.Value);
 
+                var billed = Notification.ForStaff(
+                    Guid.NewGuid(),
+                    "Repair completed",
+                    $"{vehicle.LicensePlate} was completed. Invoice {invoice.Value.Number} was issued.",
+                    NotificationCategory.Billing,
+                    workOrder.Id,
+                    now);
+
+                if (billed.IsError)
+                {
+                    return billed.Errors;
+                }
+
+                _context.Notifications.Add(billed.Value);
+
                 _logger.LogInformation(
                     "Invoice {InvoiceNumber} issued for completed work order {WorkOrderId}.",
                     invoice.Value.Number,
@@ -91,6 +139,27 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
                         task.Part.Id,
                         task.Part.StockState,
                         task.Id);
+
+                    // The prototype's low-stock alert: every deduction that
+                    // leaves the shelf at/below its minimum raises a staff row.
+                    if (task.Part.Quantity <= task.Part.MinimumQuantity)
+                    {
+                        var lowStock = Notification.ForStaff(
+                            Guid.NewGuid(),
+                            "Low stock",
+                            $"{task.Part.Name} is down to {task.Part.Quantity} " +
+                            $"(minimum {task.Part.MinimumQuantity}).",
+                            NotificationCategory.Inventory,
+                            workOrder.Id,
+                            now);
+
+                        if (lowStock.IsError)
+                        {
+                            return lowStock.Errors;
+                        }
+
+                        _context.Notifications.Add(lowStock.Value);
+                    }
                 }
             }
         }

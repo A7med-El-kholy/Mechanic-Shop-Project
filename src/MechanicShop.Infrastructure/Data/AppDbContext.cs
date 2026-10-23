@@ -5,6 +5,7 @@ using MechanicShop.Domain.Customers.Vehicles;
 using MechanicShop.Domain.Employees;
 using MechanicShop.Domain.Invoices;
 using MechanicShop.Domain.Inventory;
+using MechanicShop.Domain.Notifications;
 using MechanicShop.Domain.ServiceTasks;
 using MechanicShop.Domain.WorkOrders;
 using MechanicShop.Infrastructure.Identity;
@@ -34,6 +35,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<Part> Parts { get; set; }
 
     public DbSet<PartOrder> ShopOrders { get; set; }
+
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

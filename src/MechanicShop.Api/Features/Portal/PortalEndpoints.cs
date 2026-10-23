@@ -1,8 +1,13 @@
 using MechanicShop.Api.Common;
+using MechanicShop.Api.Features.Notifications.Contracts;
 
 using MechanicShop.Application.Features.Invoices.Commands.PayInvoice;
 using MechanicShop.Application.Features.Invoices.Queries.GetMyInvoiceById;
 using MechanicShop.Application.Features.Invoices.Queries.GetMyInvoices;
+using MechanicShop.Application.Features.Notifications.Commands.MarkNotificationsRead;
+using MechanicShop.Application.Features.Notifications.Commands.SetNotificationReadState;
+using MechanicShop.Application.Features.Notifications.Queries.GetNotifications;
+using MechanicShop.Application.Features.Notifications.Queries.GetUnreadNotificationCount;
 using MechanicShop.Application.Features.Parts.Queries.GetParts;
 using MechanicShop.Application.Features.ServiceTasks.Queries.GetServiceOptions;
 using MechanicShop.Application.Features.ShopOrders.Commands.PlaceShopOrder;
@@ -12,6 +17,7 @@ using MechanicShop.Application.Features.WorkOrders.Queries.GetMyRepairById;
 
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Invoices;
+using MechanicShop.Domain.Notifications.Enums;
 
 using MediatR;
 
@@ -92,6 +98,30 @@ public static class PortalEndpoints
             .WithName("GetMyShopOrders")
             .RequireAuthorization(Policies.IsCustomer)
             .Produces(StatusCodes.Status200OK);
+
+        group.MapGet("/notifications", MyNotificationsAsync)
+            .WithName("GetMyNotifications")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/notifications/unread-count", MyUnreadNotificationCountAsync)
+            .WithName("GetMyUnreadNotificationCount")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPut("/notifications/{notificationId:guid}/read-state", SetMyNotificationReadStateAsync)
+            .WithName("SetMyNotificationReadState")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/notifications/read-all", MarkMyNotificationsReadAsync)
+            .WithName("MarkMyNotificationsRead")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
     }
@@ -215,5 +245,69 @@ public static class PortalEndpoints
         return result.IsError
             ? result.TopError.ToProblem(httpContext)
             : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> MyNotificationsAsync(
+        bool unreadOnly = false,
+        int page = 1,
+        int pageSize = 20,
+        ISender sender = null!,
+        HttpContext httpContext = null!,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await sender.Send(
+            new GetNotificationsQuery(NotificationAudience.Customer, unreadOnly, page, pageSize),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> MyUnreadNotificationCountAsync(
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new GetUnreadNotificationCountQuery(NotificationAudience.Customer),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(new UnreadNotificationsResponse(result.Value));
+    }
+
+    private static async Task<IResult> SetMyNotificationReadStateAsync(
+        Guid notificationId,
+        SetNotificationReadStateRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new SetNotificationReadStateCommand(
+                notificationId,
+                request.IsRead,
+                NotificationAudience.Customer),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.NoContent();
+    }
+
+    private static async Task<IResult> MarkMyNotificationsReadAsync(
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new MarkNotificationsReadCommand(NotificationAudience.Customer),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.NoContent();
     }
 }
