@@ -37,6 +37,20 @@ export interface WorkOrderSummary {
   technicianName: string;
 }
 
+/** One drawable block on the appointments board (WorkOrderScheduleDto). */
+export interface ScheduleJob {
+  workOrderId: string;
+  vehicleInfo: string;
+  licensePlate: string;
+  customerName: string;
+  technicianId: string;
+  technicianName: string;
+  state: number;
+  startsAtMinute: number;
+  endsAtMinute: number;
+  spot: number;
+}
+
 export interface Vehicle {
   vehicleId: string;
   make: string;

@@ -6,6 +6,7 @@ using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderSched
 using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderStatus;
 using MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderTasks;
 using MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrderById;
+using MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrderSchedule;
 using MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrders;
 using MechanicShop.Domain.Common.Results;
 
@@ -26,6 +27,12 @@ public static class WorkOrdersEndpoints
 
         group.MapGet("/", ListAsync)
             .WithName("GetWorkOrders")
+            .RequireAuthorization(Policies.IsStaff)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        group.MapGet("/schedule", GetScheduleAsync)
+            .WithName("GetWorkOrderSchedule")
             .RequireAuthorization(Policies.IsStaff)
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
@@ -102,6 +109,22 @@ public static class WorkOrdersEndpoints
     {
         var result = await sender.Send(
             new GetWorkOrderByIdQuery(workOrderId),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> GetScheduleAsync(
+        DateOnly date,
+        Guid? technicianId,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new GetWorkOrderScheduleQuery(date, technicianId),
             cancellationToken);
 
         return result.IsError

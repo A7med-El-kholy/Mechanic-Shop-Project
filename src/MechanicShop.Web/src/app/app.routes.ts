@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { authGuard, portalGuard } from './core/auth.guard';
 import { CustomerDetailPage } from './pages/customer-detail/customer-detail';
+import { AppointmentsPage } from './pages/appointments/appointments';
 import { CustomersPage } from './pages/customers/customers';
 import { DashboardPage } from './pages/dashboard/dashboard';
 import { InvoiceDetailPage } from './pages/invoices/invoice-detail';
@@ -86,6 +87,7 @@ export const routes: Routes = [
         title: 'Customer · Mechanic Shop',
       },
       { path: 'vehicles', component: VehiclesPage, title: 'Vehicles · Mechanic Shop' },
+      { path: 'appointments', component: AppointmentsPage, title: 'Schedule · Mechanic Shop' },
       { path: 'work-orders', component: WorkOrdersPage, title: 'Work Orders · Mechanic Shop' },
       {
         path: 'work-orders/new',

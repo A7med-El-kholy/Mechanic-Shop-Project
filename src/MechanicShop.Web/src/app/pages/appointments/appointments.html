@@ -1,0 +1,74 @@
+<div class="head">
+  <div>
+    <h1>Schedule</h1>
+    <p class="muted sm">
+      {{ dayLabel() }} · shop hours 08:00–20:00
+      @if (!loading() && !pageError()) {
+        · {{ scheduledCount() }} job(s) across {{ technicians().length }} technician(s)
+      }
+    </p>
+  </div>
+</div>
+
+<div class="card toolbar">
+  <button class="btn" type="button" (click)="shiftDay(-1)">‹ Prev</button>
+  <input
+    class="input dateInput"
+    type="date"
+    aria-label="Schedule day"
+    [ngModel]="date()"
+    (ngModelChange)="onDateChange($event)"
+  />
+  <button class="btn" type="button" (click)="shiftDay(1)">Next ›</button>
+  <button class="btn" type="button" (click)="goToday()">Today</button>
+</div>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading the board…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else if (technicians().length === 0) {
+  <div class="card">
+    <p class="muted">No technicians are on the roster yet. Add technicians before scheduling work.</p>
+  </div>
+} @else {
+  <div class="card boardCard">
+    <div class="board">
+      <div class="lane lane--head">
+        <div class="laneName"></div>
+        <div class="track track--ticks">
+          @for (hour of hours; track hour) {
+            <span class="tick">{{ hour }}:00</span>
+          }
+        </div>
+      </div>
+
+      @for (lane of lanes(); track lane.technicianId) {
+        <div class="lane">
+          <div class="laneName">
+            <b>{{ lane.name }}</b>
+            <span class="muted sm">{{ lane.jobs.length }} job(s)</span>
+          </div>
+          <div class="track">
+            @for (job of lane.jobs; track job.workOrderId) {
+              <a
+                class="block"
+                [class]="'block block--' + job.state"
+                [style.left.%]="left(job)"
+                [style.width.%]="width(job)"
+                [routerLink]="['/work-orders', job.workOrderId]"
+                [title]="ref(job.workOrderId) + ' · ' + job.vehicleInfo + ' · ' + job.licensePlate + ' · Bay ' + 'ABC'[job.spot] + ' · ' + fmtMinute(job.startsAtMinute) + '–' + fmtMinute(job.endsAtMinute) + ' · ' + stateLabel(job.state)"
+              >
+                {{ ref(job.workOrderId) }} · {{ 'ABC'[job.spot] }}
+              </a>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (scheduledCount() === 0) {
+      <p class="muted sm empty">No jobs on this day. The lanes are free.</p>
+    }
+  </div>
+}

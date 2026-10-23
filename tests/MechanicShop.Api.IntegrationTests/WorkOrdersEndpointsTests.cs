@@ -364,6 +364,103 @@ public sealed class WorkOrdersEndpointsTests
     }
 
     [Fact]
+    public async Task Schedule_ReturnsOnlyLiveJobsOnTheDay_AndFiltersByTechnician()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var attempt = _sequence++;
+        var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
+        var taskId = await CreateTaskAsync(client, managerToken, $"Schedule Task WO-{attempt}", 75m, 45);
+        var assignedTech = await CreateTechnicianAsync(client, managerToken, attempt);
+        var otherTech = await CreateTechnicianAsync(client, managerToken, attempt + 500);
+        var activeSlot = TestSlots.Next();
+        var cancelledSlot = TestSlots.Next();
+
+        using var activeCreated = await SendAsync(
+            client,
+            HttpMethod.Post,
+            "/api/work-orders",
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = activeSlot.Date, startsAtMinute = activeSlot.Minute, spot = activeSlot.Spot, technicianId = assignedTech },
+            managerToken);
+
+        activeCreated.StatusCode.Should().Be(HttpStatusCode.Created);
+        var active = await ReadWorkOrder(activeCreated);
+
+        using var cancelledCreated = await SendAsync(
+            client,
+            HttpMethod.Post,
+            "/api/work-orders",
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = cancelledSlot.Date, startsAtMinute = cancelledSlot.Minute, spot = cancelledSlot.Spot, technicianId = otherTech },
+            managerToken);
+
+        cancelledCreated.StatusCode.Should().Be(HttpStatusCode.Created);
+        var cancelled = await ReadWorkOrder(cancelledCreated);
+
+        using var cancelledStatus = await SendAsync(
+            client,
+            HttpMethod.Put,
+            $"/api/work-orders/{cancelled!.WorkOrderId}/status",
+            new { state = 3 },
+            managerToken);
+
+        cancelledStatus.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var activeDay = activeSlot.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+        using var board = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/api/work-orders/schedule?date={activeDay}",
+            null,
+            managerToken);
+
+        board.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var jobs = await board.Content.ReadFromJsonAsync<List<ScheduleJobDto>>(TestContext.Current.CancellationToken);
+
+        jobs.Should().ContainSingle(j => j.WorkOrderId == active!.WorkOrderId);
+
+        var job = jobs!.Single(j => j.WorkOrderId == active!.WorkOrderId);
+        job.State.Should().Be(0);
+        job.TechnicianId.Should().Be(assignedTech);
+        job.TechnicianName.Should().NotBeNullOrWhiteSpace();
+        job.StartsAtMinute.Should().Be(activeSlot.Minute);
+        job.EndsAtMinute.Should().Be(activeSlot.Minute + 45);
+        job.Spot.Should().Be(activeSlot.Spot);
+
+        // Cancelled work leaves the board: its day has no rows.
+        var cancelledDay = cancelledSlot.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+        using var cancelledBoard = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/api/work-orders/schedule?date={cancelledDay}",
+            null,
+            managerToken);
+
+        cancelledBoard.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var cancelledJobs = await cancelledBoard.Content.ReadFromJsonAsync<List<ScheduleJobDto>>(TestContext.Current.CancellationToken);
+
+        cancelledJobs.Should().NotContain(j => j.WorkOrderId == cancelled!.WorkOrderId);
+
+        // The technician filter is the lane selector.
+        using var otherBoard = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/api/work-orders/schedule?date={activeDay}&technicianId={otherTech}",
+            null,
+            managerToken);
+
+        otherBoard.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var otherJobs = await otherBoard.Content.ReadFromJsonAsync<List<ScheduleJobDto>>(TestContext.Current.CancellationToken);
+
+        otherJobs.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task RemoveTask_ReferencedByWorkOrder_ReturnsConflict()
     {
         using var client = _factory.CreateClient();
