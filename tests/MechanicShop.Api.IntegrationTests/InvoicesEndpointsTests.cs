@@ -71,6 +71,22 @@ public sealed class InvoicesEndpointsTests
         mine.GetProperty("invoiceNumber").GetString()!.Should().StartWith("INV-");
         mine.GetProperty("totalAmount").GetDouble().Should().Be(230.00); // 200 + 15%
         mine.GetProperty("status").GetInt32().Should().Be(0); // Unpaid
+
+        // The work order screen asks "has THIS job been billed?" — the filter
+        // answers with at most one row, never the whole book.
+        using var filtered = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, $"/api/invoices?page=1&pageSize=5&workOrderId={workOrderId}", null, managerToken),
+            TestContext.Current.CancellationToken);
+
+        filtered.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var filteredRows = (await filtered.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("items")
+            .EnumerateArray()
+            .ToList();
+
+        filteredRows.Should().ContainSingle();
+        filteredRows[0].GetProperty("workOrderId").GetGuid().Should().Be(workOrderId);
     }
 
     [Fact]

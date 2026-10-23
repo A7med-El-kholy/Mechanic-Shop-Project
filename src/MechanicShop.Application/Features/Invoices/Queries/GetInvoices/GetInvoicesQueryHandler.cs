@@ -27,6 +27,11 @@ public sealed class GetInvoicesQueryHandler(IAppDbContext context)
                     .ThenInclude(v => v!.Customer)
             .AsNoTracking();
 
+        if (query.WorkOrderId is { } workOrderId)
+        {
+            invoicesQuery = invoicesQuery.Where(invoice => invoice.WorkOrderId == workOrderId);
+        }
+
         var count = await invoicesQuery.CountAsync(cancellationToken);
 
         var items = await invoicesQuery

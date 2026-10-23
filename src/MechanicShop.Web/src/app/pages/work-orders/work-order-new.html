@@ -1,0 +1,186 @@
+<p><a routerLink="/work-orders">← Work Orders</a></p>
+
+<div class="head">
+  <div>
+    <h1>New work order</h1>
+    <p class="muted sm">
+      A booking needs a vehicle, at least one service, a technician and a start slot.
+      The request is only a request — this screen turns it into work.
+    </p>
+  </div>
+</div>
+
+@if (saveError()) {
+  <p class="al al--err">{{ saveError() }}</p>
+}
+
+<div class="layout">
+  <div class="col">
+    <div class="card">
+      <h2>Vehicle</h2>
+
+      <div class="toolbar">
+        <input
+          class="input search"
+          type="search"
+          placeholder="Search plate, VIN or customer…"
+          [ngModel]="vehicleSearch()"
+          (ngModelChange)="vehicleSearch.set($event)"
+          (keyup.enter)="searchVehicles()"
+        />
+        <button class="btn" type="button" (click)="searchVehicles()">Search</button>
+      </div>
+
+      @if (vehiclesLoading()) {
+        <p class="muted">Loading…</p>
+      } @else if (vehiclesError()) {
+        <p class="al al--err">{{ vehiclesError() }}</p>
+      } @else {
+        <div class="pickList">
+          @for (vehicle of vehicles(); track vehicle.vehicleId) {
+            <button
+              class="pick"
+              type="button"
+              [class.pick--on]="selectedVehicleId() === vehicle.vehicleId"
+              (click)="selectedVehicleId.set(vehicle.vehicleId)"
+            >
+              <b>{{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})</b>
+              <span class="muted sm">
+                {{ vehicle.licensePlate }} · {{ vehicle.customerName }}
+              </span>
+            </button>
+          } @empty {
+            <p class="muted">No active vehicles match that search.</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="card">
+      <h2>Services</h2>
+
+      @if (servicesLoading()) {
+        <p class="muted">Loading…</p>
+      } @else if (servicesError()) {
+        <p class="al al--err">{{ servicesError() }}</p>
+      } @else {
+        <div class="svcList">
+          @for (service of services(); track service.serviceTaskId) {
+            <label class="svc">
+              <input
+                type="checkbox"
+                [checked]="selectedServiceIds().has(service.serviceTaskId)"
+                (change)="toggleService(service.serviceTaskId)"
+              />
+              <span class="svc__name">{{ service.name }}</span>
+              <span class="muted sm">{{ service.estimatedDurationInMins }} min</span>
+              <b>{{ money.format(service.basePrice) }}</b>
+            </label>
+          } @empty {
+            <p class="muted">The service catalog is empty — add a service task first.</p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Schedule</h2>
+
+      <label class="field">
+        <span>Day</span>
+        <input
+          class="input"
+          type="date"
+          [min]="today"
+          [ngModel]="scheduledDate()"
+          (ngModelChange)="scheduledDate.set($event)"
+        />
+      </label>
+
+      <label class="field">
+        <span>Start</span>
+        <select
+          class="input"
+          [ngModel]="startsAtMinute()"
+          (ngModelChange)="startsAtMinute.set($event)"
+        >
+          @for (slot of slots; track slot) {
+            <option [ngValue]="slot">{{ fmtMinute(slot) }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Bay</span>
+        <select class="input" [ngModel]="spot()" (ngModelChange)="spot.set($event)">
+          @for (bay of bays; track bay.value) {
+            <option [ngValue]="bay.value">{{ bay.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Technician</span>
+        <select
+          class="input"
+          [ngModel]="technicianId()"
+          (ngModelChange)="technicianId.set($event)"
+        >
+          <option value="">Choose a technician</option>
+          @for (technician of technicians(); track technician.employeeId) {
+            <option [ngValue]="technician.employeeId">{{ technician.fullName }}</option>
+          }
+        </select>
+      </label>
+
+      @if (techniciansLoading()) {
+        <p class="muted sm">Loading the roster…</p>
+      }
+
+      @if (selectedServices().length > 0) {
+        <p class="muted sm">
+          Ends around <b>{{ fmtMinute(estimatedEnd()) }}</b>
+          · {{ estimatedDuration() }} min of work.
+        </p>
+      }
+    </div>
+
+    <div class="card">
+      <h2>Estimate</h2>
+
+      @if (selectedVehicle(); as vehicle) {
+        <p class="muted sm">
+          Booking for <b>{{ vehicle.make }} {{ vehicle.model }}</b> · {{ vehicle.licensePlate }}
+        </p>
+      }
+
+      @if (selectedServices().length === 0) {
+        <p class="muted">Pick services to see the estimate.</p>
+      } @else {
+        <div class="estRows">
+          @for (service of selectedServices(); track service.serviceTaskId) {
+            <div class="estRow">
+              <span>{{ service.name }}</span>
+              <b>{{ money.format(service.basePrice) }}</b>
+            </div>
+          }
+        </div>
+
+        <div class="estRow estRow--total">
+          <span>Services total</span>
+          <b>{{ money.format(estimatedTotal()) }}</b>
+        </div>
+        <p class="muted sm">Tax is added on the invoice when the job completes.</p>
+      }
+
+      <div class="actions">
+        <button class="btn btn--brand" type="button" [disabled]="saving()" (click)="create()">
+          {{ saving() ? 'Booking…' : 'Book work order' }}
+        </button>
+        <a class="btn" routerLink="/work-orders">Cancel</a>
+      </div>
+    </div>
+  </div>
+</div>

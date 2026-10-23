@@ -1,0 +1,107 @@
+<p><a routerLink="/work-orders">← Work Orders</a></p>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else {
+  <div class="card">
+    <div class="titleRow">
+      <div>
+        <h1>{{ ref(order()!.workOrderId) }}</h1>
+        <p class="muted sm">
+          {{ order()!.vehicleInfo }} · {{ order()!.licensePlate }} · {{ order()!.customerName }}
+        </p>
+      </div>
+      <span [class]="'badge badge--' + order()!.state">{{ stateLabel(order()!.state) }}</span>
+    </div>
+
+    @if (actionError()) {
+      <p class="al al--err">{{ actionError() }}</p>
+    }
+
+    <div class="actions">
+      @if (order()!.state === 0) {
+        <button class="btn btn--brand" type="button" [disabled]="busy()" (click)="setState(1)">
+          Start work
+        </button>
+      }
+
+      @if (order()!.state === 1) {
+        <button class="btn btn--brand" type="button" [disabled]="busy()" (click)="setState(2)">
+          Complete job
+        </button>
+      }
+
+      @if (order()!.state === 0 || order()!.state === 1) {
+        <button class="btn btn--danger" type="button" [disabled]="busy()" (click)="setState(3)">
+          Cancel work order
+        </button>
+      }
+
+      @if (order()!.state === 0) {
+        <button class="btn btn--danger" type="button" [disabled]="busy()" (click)="remove()">
+          Delete
+        </button>
+      }
+
+      @if (invoice()) {
+        <a class="btn" [routerLink]="['/invoices', invoice()!.invoiceId]">View invoice</a>
+      }
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="card">
+      <h3>Vehicle &amp; customer</h3>
+      <p>
+        <b>{{ order()!.vehicleInfo }}</b>
+        <span class="muted sm">{{ order()!.licensePlate }}</span>
+      </p>
+      <p class="muted sm">{{ order()!.customerName }}</p>
+    </div>
+
+    <div class="card">
+      <h3>Schedule</h3>
+      <p>
+        {{ fmtDate(order()!.scheduledDate) }} ·
+        {{ fmtMinute(order()!.startsAtMinute) }}–{{ fmtMinute(order()!.endsAtMinute) }}
+      </p>
+      <p class="muted sm">
+        Bay {{ 'ABC'[order()!.spot] }} · {{ order()!.technicianName }}
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Work to be done</h3>
+
+    <table class="plain">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Duration</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (task of order()!.serviceTasks; track task.serviceTaskId) {
+          <tr>
+            <td>{{ task.name }}</td>
+            <td class="muted">{{ task.estimatedDurationInMins }} min</td>
+            <td>{{ money.format(task.basePrice) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td></td>
+          <td class="muted">{{ order()!.estimatedDurationTotalInMins }} min total</td>
+          <td><b>{{ money.format(order()!.totalPrice) }}</b></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p class="muted sm">Tax is added on the invoice when the job completes.</p>
+  </div>
+}

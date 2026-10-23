@@ -50,7 +50,7 @@
       <p class="notice__msg">{{ row.message }}</p>
 
       <div class="notice__actions">
-        @if (portal && row.workOrderId) {
+        @if (row.workOrderId) {
           <button class="btn" type="button" (click)="open(row)">Open</button>
         }
         <button

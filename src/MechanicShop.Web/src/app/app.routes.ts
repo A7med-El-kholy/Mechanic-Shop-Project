@@ -14,6 +14,9 @@ import { PortalShopPage } from './pages/portal/shop';
 import { ReportsPage } from './pages/reports/reports';
 import { ShellPage } from './pages/shell/shell';
 import { VehiclesPage } from './pages/vehicles/vehicles';
+import { WorkOrderDetailPage } from './pages/work-orders/work-order-detail';
+import { WorkOrderNewPage } from './pages/work-orders/work-order-new';
+import { WorkOrdersPage } from './pages/work-orders/work-orders';
 import { PortalShellPage } from './pages/portal/portal-shell';
 import { PortalAppointmentsPage } from './pages/portal/portal-appointments';
 import { PortalDashboardPage } from './pages/portal/portal-dashboard';
@@ -83,6 +86,17 @@ export const routes: Routes = [
         title: 'Customer · Mechanic Shop',
       },
       { path: 'vehicles', component: VehiclesPage, title: 'Vehicles · Mechanic Shop' },
+      { path: 'work-orders', component: WorkOrdersPage, title: 'Work Orders · Mechanic Shop' },
+      {
+        path: 'work-orders/new',
+        component: WorkOrderNewPage,
+        title: 'New work order · Mechanic Shop',
+      },
+      {
+        path: 'work-orders/:workOrderId',
+        component: WorkOrderDetailPage,
+        title: 'Work order · Mechanic Shop',
+      },
       { path: 'invoices', component: InvoicesPage, title: 'Invoices · Mechanic Shop' },
       {
         path: 'invoices/:invoiceId',

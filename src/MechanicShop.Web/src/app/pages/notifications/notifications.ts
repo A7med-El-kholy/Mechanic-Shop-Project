@@ -15,9 +15,8 @@ type Filter = 'all' | 'unread';
 
 /** The prototype's single nt() view: one list for staff and customers, scoped
  * by the API. The `portal` flag comes from route data — the UI is shared, the
- * inbox is not. "Open" renders only where a detail route exists (portal repairs
- * today); until the staff work-orders screen ships, staff rows carry the work
- * order in their message so there are no dead links. */
+ * inbox is not. A row with a work order opens that ticket on the reader's own
+ * side: portal repairs or the staff work-order screen. */
 @Component({
   selector: 'app-notifications',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,11 +99,12 @@ export class NotificationsPage {
   }
 
   protected open(row: NotificationRow): void {
-    if (!this.portal || !row.workOrderId) {
+    if (!row.workOrderId) {
       return;
     }
 
-    void this.router.navigate(['/portal/repairs', row.workOrderId]);
+    void this.router.navigate(
+      [this.portal ? '/portal/repairs' : '/work-orders', row.workOrderId]);
   }
 
   private load(): void {

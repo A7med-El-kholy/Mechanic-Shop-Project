@@ -322,6 +322,48 @@ public sealed class WorkOrdersEndpointsTests
     }
 
     [Fact]
+    public async Task List_SearchByCustomerName_ReturnsTheJob()
+    {
+        using var client = _factory.CreateClient();
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+
+        var attempt = _sequence++;
+        var (vehicleId, _) = await CreateCustomerWithVehicleAsync(client, managerToken, attempt);
+        var taskId = await CreateTaskAsync(client, managerToken, $"Search Task WO-{attempt}", 50m, 30);
+        var technicianId = await CreateTechnicianAsync(client, managerToken, attempt);
+        var slot = TestSlots.Next();
+
+        using var created = await SendAsync(
+            client,
+            HttpMethod.Post,
+            "/api/work-orders",
+            new { vehicleId, serviceTaskIds = new[] { taskId }, scheduledDate = slot.Date, startsAtMinute = slot.Minute, spot = slot.Spot, technicianId },
+            managerToken);
+
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var workOrder = await ReadWorkOrder(created);
+
+        var search = Uri.EscapeDataString($"WO Customer {attempt}");
+
+        using var listed = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/api/work-orders?page=1&pageSize=50&search={search}",
+            null,
+            managerToken);
+
+        listed.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var json = await listed.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+
+        json.GetProperty("items")
+            .EnumerateArray()
+            .Select(i => i.GetProperty("workOrderId").GetGuid())
+            .Should().Contain(workOrder!.WorkOrderId);
+    }
+
+    [Fact]
     public async Task RemoveTask_ReferencedByWorkOrder_ReturnsConflict()
     {
         using var client = _factory.CreateClient();

@@ -42,6 +42,7 @@
           <th>Customer</th>
           <th>Technician</th>
           <th>Status</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -57,6 +58,7 @@
             <td>{{ wo.customerName }}</td>
             <td>{{ wo.technicianName }}</td>
             <td><span class="badge" [class]="'badge badge--' + wo.state">{{ stateLabel(wo.state) }}</span></td>
+            <td><a [routerLink]="['/work-orders', wo.workOrderId]">Open</a></td>
           </tr>
         }
       </tbody>

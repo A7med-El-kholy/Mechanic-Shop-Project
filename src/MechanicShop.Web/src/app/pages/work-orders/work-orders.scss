@@ -1,0 +1,19 @@
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.statusSelect {
+  width: 170px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.bay {
+  font-weight: 600;
+}

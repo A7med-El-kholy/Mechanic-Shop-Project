@@ -93,12 +93,16 @@ export interface ServiceOption {
   estimatedDurationInMins: number;
 }
 
-/** WorkOrderDto as the portal binds it (customer's own repair). */
-export interface RepairDetail extends WorkOrderSummary {
+/** The full WorkOrderDto — the staff detail screen and the customer's repair
+ * ticket read the same document. */
+export interface WorkOrderDetail extends WorkOrderSummary {
   totalPrice: number;
   estimatedDurationTotalInMins: number;
   serviceTasks: ServiceOption[];
 }
+
+/** The portal's name for the same ticket. */
+export type RepairDetail = WorkOrderDetail;
 
 /** Row of the invoices book (staff list). */
 export interface InvoiceRow {

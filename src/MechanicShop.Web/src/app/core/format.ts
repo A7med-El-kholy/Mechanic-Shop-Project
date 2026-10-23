@@ -21,6 +21,12 @@ export function fmtMinute(minute: number): string {
   return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 }
 
+/** The API identifies a work order by GUID; the shop floor calls it WO-XXXXXXXX.
+ * Derived, never stored — the id stays the only identity. */
+export function workOrderRef(workOrderId: string): string {
+  return `WO-${workOrderId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+}
+
 /** ISO timestamp → "just now" / "5m ago" / "3h ago" / "Yesterday" / a date.
  * The prototype seeded human strings ("2 min ago"); real rows carry the real
  * timestamp, so the label is derived at render time. */

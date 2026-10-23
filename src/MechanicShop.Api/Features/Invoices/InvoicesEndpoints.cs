@@ -44,11 +44,12 @@ public static class InvoicesEndpoints
     private static async Task<IResult> ListAsync(
         int page = 1,
         int pageSize = 10,
+        Guid? workOrderId = null,
         ISender sender = null!,
         HttpContext httpContext = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetInvoicesQuery(page, pageSize), cancellationToken);
+        var result = await sender.Send(new GetInvoicesQuery(page, pageSize, workOrderId), cancellationToken);
 
         return result.IsError
             ? result.TopError.ToProblem(httpContext)

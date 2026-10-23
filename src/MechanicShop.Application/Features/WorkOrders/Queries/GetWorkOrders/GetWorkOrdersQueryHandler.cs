@@ -41,9 +41,15 @@ public sealed class GetWorkOrdersQueryHandler(IAppDbContext context)
         {
             var normalized = query.Search.Trim().ToLower();
 
+            // The list's one search box answers "which job is this?" — plate,
+            // car and owner are all things a person at the counter knows.
             ordersQuery = ordersQuery.Where(w =>
                 w.Vehicle != null &&
-                w.Vehicle.LicensePlate.ToLower().Contains(normalized));
+                (w.Vehicle.LicensePlate.ToLower().Contains(normalized) ||
+                 w.Vehicle.Make.ToLower().Contains(normalized) ||
+                 w.Vehicle.Model.ToLower().Contains(normalized) ||
+                 (w.Vehicle.Customer != null &&
+                  w.Vehicle.Customer.Name.ToLower().Contains(normalized))));
         }
 
         // Timeline order: the day's flow as a reader scans it, then stable ids for
