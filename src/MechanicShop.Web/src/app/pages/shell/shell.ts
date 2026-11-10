@@ -1,13 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
 import { NotificationBadgeService } from '../../core/notifications';
 
-/** Staff navigation, mirroring the prototype's manager tab list. */
+/** Staff shell. The nav is the role's map: managers see the whole shop, technicians
+ * see their four destinations (the prototype's T tree — same pages, "My" labels). */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -18,7 +24,7 @@ export class ShellPage {
   protected readonly auth = inject(AuthStore);
   protected readonly badge = inject(NotificationBadgeService);
 
-  protected readonly liveNav = [
+  protected readonly managerNav = [
     { path: 'dashboard', label: 'Dashboard', icon: '▦' },
     { path: 'customers', label: 'Customers', icon: '☰' },
     { path: 'vehicles', label: 'Vehicles', icon: '⌂' },
@@ -30,6 +36,19 @@ export class ShellPage {
     { path: 'reports', label: 'Reports', icon: 'Σ' },
     { path: 'notifications', label: 'Notifications', icon: '◔' },
   ];
+
+  protected readonly technicianNav = [
+    { path: 'tech-home', label: 'My Dashboard', icon: '▦' },
+    { path: 'work-orders', label: 'My Work Orders', icon: '≡' },
+    { path: 'appointments', label: 'My Schedule', icon: '◷' },
+    { path: 'notifications', label: 'Notifications', icon: '◔' },
+  ];
+
+  protected readonly nav = computed(() =>
+    this.auth.isManager() ? this.managerNav : this.technicianNav);
+
+  protected readonly currentPath = () =>
+    this.router.url.split('/').pop() ?? '';
 
   protected readonly initials = computed(() => {
     const name = this.auth.fullName().trim();

@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Employees;
 
 using MediatR;
 
@@ -17,26 +18,60 @@ namespace MechanicShop.Application.Features.WorkOrders.Commands.UpdateWorkOrderS
 
 public sealed class UpdateWorkOrderStatusCommandHandler(
     IAppDbContext context,
+    IUser caller,
     ILogger<UpdateWorkOrderStatusCommandHandler> logger)
     : IRequestHandler<UpdateWorkOrderStatusCommand, Result<Updated>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly IUser _caller = caller;
     private readonly ILogger<UpdateWorkOrderStatusCommandHandler> _logger = logger;
 
     public async Task<Result<Updated>> Handle(UpdateWorkOrderStatusCommand command, CancellationToken cancellationToken)
     {
+        var scope = await StaffScope.ResolveMineAsync(_context, _caller, cancellationToken);
+
+        if (scope.IsError)
+        {
+            return scope.Errors;
+        }
+
+        var mine = scope.Value.TechnicianId;
+
         var workOrder = await _context.WorkOrders
             .Include(w => w.ServiceTasks)
                 .ThenInclude(t => t.Part)
             .Include(w => w.Vehicle)
-            .FirstOrDefaultAsync(w => w.Id == command.WorkOrderId, cancellationToken);
+            .FirstOrDefaultAsync(
+                w => w.Id == command.WorkOrderId && (mine == null || w.TechnicianId == mine),
+                cancellationToken);
 
         if (workOrder is null)
         {
+            // Same wall as reads: a foreign ticket does not exist for this caller.
             return WorkOrderErrors.NotFound(command.WorkOrderId);
         }
 
-        var updateResult = workOrder.UpdateState((WorkOrderState)command.State);
+        var before = workOrder.State;
+        var target = (WorkOrderState)command.State;
+
+        // The prototype's role map: a technician works their job forward step by
+        // step (start, complete); only the counter can route it sideways (cancel,
+        // or jump steps). Enforced here because that rule is about hands, not
+        // about who owns the HTTP surface.
+        if (scope.Value.TechnicianId is not null)
+        {
+            var stepForward = before == WorkOrderState.Scheduled && target == WorkOrderState.InProgress ||
+                              before == WorkOrderState.InProgress && target == WorkOrderState.Completed;
+
+            if (!stepForward)
+            {
+                return Error.Forbidden(
+                    "WorkOrder_TechnicianTransition",
+                    "Technicians advance their own job one step at a time (start, complete).");
+            }
+        }
+
+        var updateResult = workOrder.UpdateState(target);
 
         if (updateResult.IsError)
         {

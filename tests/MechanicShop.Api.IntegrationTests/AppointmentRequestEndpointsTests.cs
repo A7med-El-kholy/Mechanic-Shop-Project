@@ -73,6 +73,74 @@ public sealed class AppointmentRequestEndpointsTests
     }
 
     [Fact]
+    public async Task Create_WithTriageNotesAndUrgency_PersistsForReview()
+    {
+        using var client = _factory.CreateClient();
+
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+        var (_, ownVehicleId, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
+
+        const string report =
+            "My front brakes grind when I stop.\nWhen does it happen? When braking\nAny dashboard warning lights? Yes";
+
+        using var response = await client.SendAsync(
+            RequestMessage(
+                HttpMethod.Post,
+                "/api/appointment-requests",
+                new
+                {
+                    vehicleId = ownVehicleId,
+                    serviceTaskId = (Guid?)null,
+                    preferredDate = "2027-05-01",
+                    notes = report,
+                    urgency = 2
+                },
+                customerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        using var mine = await client.SendAsync(
+            RequestMessage(HttpMethod.Get, "/api/appointment-requests/mine", null, customerToken),
+            TestContext.Current.CancellationToken);
+        mine.EnsureSuccessStatusCode();
+
+        var rows = (await mine.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .EnumerateArray()
+            .ToList();
+
+        var row = rows.First(r => r.GetProperty("vehicleId").GetGuid() == ownVehicleId);
+
+        row.GetProperty("notes").GetString().Should().Be(report);
+        row.GetProperty("urgency").GetInt32().Should().Be(2); // High, as reported
+    }
+
+    [Fact]
+    public async Task Create_UnknownUrgency_ReturnsValidationProblem()
+    {
+        using var client = _factory.CreateClient();
+
+        var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
+        var (_, ownVehicleId, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
+
+        using var response = await client.SendAsync(
+            RequestMessage(
+                HttpMethod.Post,
+                "/api/appointment-requests",
+                new
+                {
+                    vehicleId = ownVehicleId,
+                    serviceTaskId = (Guid?)null,
+                    preferredDate = "2027-05-01",
+                    urgency = 99
+                },
+                customerToken),
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Create_OtherCustomersVehicle_ReturnsForbidden()
     {
         using var client = _factory.CreateClient();

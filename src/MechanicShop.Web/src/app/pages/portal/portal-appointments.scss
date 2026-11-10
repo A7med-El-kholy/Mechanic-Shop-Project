@@ -1,40 +1,58 @@
-h1 {
-  margin-bottom: 2px;
-}
-
-h1 + p.muted {
-  margin-bottom: 14px;
-}
-
-.g2 {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 14px;
-}
-
-label {
+.requestForm {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 1rem;
 }
 
-.reqRow {
+.requestList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.requestRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  transition: all var(--transition);
 }
 
-.reqRow:last-child {
-  border-bottom: none;
+.requestRow:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
 }
 
-@media (max-width: 900px) {
-  .g2 {
-    grid-template-columns: 1fr;
-  }
+.requestBadge {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.requestInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.requestPlate {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.requestService {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.requestDate {
+  margin-top: 0.15rem;
 }

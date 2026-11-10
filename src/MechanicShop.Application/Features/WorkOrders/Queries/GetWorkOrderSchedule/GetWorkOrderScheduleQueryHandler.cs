@@ -1,4 +1,5 @@
 using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Employees;
 using MechanicShop.Application.Features.WorkOrders.Dtos;
 
 using MediatR;
@@ -10,15 +11,38 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrderSchedule;
 
-public sealed class GetWorkOrderScheduleQueryHandler(IAppDbContext context)
+public sealed class GetWorkOrderScheduleQueryHandler(IAppDbContext context, IUser caller)
     : IRequestHandler<GetWorkOrderScheduleQuery, Result<List<ScheduleJobDto>>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly IUser _caller = caller;
 
     public async Task<Result<List<ScheduleJobDto>>> Handle(
         GetWorkOrderScheduleQuery query,
         CancellationToken cancellationToken)
     {
+        var scope = await StaffScope.ResolveMineAsync(_context, _caller, cancellationToken);
+
+        if (scope.IsError)
+        {
+            return scope.Errors;
+        }
+
+        // A technician's board IS their lane: any lane id arrives only from a
+        // manager. An explicit ask for someone else's view of the day is refused
+        // outright; a plain day fetch silently narrows to their own hands.
+        if (scope.Value.TechnicianId is { } mine)
+        {
+            if (query.TechnicianId is { } asked && asked != mine)
+            {
+                return Error.Forbidden(
+                    "Schedule_ForeignTechnician",
+                    "You can only view your own schedule lane.");
+            }
+
+            query = query with { TechnicianId = mine };
+        }
+
         // A board is one bounded day, so loading the entities (instead of a
         // projection) lets EndsAtMinute keep its domain rule — a job is never
         // shorter than one grid slot — without duplicating the arithmetic here.

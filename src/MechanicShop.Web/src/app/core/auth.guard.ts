@@ -28,3 +28,13 @@ export const portalGuard: CanActivateFn = (_route, state) => {
 
   return auth.hasStaffRole() ? router.createUrlTree(['/dashboard']) : true;
 };
+
+/** The counter surfaces a technician never sees: shop-wide customers, vehicles,
+ * reports, booking. A technician typing such a URL lands back in their own
+ * workspace instead of staring at an empty page; the API keeps its own wall. */
+export const managerGuard: CanActivateFn = () => {
+  const auth = inject(AuthStore);
+  const router = inject(Router);
+
+  return auth.isManager() ? true : router.createUrlTree(['/tech-home']);
+};

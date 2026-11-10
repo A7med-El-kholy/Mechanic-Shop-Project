@@ -1,0 +1,83 @@
+.head {
+  margin-bottom: 14px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.dateInput {
+  width: 175px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.techHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.techHead h3 {
+  margin: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill--busy {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: #f4f8ff;
+}
+
+.pill--free {
+  color: var(--ok);
+  border-color: var(--ok);
+  background: #f3fbf7;
+}
+
+.rows {
+  margin-top: 10px;
+}
+
+.jobRow {
+  display: block;
+  color: inherit;
+  padding: 9px 6px;
+  border-top: 1px solid var(--line);
+}
+
+.jobRow:hover {
+  background: #fafbfc;
+}
+
+.jobRow__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}

@@ -30,6 +30,12 @@
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
+  <!-- OpenAPI UI for the API (first real use: F16 portal demo story). Version 8.x
+       targets net8.0 and forward-rolls on net10.0 at runtime. -->
+  <ItemGroup>
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.0.0" />
+  </ItemGroup>
+
   <!-- Real SQL Server in a container for database-backed integration tests.
        First real use: F2 auth tests (the ApiFactory comment anticipated this). -->
   <ItemGroup>

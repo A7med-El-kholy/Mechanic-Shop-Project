@@ -21,7 +21,9 @@ public static class AppointmentRequestMapper
             task?.Name,
             task?.BasePrice,
             request.PreferredDate,
-            (int)request.Status);
+            (int)request.Status,
+            request.Notes,
+            request.Urgency);
     }
 
     public static List<AppointmentRequestDto> ToDtos(this IEnumerable<AppointmentRequest> requests) =>

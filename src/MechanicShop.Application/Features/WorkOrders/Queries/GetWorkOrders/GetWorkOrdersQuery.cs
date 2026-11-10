@@ -11,5 +11,6 @@ public sealed record GetWorkOrdersQuery(
     int Page = 1,
     int PageSize = 10,
     int? State = null,
-    string? Search = null)
+    string? Search = null,
+    DateOnly? ScheduledDate = null)
     : IRequest<Result<PaginatedList<WorkOrderDto>>>;

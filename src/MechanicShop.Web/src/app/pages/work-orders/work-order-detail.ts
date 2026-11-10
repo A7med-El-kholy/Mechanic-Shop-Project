@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { problemMessage } from '../../core/api';
+import { AuthStore } from '../../core/auth-store';
 import { fmtDate, fmtMinute, workOrderRef } from '../../core/format';
 import {
   InvoiceRow,
@@ -24,6 +25,7 @@ import {
 export class WorkOrderDetailPage {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  protected readonly auth = inject(AuthStore);
 
   readonly workOrderId = input.required<string>();
 

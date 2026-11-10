@@ -33,6 +33,14 @@ export class DashboardPage {
   protected readonly pending = computed(
     () => this.requests().filter(r => r.status === 0));
 
+  /** The first line of the customer's report, cut for the table cell — the
+   * full hover text carries everything they sent. */
+  protected reportLine(notes: string): string {
+    const first = notes.split('\n')[0] ?? '';
+
+    return first.length > 80 ? `${first.slice(0, 79)}…` : first;
+  }
+
   ngOnInit(): void {
     forkJoin({
       orders: this.http.get<PaginatedList<WorkOrderSummary>>('/api/work-orders?page=1&pageSize=6'),

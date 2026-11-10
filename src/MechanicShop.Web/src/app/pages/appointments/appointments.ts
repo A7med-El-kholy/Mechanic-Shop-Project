@@ -1,10 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { problemMessage } from '../../core/api';
-import { fmtDate, fmtMinute, workOrderRef } from '../../core/format';
+import { AuthStore } from '../../core/auth-store';
+import {
+  fmtDate,
+  fmtMinute,
+  shiftIsoDate,
+  todayIso,
+  workOrderRef,
+} from '../../core/format';
+import { ScheduleService } from '../../core/schedule';
 import {
   EmployeeSummary,
   ScheduleJob,
@@ -19,12 +27,6 @@ const SHOP_MINUTES = SHOP_CLOSE_MINUTE - SHOP_OPEN_MINUTE;
 /** Two-hour gridlines, matching the prototype's hs = [8, 10, …, 20]. */
 const HOUR_MARKS = [8, 10, 12, 14, 16, 18, 20];
 
-function todayIso(): string {
-  const now = new Date();
-
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
 /** Appointments is the day board: one lane per technician, blocks placed by the
  * same minute numbers the API stores. A block is a link into the work order —
  * the board is a read model, so nothing here mutates a schedule. */
@@ -36,7 +38,8 @@ function todayIso(): string {
   styleUrl: './appointments.scss',
 })
 export class AppointmentsPage {
-  private readonly http = inject(HttpClient);
+  private readonly schedule = inject(ScheduleService);
+  private readonly auth = inject(AuthStore);
 
   protected readonly technicians = signal<EmployeeSummary[]>([]);
   protected readonly jobs = signal<ScheduleJob[]>([]);
@@ -56,7 +59,15 @@ export class AppointmentsPage {
   protected readonly lanes = computed(() => {
     const jobs = this.jobs();
 
-    return this.technicians().map(technician => ({
+    // The manager's board lays out every lane — empty ones are free hands.
+    // A technician's board IS their own lane: the API returns only their jobs,
+    // so the other (all-empty) lanes would be someone else's silent schedule.
+    const people = this.auth.isManager()
+      ? this.technicians()
+      : this.technicians().filter(technician =>
+          jobs.some(job => job.technicianId === technician.employeeId));
+
+    return people.map(technician => ({
       technicianId: technician.employeeId,
       name: technician.fullName,
       jobs: jobs.filter(job => job.technicianId === technician.employeeId),
@@ -66,7 +77,7 @@ export class AppointmentsPage {
   protected readonly scheduledCount = computed(() => this.jobs().length);
 
   ngOnInit(): void {
-    this.http.get<EmployeeSummary[]>('/api/employees/technicians').subscribe({
+    this.schedule.technicians().subscribe({
       next: technicians => this.technicians.set(technicians),
       error: (error: HttpErrorResponse) => {
         this.pageError.set(problemMessage(error));
@@ -81,19 +92,16 @@ export class AppointmentsPage {
     this.loading.set(true);
     this.pageError.set(null);
 
-    this.http
-      .get<ScheduleJob[]>(
-        `/api/work-orders/schedule?date=${encodeURIComponent(this.date())}`)
-      .subscribe({
-        next: jobs => {
-          this.jobs.set(jobs);
-          this.loading.set(false);
-        },
-        error: (error: HttpErrorResponse) => {
-          this.pageError.set(problemMessage(error));
-          this.loading.set(false);
-        },
-      });
+    this.schedule.jobsForDate(this.date()).subscribe({
+      next: jobs => {
+        this.jobs.set(jobs);
+        this.loading.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.pageError.set(problemMessage(error));
+        this.loading.set(false);
+      },
+    });
   }
 
   protected onDateChange(value: string): void {
@@ -106,9 +114,7 @@ export class AppointmentsPage {
   }
 
   protected shiftDay(days: number): void {
-    const current = new Date(`${this.date()}T00:00:00Z`);
-    current.setUTCDate(current.getUTCDate() + days);
-    this.date.set(current.toISOString().slice(0, 10));
+    this.date.set(shiftIsoDate(this.date(), days));
     this.load();
   }
 

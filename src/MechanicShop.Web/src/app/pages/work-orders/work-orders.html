@@ -1,6 +1,6 @@
 <div class="head">
   <div>
-    <h1>Work Orders</h1>
+    <h1>{{ auth.isManager() ? 'Work Orders' : 'My Work Orders' }}</h1>
     <p class="muted sm">
       @if (data()) {
         {{ data()!.totalCount }} job(s) on the book — search reaches plate, car and customer.
@@ -9,7 +9,9 @@
       }
     </p>
   </div>
-  <a class="btn btn--brand" routerLink="/work-orders/new">+ New work order</a>
+  @if (auth.isManager()) {
+    <a class="btn btn--brand" routerLink="/work-orders/new">+ New work order</a>
+  }
 </div>
 
 <div class="card">

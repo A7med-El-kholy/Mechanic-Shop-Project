@@ -18,6 +18,13 @@ public sealed class AppointmentRequestConfiguration : IEntityTypeConfiguration<A
 
         builder.Property(r => r.Status);
 
+        // The triage record: what the customer reported and what their assistant
+        // session claimed about urgency. Null urgency = nobody assessed it.
+        builder.Property(r => r.Notes)
+               .HasMaxLength(AppointmentRequest.NotesMaxLength);
+
+        builder.Property(r => r.Urgency);
+
         // A request hangs off the customer; when the customer goes (only possible
         // with a clean history), their requests go with them.
         builder.HasOne(r => r.Customer)

@@ -16,6 +16,13 @@ public sealed class Employee : Entity
 
     public EmployeeRole Role { get; private set; }
 
+    /// <summary>
+    /// The Identity account this roster row answers to ("my work orders"), or null
+    /// while the tech has no login. Soft reference like Customer.UserId: identity
+    /// rows may come and go without cascading through the roster.
+    /// </summary>
+    public string? UserId { get; private set; }
+
 #pragma warning disable CS8618
 
     private Employee()
@@ -52,5 +59,22 @@ public sealed class Employee : Entity
         }
 
         return new Employee(id, normalized, role);
+    }
+
+    /// <summary>
+    /// Binds this roster entry to a staff login. "My work orders" resolves through
+    /// this link, so the hands an account answers for are whoever the roster says —
+    /// never a client-supplied id.
+    /// </summary>
+    public Result<Updated> LinkUserAccount(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return EmployeeErrors.UserIdRequired;
+        }
+
+        UserId = userId;
+
+        return Result.Updated;
     }
 }

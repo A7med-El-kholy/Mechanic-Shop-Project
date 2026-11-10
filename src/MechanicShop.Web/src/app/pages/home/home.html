@@ -1,0 +1,195 @@
+<!-- Hero -->
+<section class="hero">
+  <div class="hero__bg">
+    <img class="hero__img car-img" src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80" alt="Mechanic working on a car" />
+  </div>
+  <div class="container">
+    <div class="hero__content fadeIn">
+      <div class="hero__kicker">
+        <span></span>
+        Open 7 Days · AI-Powered Diagnostics
+      </div>
+      <h1>Your car, in expert hands.</h1>
+      <p class="hero__lead">
+        Full-service auto repair and maintenance — diagnostics, brakes,
+        electrical, tyres and pre-purchase inspections. Honest quotes,
+        certified mechanics, and AI-assisted triage so you know what's
+        wrong before you even book.
+      </p>
+      <div class="hero__actions">
+        @if (auth.isAuthenticated()) {
+          <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Try AI Assistant</a>
+          <a routerLink="/portal/appointments" class="btn btn--outline btn--lg">Book Appointment</a>
+        } @else {
+          <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Try AI Assistant</a>
+          <a routerLink="/login" class="btn btn--outline btn--lg">Sign In</a>
+        }
+      </div>
+      <div class="hero__stats">
+        @for (stat of stats; track stat.num) {
+          <div class="stat">
+            <span class="stat__num">{{ stat.num }}</span>
+            <span class="stat__lab">{{ stat.lab }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Hero side image -->
+    <div class="hero__side fadeIn" style="animation-delay: 0.2s;">
+      <div class="car-hero">
+        <img class="car-img" src="https://images.unsplash.com/photo-1494976388531-d1058494cba5?w=800&q=80" alt="Modern car in workshop" />
+        <div class="car-overlay"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Services -->
+<section class="section section--sm">
+  <div class="container">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto 3rem;">
+      <h2>Our Services</h2>
+      <p class="muted" style="font-size: 1.15rem">Everything your vehicle needs, from oil changes to full engine rebuilds.</p>
+    </div>
+    <div class="grid grid--4">
+      @for (service of services; track service.title) {
+        <div class="card serviceCard fadeIn">
+          <div class="service__media">
+            <img class="car-thumb" [src]="service.img" [alt]="service.title" />
+            <span class="service__tag">{{ service.tag }}</span>
+          </div>
+          <div class="card__body">
+            <div style="font-size: 2rem; margin-bottom: 0.75rem">{{ service.icon }}</div>
+            <h3 class="service__title">{{ service.title }}</h3>
+            <p class="service__desc">{{ service.desc }}</p>
+            <div class="service__footer">
+              <span class="service__price">{{ service.price }} <span style="font-weight:500;font-size:0.85rem;color:var(--muted)">{{ service.priceUnit }}</span></span>
+              <a routerLink="/login" class="btn btn--sm btn--ghost">Book</a>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- AI Centerpiece -->
+<section class="section--dark aiCenterpiece">
+  <div class="aiCenterpiece__bg"></div>
+  <div class="container">
+    <div class="aiHeader fadeIn">
+      <div class="aiHeader__kicker">
+        <span></span>
+        Artificial Intelligence
+      </div>
+      <h2>Describe the problem. Get answers before you visit.</h2>
+      <p>
+        Our AI Assistant guides you through a quick triage — vehicle, symptoms,
+        and urgency — then submits a detailed request to the workshop for human
+        review. Nothing is booked automatically; a real mechanic confirms.
+      </p>
+    </div>
+
+    <div class="aiSteps fadeIn" style="animation-delay: 0.1s;">
+      <div class="aiStep">
+        <div class="aiStep__num">1</div>
+        <h3>Select Vehicle</h3>
+        <p>Choose your car from your profile.</p>
+      </div>
+      <div class="aiStep">
+        <div class="aiStep__num">2</div>
+        <h3>Describe Symptoms</h3>
+        <p>Tell us what you notice — noise, smell, warning lights.</p>
+      </div>
+      <div class="aiStep">
+        <div class="aiStep__num">3</div>
+        <h3>Review & Send</h3>
+        <p>Get urgency + inspection areas, then submit for review.</p>
+      </div>
+    </div>
+
+    <div style="text-align: center">
+      <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Launch AI Assistant</a>
+    </div>
+  </div>
+</section>
+
+<!-- Why us -->
+<section class="section">
+  <div class="container">
+    <div class="feature fadeIn">
+      <div class="feature__text">
+        <h2>Why drivers choose Mechanic Shop</h2>
+        <p>
+          Certified mechanics, transparent pricing, and AI-assisted diagnostics.
+          We treat every vehicle like it's our own — from a quick oil change to
+          a full engine rebuild.
+        </p>
+        <ul class="feature__checks">
+          <li>ASE-certified technicians on every job</li>
+          <li>Upfront pricing — no hidden fees</li>
+          <li>12-month parts & labour warranty</li>
+          <li>AI triage before you book</li>
+          <li>Loaner cars available on request</li>
+        </ul>
+        <a routerLink="/login" class="btn btn--primary">Get Started</a>
+      </div>
+      <div class="feature__media">
+        <div class="car-hero">
+          <img class="car-img" src="https://images.unsplash.com/photo-1603774675286-59789361f350?w=800&q=80" alt="Workshop interior" />
+          <div class="car-overlay"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="section section--sm">
+  <div class="container">
+    <div style="text-align: center; margin-bottom: 3rem">
+      <h2>Customer Stories</h2>
+      <p class="muted" style="font-size: 1.15rem">Real people, real repairs.</p>
+    </div>
+    <div class="grid grid--3">
+      @for (t of testimonials; track t.name) {
+        <div class="card testimonial fadeIn">
+          <p class="testimonial__quote">{{ t.quote }}</p>
+          <div class="testimonial__author">
+            <img class="testimonial__avatar" [src]="t.avatar" [alt]="t.name" />
+            <div>
+              <span class="testimonial__name">{{ t.name }}</span>
+              <span class="testimonial__role">{{ t.role }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="section--sm">
+  <div class="container">
+    <div class="trust">
+      @for (logo of trustLogos; track logo.alt) {
+        <div class="trustItem">
+          <img [src]="logo.src" [alt]="logo.alt" loading="lazy" />
+          {{ logo.alt }}
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="ctaStrip fadeIn">
+  <div class="container">
+    <h2>Ready to service your vehicle?</h2>
+    <p>Book online in under a minute. We'll confirm your slot within the hour.</p>
+    <div class="hero__actions" style="justify-content: center">
+      <a routerLink="/login" class="btn btn--primary btn--lg">Book My Appointment</a>
+    </div>
+  </div>
+</section>

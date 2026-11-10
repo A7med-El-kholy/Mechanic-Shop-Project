@@ -1,0 +1,8 @@
+# syntax=docker/dockerfile:1
+# Mechanic Shop SPA — nginx serving pre-built Angular output.
+# Build context must contain: browser/ (from npm run build) and nginx/default.conf.
+FROM nginx:alpine
+COPY browser/ /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

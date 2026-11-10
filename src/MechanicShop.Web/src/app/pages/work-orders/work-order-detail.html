@@ -33,13 +33,13 @@
         </button>
       }
 
-      @if (order()!.state === 0 || order()!.state === 1) {
+      @if ((order()!.state === 0 || order()!.state === 1) && auth.isManager()) {
         <button class="btn btn--danger" type="button" [disabled]="busy()" (click)="setState(3)">
           Cancel work order
         </button>
       }
 
-      @if (order()!.state === 0) {
+      @if (order()!.state === 0 && auth.isManager()) {
         <button class="btn btn--danger" type="button" [disabled]="busy()" (click)="remove()">
           Delete
         </button>

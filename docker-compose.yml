@@ -1,0 +1,50 @@
+services:
+  # SQL Server 2022 Express — dev database. Already running as mechanicshop-sql.
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      SA_PASSWORD: ${SQL_PASSWORD:-Mech@Shop_Dev2026}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -C -N -Q "SELECT 1" || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    restart: unless-stopped
+
+  # The API: JWT auth, EF Core + SQL Server, Swagger at /swagger.
+  api:
+    image: mechanic-shop-api:latest
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MechanicShop: "Server=sql,1433;Database=MechanicShop;User Id=sa;Password=${SQL_PASSWORD:-Mech@Shop_Dev2026};TrustServerCertificate=True;Encrypt=False"
+      JwtSettings__Secret: ${JWT_SECRET:-please-change-me-this-is-a-dev-secret}
+      JwtSettings__Issuer: MechanicShop
+      JwtSettings__Audience: MechanicShopPortal
+      Seed__ManagerEmail: manager@mechanicshop.dev
+      Seed__ManagerPassword: ${MANAGER_PASSWORD:-Manager@Dev2026}
+    ports:
+      - "5255:8080"
+    depends_on:
+      sql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # The customer portal (Angular + nginx). /api calls proxied to the api container.
+  spa:
+    image: mechanic-shop-spa:latest
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  sql-data:

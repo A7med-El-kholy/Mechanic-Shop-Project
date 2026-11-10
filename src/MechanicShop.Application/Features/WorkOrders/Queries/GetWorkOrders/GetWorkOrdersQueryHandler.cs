@@ -1,5 +1,6 @@
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Application.Common.Models;
+using MechanicShop.Application.Features.Employees;
 using MechanicShop.Application.Features.WorkOrders.Dtos;
 using MechanicShop.Application.Features.WorkOrders.Mappers;
 
@@ -12,13 +13,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MechanicShop.Application.Features.WorkOrders.Queries.GetWorkOrders;
 
-public sealed class GetWorkOrdersQueryHandler(IAppDbContext context)
+public sealed class GetWorkOrdersQueryHandler(IAppDbContext context, IUser caller)
     : IRequestHandler<GetWorkOrdersQuery, Result<PaginatedList<WorkOrderDto>>>
 {
     private readonly IAppDbContext _context = context;
+    private readonly IUser _caller = caller;
 
     public async Task<Result<PaginatedList<WorkOrderDto>>> Handle(GetWorkOrdersQuery query, CancellationToken cancellationToken)
     {
+        // The caller answers for whose jobs these are: a technician only ever reads
+        // back their own roster hands, resolved from the token — not from a query
+        // string a client could edit.
+        var scope = await StaffScope.ResolveMineAsync(_context, _caller, cancellationToken);
+
+        if (scope.IsError)
+        {
+            return scope.Errors;
+        }
+
         // Defensive input handling: the API accepts any ints, handlers decide bounds.
         var page = Math.Max(query.Page, 1);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
@@ -30,6 +42,16 @@ public sealed class GetWorkOrdersQueryHandler(IAppDbContext context)
             .Include(w => w.Technician)
             .AsNoTracking()
             .AsQueryable();
+
+        if (query.ScheduledDate is { } day)
+        {
+            ordersQuery = ordersQuery.Where(w => w.ScheduledDate == day);
+        }
+
+        if (scope.Value.TechnicianId is { } mine)
+        {
+            ordersQuery = ordersQuery.Where(w => w.TechnicianId == mine);
+        }
 
         if (query.State is not null)
         {

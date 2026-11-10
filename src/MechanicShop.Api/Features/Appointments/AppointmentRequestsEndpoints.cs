@@ -5,6 +5,7 @@ using MechanicShop.Application.Features.Appointments.Commands.CreateAppointmentR
 using MechanicShop.Application.Features.Appointments.Queries.GetAppointmentRequests;
 using MechanicShop.Application.Features.Appointments.Queries.GetMyAppointmentRequests;
 
+using MechanicShop.Domain.Appointments;
 using MechanicShop.Domain.Common.Results;
 
 using MediatR;
@@ -55,7 +56,9 @@ public static class AppointmentRequestsEndpoints
             new CreateAppointmentRequestCommand(
                 request.VehicleId,
                 request.ServiceTaskId,
-                request.PreferredDate),
+                request.PreferredDate,
+                request.Notes,
+                (ReportedUrgency?)request.Urgency),
             cancellationToken);
 
         return result.IsError

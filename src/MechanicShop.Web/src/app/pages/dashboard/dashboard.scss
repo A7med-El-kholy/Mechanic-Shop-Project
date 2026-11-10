@@ -1,59 +1,84 @@
-:host {
-  display: block;
-}
-
-.head {
+.statCard {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 1rem;
 }
 
-.stats {
+.stat__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-2);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
+  place-items: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
-.stat {
+.statCard:hover .stat__icon {
+  background: var(--brand);
+  color: var(--brand-ink);
+  transform: rotate(-5deg);
+}
+
+.stat__body .stat__num {
   display: block;
-  text-decoration: none;
-  color: inherit;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 1.75rem;
+  color: var(--ink);
 }
 
-.stat .num {
+.stat__body .stat__label {
   display: block;
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.stat .label {
+  font-size: 0.8rem;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-top: 0.1rem;
 }
 
-.stat:hover {
-  border-color: #c4d6ff;
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
 }
 
-.table-card {
-  overflow-x: auto;
+.card__header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.count {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  color: var(--brand-2);
+  font-size: 0.95rem;
+  margin-left: 0.4rem;
 }
 
 .bay {
-  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--brand-2);
 }
 
-.requests .count {
-  display: inline-block;
-  min-width: 22px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: #fdf1d6;
-  color: #8a5b00;
-  font-size: 12px;
-  font-weight: 700;
+.rpt {
+  max-width: 40ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty__text {
   text-align: center;
+  padding: 2rem 0;
+}
+
+table.plain tr {
+  transition: background var(--transition);
 }

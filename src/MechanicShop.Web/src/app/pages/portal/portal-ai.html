@@ -1,0 +1,202 @@
+<div class="aiPage">
+  <!-- Header -->
+  <header class="aiHeader">
+    <div class="container">
+      <a routerLink="/portal" class="btn btn--ghost btn--sm">← Back to Portal</a>
+      <div style="flex:1"></div>
+      <span class="badge badge--ai">AI Assistant · Triage</span>
+    </div>
+  </header>
+
+  <div class="container">
+    @if (loading()) {
+      <div class="card" style="text-align:center; padding: 4rem 0">
+        <div style="font-size:3rem; margin-bottom:1rem">⚡</div>
+        <p class="muted">Loading your vehicles…</p>
+      </div>
+    } @else if (pageError()) {
+      <div class="al al--err">{{ pageError() }}</div>
+    } @else if (vehicles().length === 0) {
+      <div class="card glassPanel" style="text-align:center">
+        <div style="font-size:3rem; margin-bottom:1rem">🚗</div>
+        <h2>No vehicles on file</h2>
+        <p class="muted">The workshop needs to register your vehicle first. Please contact them.</p>
+      </div>
+    } @else {
+      @if (step() === 0) {
+        <!-- Step 0: Vehicle + description -->
+        <div class="glassPanel fadeIn">
+          <div class="stepHeader">
+            <span class="badge badge--brand">Step 1 of 4</span>
+            <h2>Tell us about your car</h2>
+          </div>
+
+          <div class="grid grid--2" style="margin-bottom: 2rem">
+            <div class="field">
+              <span>Vehicle <span class="req">*</span></span>
+              <select class="select" [ngModel]="vehicleId()" (ngModelChange)="vehicleId.set($event)">
+                <option value="" disabled>Choose a vehicle…</option>
+                @for (vehicle of vehicles(); track vehicle.vehicleId) {
+                  <option [value]="vehicle.vehicleId">
+                    {{ vehicle.licensePlate }} — {{ vehicle.vehicleInfo }}
+                  </option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Describe what you notice <span class="req">*</span></span>
+            <textarea
+              class="textarea"
+              [ngModel]="report()"
+              (ngModelChange)="report.set($event)"
+              placeholder="e.g. My front brakes grind when I stop, and there's a burning smell."
+              rows="5"></textarea>
+            <div class="muted sm">Be specific — noises, smells, warning lights, when it happens.</div>
+          </div>
+
+          @if (pageError()) {
+            <div class="al al--err">{{ pageError() }}</div>
+          }
+
+          <button class="btn btn--primary btn--full" (click)="continueToQuestions()">
+            Next →
+          </button>
+        </div>
+      }
+
+      @if (step() === 1) {
+        <!-- Step 1-3: Questions (chat style) -->
+        <div class="grid grid--2" style="gap: 2rem">
+          <!-- Chat transcript -->
+          <div class="card glassPanel" style="min-height: 500px; display:flex; flex-direction:column">
+            <div class="stepHeader">
+              <span class="badge badge--ai">Step 2 of 4</span>
+              <h2>Quick Questions</h2>
+            </div>
+            <div class="chatWindow">
+              <div class="msg msg--you">
+                <div class="msgBubble">{{ report() }}</div>
+              </div>
+              @for (pair of answeredPairs(); track pair.question) {
+                <div class="msg msg--ai">
+                  <div class="msgBubble">{{ pair.question }}</div>
+                  <div class="msgBubble msgBubble--answer">{{ pair.answer }}</div>
+                </div>
+              }
+              <div class="msg msg--ai typing">
+                <div class="msgBubble">{{ currentQuestion().text }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="card glassPanel">
+            <div class="stepHeader">
+              <span class="badge badge--brand">Pick one</span>
+              <h2>{{ currentQuestion().text }}</h2>
+            </div>
+            <div class="optionGrid">
+              @for (option of currentQuestion().options; track option) {
+                <button
+                  class="optionChip"
+                  (click)="answer(option)"
+                  [class.selected]="false"
+                >
+                  {{ option }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (step() === 2) {
+        <!-- Step 2: Review -->
+        <div class="grid grid--2" style="gap: 2rem">
+          <div class="card glassPanel">
+            <div class="stepHeader">
+              <span class="badge badge--brand">Step 3 of 4</span>
+              <h2>Review before sending</h2>
+            </div>
+            <div class="reviewCard">
+              <div class="reviewRow">
+                <span class="muted sm">Vehicle</span>
+                <div>
+                  <strong>{{ chosenVehicle()?.vehicleInfo }}</strong>
+                  <span class="muted sm block">{{ chosenVehicle()?.licensePlate }}</span>
+                </div>
+              </div>
+              <div class="reviewRow">
+                <span class="muted sm">What you reported</span>
+                <div style="white-space: pre-wrap">{{ report() }}</div>
+              </div>
+              <div class="reviewRow">
+                <span class="muted sm">Conversation</span>
+                <div style="white-space: pre-wrap; font-size:0.9rem; color:var(--muted)">{{ triage().transcript }}</div>
+              </div>
+              <div class="reviewRow">
+                <span class="muted sm">Areas to inspect</span>
+                <div style="color:var(--ink-2)">{{ triage().areas }}</div>
+              </div>
+              <div class="reviewRow urgencyRow">
+                <span class="muted sm">Suggested urgency</span>
+                <div style="display:flex; align-items:center; gap:0.75rem">
+                  <span class="badge" [class]="'badge badge--u' + triage().urgencyIndex" style="color:var(--ink)">
+                    {{ triage().urgencyIndex === 2 ? '▲' : '●' }} {{ triage().label }}
+                  </span>
+                  <span class="muted sm" style="font-style:italic">{{ triage().advice }}</span>
+                </div>
+              </div>
+              <div class="al al--warn" style="font-size:0.85rem">
+                ⚠ This is an AI suggestion, not a diagnosis. A mechanic will review and confirm.
+              </div>
+            </div>
+          </div>
+
+          <div class="card glassPanel" style="display:flex; flex-direction:column; height:fit-content">
+            <div class="stepHeader">
+              <span class="badge badge--primary">Send</span>
+              <h2>Submit for Review</h2>
+            </div>
+            <p class="muted sm" style="margin-bottom: 1.5rem">
+              The workshop will review your request and contact you. Nothing is booked automatically.
+            </p>
+
+            @if (submitError()) {
+              <div class="al al--err">{{ submitError() }}</div>
+            }
+
+            <button
+              class="btn btn--primary btn--full"
+              (click)="submitForReview()"
+              [disabled]="busy()"
+            >
+              {{ busy() ? 'Sending…' : 'Submit for Human Review' }}
+            </button>
+
+            <button class="btn btn--ghost btn--full" style="margin-top:0.75rem" (click)="editDescription()">
+              Edit description
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (step() === 3) {
+        <!-- Step 3: Sent -->
+        <div class="glassPanel fadeIn" style="text-align:center; max-width:560px; margin:0 auto">
+          <div style="font-size:4rem; margin-bottom:1.5rem; display:block">✓</div>
+          <h2>Sent to the workshop</h2>
+          <p class="muted" style="margin-bottom: 2rem">
+            A team member will review your request and contact you. No appointment or repair has been created yet.
+          </p>
+          <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap">
+            <button class="btn btn--outline" (click)="restart()">New Description</button>
+            <a routerLink="/portal/appointments" class="btn btn--primary">View My Requests</a>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

@@ -1,58 +1,188 @@
-:host {
-  display: block;
-}
-
-.head {
-  margin-bottom: 16px;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.stat .num {
-  display: block;
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.stat .label {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.g2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.row {
+.statCard {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  margin: 6px 0;
-}
-
-.aiTeaser {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 14px;
+  gap: 1rem;
 }
 
-@media (max-width: 900px) {
-  .g2 {
-    grid-template-columns: 1fr;
-  }
+.stat__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-2);
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
 
-  .stats {
-    grid-template-columns: 1fr;
-  }
+.statCard:hover .stat__icon {
+  background: var(--brand);
+  color: var(--brand-ink);
+  transform: rotate(-5deg);
+}
+
+.stat__body .stat__num {
+  display: block;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 1.75rem;
+  color: var(--ink);
+}
+
+.stat__body .stat__label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-top: 0.1rem;
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.card__header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* Vehicle list */
+.vehicleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vehicleRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  transition: all var(--transition);
+}
+
+.vehicleRow:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.vehicleThumb {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.vehicleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.vehiclePlate {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicleMake {
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicleYear {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Spotlight card */
+.spotlightCard {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.spotlightImg {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+}
+
+.spotlightBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotlightVehicle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.spotlightMeta {
+  margin-bottom: 0.75rem;
+}
+
+.spotlightState {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* AI teaser */
+.aiTeaser {
+  background: linear-gradient(135deg, var(--ink) 0%, #1e293b 100%);
+  color: var(--surface);
+  border: none;
+}
+
+.aiTeaser .aiHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.aiTeaser .aiHeader h3 {
+  color: var(--surface);
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.aiTeaser p {
+  color: var(--muted-soft);
+  margin: 0;
+}
+
+.aiTeaser .btn--outline {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--surface);
+}
+
+.aiTeaser .btn--outline:hover {
+  background: var(--brand);
+  border-color: var(--brand);
 }

@@ -71,6 +71,10 @@ export class AuthStore {
     return roles.includes('Manager') || roles.includes('Technician');
   });
 
+  /** The counter: full shop view (manager nav, booking, cancel/delete). */
+  readonly isManager = computed(() =>
+    (this.userSignal()?.roles ?? []).includes('Manager'));
+
   async login(email: string, password: string): Promise<void> {
     this.busySignal.set(true);
 

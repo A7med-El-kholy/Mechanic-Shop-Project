@@ -1,0 +1,53 @@
+<div class="head">
+  <h1>{{ greeting() }}</h1>
+  <p class="muted sm">{{ fmtDate(day()) }} · your workload for today</p>
+</div>
+
+@if (loading()) {
+  <div class="card"><p class="muted">Loading your workspace…</p></div>
+} @else if (pageError()) {
+  <div class="card"><p class="al al--err">{{ pageError() }}</p></div>
+} @else {
+  <div class="stats">
+    <div class="card kpi">
+      <span class="muted sm">Assigned jobs</span>
+      <b>{{ kpis().assigned }}</b>
+    </div>
+    <div class="card kpi">
+      <span class="muted sm">In progress</span>
+      <b>{{ kpis().inProgress }}</b>
+    </div>
+    <div class="card kpi">
+      <span class="muted sm">Next job</span>
+      <b>{{ kpis().nextJob }}</b>
+    </div>
+  </div>
+
+  <h2>Assigned jobs</h2>
+
+  @if (orders().length === 0) {
+    <div class="card">
+      <p class="muted">Nothing assigned for today. Check My Schedule for the rest of the week.</p>
+    </div>
+  } @else {
+    <div class="jobs">
+      @for (order of orders(); track order.workOrderId) {
+        <div class="card job">
+          <div class="info">
+            <b>{{ ref(order.workOrderId) }}</b>
+            <span class="vehicle">{{ order.vehicleInfo }} · {{ order.licensePlate }}</span>
+            <div class="muted sm">
+              Bay {{ 'ABC'[order.spot] }} · {{ fmtMinute(order.startsAtMinute) }}–{{ fmtMinute(order.endsAtMinute) }}
+            </div>
+          </div>
+          <div class="gap">
+            <span [class]="'badge badge--' + order.state">{{ stateLabel(order.state) }}</span>
+            <a class="btn btn--brand" [routerLink]="['/work-orders', order.workOrderId]">Open job</a>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}
+
+<a class="muted sm backLink" (click)="gotoSelf()">Refresh today</a>

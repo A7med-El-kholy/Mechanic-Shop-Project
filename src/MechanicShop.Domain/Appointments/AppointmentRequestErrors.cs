@@ -29,4 +29,14 @@ public static class AppointmentRequestErrors
         Error.NotFound(
             "Request_ProfileNotLinked",
             "No customer profile is linked to this account yet. Profiles are created by the workshop using the same email.");
+
+    public static Error NotesTooLong =>
+        Error.Validation(
+            "Request_NotesTooLong",
+            $"The request notes exceed {AppointmentRequest.NotesMaxLength} characters.");
+
+    public static Error UrgencyInvalid =>
+        Error.Validation(
+            "Request_UrgencyInvalid",
+            "Urgency must be one of: Low, Medium, High.");
 }

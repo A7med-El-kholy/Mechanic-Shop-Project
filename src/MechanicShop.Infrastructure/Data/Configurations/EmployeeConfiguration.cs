@@ -24,5 +24,16 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 
         builder.Property(e => e.Role)
                .IsRequired();
+
+        // The staff-login link mirrors Customer.UserId: 450 chars (the Identity id
+        // length), unique among linked neighbours so one account answers for one
+        // roster row, NULL rows excluded from the index.
+        builder.Property(e => e.UserId)
+               .HasMaxLength(450)
+               .IsRequired(false);
+
+        builder.HasIndex(e => e.UserId)
+               .IsUnique()
+               .HasFilter("[UserId] IS NOT NULL");
     }
 }

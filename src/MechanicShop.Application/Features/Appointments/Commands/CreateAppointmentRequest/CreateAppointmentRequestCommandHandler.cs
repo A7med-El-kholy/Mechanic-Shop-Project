@@ -80,7 +80,9 @@ public sealed class CreateAppointmentRequestCommandHandler(
             customer.Id,
             vehicle.Id,
             command.ServiceTaskId,
-            command.PreferredDate);
+            command.PreferredDate,
+            command.Notes,
+            command.Urgency);
 
         if (created.IsError)
         {
@@ -90,12 +92,18 @@ public sealed class CreateAppointmentRequestCommandHandler(
         _context.AppointmentRequests.Add(created.Value);
 
         // Prototype: a submitted request lands in the staff inbox as a Requests
-        // row — the workshop decides; the request itself books nothing.
+        // row — the workshop decides; the request itself books nothing. When the
+        // customer's assistant session reported an urgency, say so: the reviewer
+        // then sees the claim next to the slot decision they still own.
+        var urgencyNote = command.Urgency is { } reported
+            ? $" Customer reports {reported} urgency."
+            : string.Empty;
+
         var requestNotice = Notification.ForStaff(
             Guid.NewGuid(),
             "Appointment request",
             $"{customer.Name} requested {serviceTask?.Name ?? "an inspection"} " +
-            $"for {vehicle.LicensePlate} on {command.PreferredDate:yyyy-MM-dd}. Needs confirmation.",
+            $"for {vehicle.LicensePlate} on {command.PreferredDate:yyyy-MM-dd}.{urgencyNote} Needs confirmation.",
             NotificationCategory.Requests,
             null,
             DateTimeOffset.UtcNow);

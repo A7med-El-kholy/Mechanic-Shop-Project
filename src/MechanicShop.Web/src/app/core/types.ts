@@ -97,6 +97,14 @@ export interface AppointmentRequestRow {
   serviceTaskPrice: number | null;
   preferredDate: string;
   status: number;
+  /** The triage record: the customer's own description plus the guided
+   * conversation, stored for the workshop's review. Empty for plain form
+   * requests. */
+  notes: string;
+  /** What the assistant session REPORTED (0=Low, 1=Medium, 2=High). The claim
+   * travels to a human — nothing schedules or books by it. Null when the
+   * request was sent without an urgency assessment. */
+  urgency: number | null;
 }
 
 /** Catalog read for the request form (GET /api/portal/service-options). */

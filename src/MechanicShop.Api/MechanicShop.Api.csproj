@@ -18,6 +18,8 @@
     <!-- Design-time only: EF tools require this on the startup project to run migrations.
          PrivateAssets=all keeps it out of any project that references the Api. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- OpenAPI: /swagger UI for exploring and testing the API from the browser. -->
+    <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 
 </Project>

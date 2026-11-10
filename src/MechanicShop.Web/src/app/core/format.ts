@@ -27,6 +27,23 @@ export function workOrderRef(workOrderId: string): string {
   return `WO-${workOrderId.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
+/** Local calendar date as the API's DateOnly string ("2027-01-15"). Split by
+ * hand so toISOString()'s UTC clock can never roll the day at a local midnight. */
+export function todayIso(): string {
+  const now = new Date();
+
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/** Shifts an ISO date by whole days on the UTC clock, so a local midnight or
+ * DST edge cannot shift the day. */
+export function shiftIsoDate(date: string, days: number): string {
+  const current = new Date(`${date}T00:00:00Z`);
+  current.setUTCDate(current.getUTCDate() + days);
+
+  return current.toISOString().slice(0, 10);
+}
+
 /** ISO timestamp → "just now" / "5m ago" / "3h ago" / "Yesterday" / a date.
  * The prototype seeded human strings ("2 min ago"); real rows carry the real
  * timestamp, so the label is derived at render time. */

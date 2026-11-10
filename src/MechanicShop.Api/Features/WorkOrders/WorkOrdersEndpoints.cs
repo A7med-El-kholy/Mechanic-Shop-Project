@@ -15,9 +15,10 @@ using MediatR;
 namespace MechanicShop.Api.Features.WorkOrders;
 
 /// <summary>
-/// Staff work order management: open a job on a vehicle, evolve its state through
-/// the lifecycle, adjust its service list while it is still editable, and delete
-/// it as long as work has not started.
+/// Staff work order management. Reader surfaces are staff-wide with technicians
+/// narrowed server-side to their own hands; the counter actions — booking, editing
+/// a job's service list, rescheduling, deleting — belong to the manager, matching
+/// the prototype's role map.
 /// </summary>
 public static class WorkOrdersEndpoints
 {
@@ -45,7 +46,7 @@ public static class WorkOrdersEndpoints
 
         group.MapPost("/", CreateAsync)
             .WithName("CreateWorkOrder")
-            .RequireAuthorization(Policies.IsStaff)
+            .RequireAuthorization(Policies.IsManager)
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -60,14 +61,14 @@ public static class WorkOrdersEndpoints
 
         group.MapPut("/{workOrderId:guid}/tasks", UpdateTasksAsync)
             .WithName("UpdateWorkOrderTasks")
-            .RequireAuthorization(Policies.IsStaff)
+            .RequireAuthorization(Policies.IsManager)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapPut("/{workOrderId:guid}/schedule", UpdateScheduleAsync)
             .WithName("UpdateWorkOrderSchedule")
-            .RequireAuthorization(Policies.IsStaff)
+            .RequireAuthorization(Policies.IsManager)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -75,7 +76,7 @@ public static class WorkOrdersEndpoints
 
         group.MapDelete("/{workOrderId:guid}", DeleteAsync)
             .WithName("RemoveWorkOrder")
-            .RequireAuthorization(Policies.IsStaff)
+            .RequireAuthorization(Policies.IsManager)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
@@ -89,11 +90,12 @@ public static class WorkOrdersEndpoints
         int pageSize = 10,
         int? state = null,
         string? search = null,
+        DateOnly? scheduledDate = null,
         HttpContext httpContext = null!,
         CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetWorkOrdersQuery(page, pageSize, state, search),
+            new GetWorkOrdersQuery(page, pageSize, state, search, scheduledDate),
             cancellationToken);
 
         return result.IsError

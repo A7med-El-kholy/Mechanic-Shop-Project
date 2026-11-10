@@ -1,31 +1,45 @@
-<div class="portalTop">
-  <a class="brand" routerLink="/portal">🔧 Mechanic Shop</a>
-
-  <nav class="pnav">
-    @for (item of portalNav; track item.path) {
-      <a
-        class="pnavItem"
-        [routerLink]="['/' + item.path]"
-        routerLinkActive="on"
-        [routerLinkActiveOptions]="{ exact: item.exact }"
-      >
-        {{ item.label }}
-        @if (item.path === 'portal/notifications' && badge.unread() > 0) {
-          <span class="navBadge">{{ badge.unread() }}</span>
-        }
+<div class="portal">
+  <header class="appHeader">
+    <div class="appHeader__inner">
+      <a class="brand" routerLink="/home">
+        <div class="brandMark">MS</div>
+        <div>
+          <b>Mechanic Shop</b>
+          <div class="brandSub">Customer Portal</div>
+        </div>
       </a>
-    }
-    @for (label of plannedNav; track label) {
-      <span class="pnavItem soon">{{ label }}</span>
-    }
-  </nav>
 
-  <div class="who">
-    <span class="muted sm">Customer · {{ auth.fullName() }}</span>
-    <button class="btn" type="button" (click)="logout()">Sign out</button>
-  </div>
+      <nav class="mainNav">
+        @for (item of portalNav; track item.path) {
+          <a
+            class="navLink"
+            [routerLink]="['/' + item.path]"
+            [class.navLink--active]="isActive(item.path)"
+          >
+            {{ item.label }}
+            @if (item.path === 'portal/notifications' && badge.unread() > 0) {
+              <span class="badge badge--neutral" style="padding:2px 6px">{{ badge.unread() }}</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="navActions">
+        <div class="userBadge">
+          <div class="userAvatar">{{ initials() }}</div>
+          <div>
+            <b>{{ auth.fullName() }}</b>
+            <div class="brandSub">Customer</div>
+          </div>
+        </div>
+        <button class="btn btn--outline btn--sm" type="button" (click)="logout()">
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="portalMain">
+    <router-outlet />
+  </main>
 </div>
-
-<main class="portalMain">
-  <router-outlet />
-</main>

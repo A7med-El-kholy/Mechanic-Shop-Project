@@ -1,24 +1,36 @@
 <div class="shell">
   <aside class="side">
     <div class="sideHead">
-      <div class="logo">MS</div>
-      <div>
-        <b>Mechanic Shop</b>
-        <div class="muted sm">Staff workspace</div>
-      </div>
+      <a class="brandLink" routerLink="/home">
+        <div class="brandMark">MS</div>
+        <div>
+          <b>Mechanic Shop</b>
+          <div class="sideSub">Staff Counter</div>
+        </div>
+      </a>
     </div>
 
     <nav class="nav">
-      @for (item of liveNav; track item.path) {
-        <a class="navItem" [routerLink]="['/', item.path]" routerLinkActive="on">
+      @for (item of nav(); track item.path) {
+        <a
+          class="navItem"
+          [routerLink]="['/', item.path]"
+          [class.on]="currentPath() === item.path || currentPath() === '' && item.path === 'dashboard'"
+        >
           <span class="ico">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
           @if (item.path === 'notifications' && badge.unread() > 0) {
-            <span class="navBadge">{{ badge.unread() }}</span>
+            <span class="badge badge--brand">{{ badge.unread() }}</span>
           }
         </a>
       }
     </nav>
+
+    <div class="sideFoot">
+      <button class="btn btn--outline btn--full" type="button" (click)="logout()">
+        Sign out
+      </button>
+    </div>
   </aside>
 
   <div class="main">
@@ -27,10 +39,9 @@
         <div class="avatar">{{ initials() }}</div>
         <div>
           <b>{{ auth.fullName() }}</b>
-          <div class="muted sm">{{ auth.primaryRole() }}</div>
+          <div class="sideSub muted sm">{{ auth.primaryRole() }}</div>
         </div>
       </div>
-      <button class="btn" type="button" (click)="logout()">Sign out</button>
     </header>
 
     <main class="content">

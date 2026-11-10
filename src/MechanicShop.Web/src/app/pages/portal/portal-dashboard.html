@@ -1,69 +1,126 @@
-<div class="head">
-  <div>
-    <h1>Welcome{{ firstName() ? ', ' + firstName() : '' }}</h1>
-    <p class="muted sm">Your view of the workshop — cars, ongoing repairs, and appointment requests.</p>
+<div class="pageHeader">
+  <div class="pageHeader__text">
+    <h1>Welcome back, {{ firstName() }}</h1>
+    <p class="muted">Your vehicles, repairs, and appointment requests — all in one place.</p>
   </div>
+  <a routerLink="/portal/ai-assistant" class="btn btn--ai">Try AI Assistant</a>
+  <a routerLink="/portal/appointments" class="btn btn--primary">Book Appointment</a>
 </div>
 
 @if (loading()) {
-  <div class="card"><p class="muted">Loading…</p></div>
+  <div class="card" style="text-align:center; padding: 4rem 0">
+    <div style="font-size:3rem; margin-bottom:1rem">⚡</div>
+    <p class="muted">Loading your dashboard…</p>
+  </div>
 } @else if (pageError()) {
-  <div class="card">
-    <p class="al al--err">{{ pageError() }}</p>
-    <p class="muted sm">Ask the workshop to create your profile with the same email you signed up with, then sign in again.</p>
+  <div class="card al al--err" style="text-align:center; padding: 3rem 0">
+    {{ pageError() }}
+    <p class="muted sm" style="margin-top:0.5rem">
+      Ask the workshop to create your profile with the same email you signed up with.
+    </p>
   </div>
 } @else {
-  <div class="stats">
-    <div class="card stat">
-      <span class="num">{{ activeCount() }}</span>
-      <span class="label">Active repairs</span>
-    </div>
-    <div class="card stat">
-      <span class="num">{{ upcomingCount() }}</span>
-      <span class="label">Scheduled visits</span>
-    </div>
-    <div class="card stat">
-      <span class="num">{{ profile()!.vehicles.length }}</span>
-      <span class="label">Cars on file</span>
-    </div>
+  <!-- Stats -->
+  <div class="grid grid--3" style="margin-bottom: 2.5rem">
+    <a class="card statCard" routerLink="/portal/repairs">
+      <div class="stat__icon" style="background: var(--ok-soft); color: var(--ok)">🔧</div>
+      <div class="stat__body">
+        <span class="stat__num">{{ activeCount() }}</span>
+        <span class="stat__label">Active Repairs</span>
+      </div>
+    </a>
+    <a class="card statCard" routerLink="/portal/appointments">
+      <div class="stat__icon" style="background: var(--brand-soft); color: var(--brand-2)">📅</div>
+      <div class="stat__body">
+        <span class="stat__num">{{ upcomingCount() }}</span>
+        <span class="stat__label">Scheduled Visits</span>
+      </div>
+    </a>
+    <a class="card statCard" routerLink="/portal/vehicles">
+      <div class="stat__icon" style="background: var(--info-soft); color: #0369a1">🚗</div>
+      <div class="stat__body">
+        <span class="stat__num">{{ profile()!.vehicles.length }}</span>
+        <span class="stat__label">Cars on File</span>
+      </div>
+    </a>
   </div>
 
-  <div class="g2">
+  <div class="grid grid--2" style="gap: 2rem; margin-bottom: 2.5rem">
+    <!-- Vehicles -->
     <div class="card">
-      <h3>My vehicles</h3>
+      <div class="card__header">
+        <h2>My Vehicles</h2>
+        <a routerLink="/portal/vehicles" class="btn btn--sm btn--outline">Manage</a>
+      </div>
+
       @if (profile()!.vehicles.length === 0) {
-        <p class="muted">No vehicles on file yet — the workshop adds your car when you visit.</p>
+        <div class="empty" style="padding: 3rem 0; text-align:center">
+          <span class="empty__icon">🚗</span>
+          <h3>No vehicles on file yet</h3>
+          <p class="muted sm">The workshop adds your car when you visit.</p>
+        </div>
       } @else {
-        @for (vehicle of profile()!.vehicles; track vehicle.vehicleId) {
-          <p class="row">
-            <span><b>{{ vehicle.licensePlate }}</b></span>
-            <span class="muted sm">{{ vehicle.vehicleInfo }}</span>
-          </p>
-        }
+        <div class="vehicleList">
+          @for (vehicle of profile()!.vehicles; track vehicle.vehicleId) {
+            <div class="vehicleRow">
+              <div class="vehicleThumb">
+                <img class="car-thumb" [src]="'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80'" [alt]="vehicle.vehicleInfo" />
+              </div>
+              <div class="vehicleInfo">
+                <div class="vehiclePlate">{{ vehicle.licensePlate }}</div>
+                <div class="vehicleMake">{{ vehicle.vehicleInfo }}</div>
+                <div class="vehicleYear">{{ vehicle.year }} · {{ vehicle.make }} · VIN ends {{ vehicle.vin.slice(-4) }}</div>
+              </div>
+              <a class="btn btn--sm btn--outline" [routerLink]="['/portal/vehicles']">View</a>
+            </div>
+          }
+        </div>
       }
     </div>
 
+    <!-- Spotlight repair -->
     <div class="card">
-      <h3>{{ spotlightTitle() }}</h3>
+      <div class="card__header">
+        <h2>{{ spotlightTitle() }}</h2>
+      </div>
+
       @if (spotlight(); as repair) {
-        <p><b>{{ repair.vehicleInfo }}</b> · {{ repair.licensePlate }}</p>
-        <p class="muted sm">
-          {{ repair.technicianName }} ·
-          {{ fmtDate(repair.scheduledDate) }} ·
-          {{ fmtMinute(repair.startsAtMinute) }}–{{ fmtMinute(repair.endsAtMinute) }}
-        </p>
-        <a class="btn btn--brand" [routerLink]="['/portal/repairs', repair.workOrderId]">Track repair</a>
+        <div class="spotlightCard">
+          <div class="spotlightImg">
+            <img class="car-thumb" src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500&q=80" [alt]="repair.vehicleInfo" />
+          </div>
+          <div class="spotlightBody">
+            <div class="spotlightVehicle">{{ repair.vehicleInfo }} · {{ repair.licensePlate }}</div>
+            <div class="spotlightMeta muted sm">
+              {{ repair.technicianName }} · {{ fmtDate(repair.scheduledDate) }} ·
+              {{ fmtMinute(repair.startsAtMinute) }}–{{ fmtMinute(repair.endsAtMinute) }}
+            </div>
+            <div class="spotlightState" style="margin-bottom: 1rem">
+              <span class="badge" [class]="'badge badge--' + repair.state">{{ stateLabel(repair.state) }}</span>
+            </div>
+            <a class="btn btn--primary btn--full" [routerLink]="['/portal/repairs', repair.workOrderId]">Track Repair</a>
+          </div>
+        </div>
       } @else {
-        <p class="muted">No repairs booked yet. Request an appointment and the workshop will confirm a slot.</p>
+        <div class="empty" style="padding: 3rem 0; text-align:center">
+          <span class="empty__icon">📅</span>
+          <h3>No repairs booked yet</h3>
+          <p class="muted sm">Request an appointment and the workshop will confirm a slot.</p>
+          <a routerLink="/portal/appointments" class="btn btn--primary">Request Appointment</a>
+        </div>
       }
     </div>
   </div>
 
-  <div class="card row aiTeaser">
-    <div>
+  <!-- AI Assistant teaser -->
+  <div class="card aiTeaser">
+    <div class="aiHeader">
       <h3>Something wrong with your car?</h3>
-      <span class="muted sm">Describe it to the AI Assistant before you visit — arrives in a later stage.</span>
+      <a routerLink="/portal/ai-assistant" class="btn btn--outline btn--sm">Try AI Assistant</a>
     </div>
-    <button class="btn" type="button" disabled>Describe a problem</button>
+    <p class="muted sm">
+      Describe the problem to our AI Assistant before you visit — it collects the
+      details for the workshop's review. Nothing is booked automatically.
+    </p>
   </div>
 }

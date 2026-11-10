@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +91,36 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.IsStaff, policy => policy.RequireRole(AppRoles.Manager, AppRoles.Technician));
 });
 
+// --- OpenAPI (Swagger): /swagger UI for exploring and testing the API from
+// the browser. Protected endpoints need a bearer token — paste the access
+// token from POST /api/auth/login into the Authorize button.
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Mechanic Shop API", Version = "v1" });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste the access token returned by POST /api/auth/login here.",
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 // IHttpContextAccessor lets ApplicationUser reach the request's claims anywhere in
 // the container; ApplicationUser adapts those claims to the Application-side IUser.
 builder.Services.AddHttpContextAccessor();
@@ -122,6 +153,14 @@ await SeedData.SeedAsync(app.Services);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Swagger UI lives at /swagger; the root stays "Hello World!" for the smoke test.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.RoutePrefix = "swagger";
+    options.DocumentTitle = "Mechanic Shop API";
+});
 
 app.MapGet("/", () => "Hello World!");
 app.MapAuthEndpoints();

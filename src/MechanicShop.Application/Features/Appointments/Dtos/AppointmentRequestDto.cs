@@ -1,3 +1,5 @@
+using MechanicShop.Domain.Appointments;
+
 namespace MechanicShop.Application.Features.Appointments.Dtos;
 
 /// <summary>One appointment request: what the customer asked for, for which car,
@@ -14,4 +16,6 @@ public sealed record AppointmentRequestDto(
     string? ServiceTaskName,
     decimal? ServiceTaskPrice,
     DateOnly PreferredDate,
-    int Status);
+    int Status,
+    string Notes,
+    ReportedUrgency? Urgency);

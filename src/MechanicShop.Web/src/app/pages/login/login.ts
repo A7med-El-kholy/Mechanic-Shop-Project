@@ -31,9 +31,10 @@ export class LoginPage {
     try {
       await this.auth.login(this.email(), this.password());
 
-      // Staff head to the workshop; customers get their portal home. A returnUrl
-      // from a guard bounce still wins.
-      const home = this.auth.hasStaffRole() ? '/dashboard' : '/portal';
+      // Each role gets its own home; a returnUrl from a guard bounce still wins.
+      const home = this.auth.isManager()
+        ? '/dashboard'
+        : this.auth.hasStaffRole() ? '/tech-home' : '/portal';
 
       await this.router.navigateByUrl(this.returnUrl ?? home);
     } catch (ex) {

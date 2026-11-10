@@ -1,44 +1,74 @@
-<div class="wrap">
-  <div class="brand">
-    <div class="logo">MS</div>
-    <p class="muted">Workshop management for staff — sign in with your shop account.</p>
+<div class="loginPage">
+  <div class="loginSplit">
+    <!-- Image side -->
+    <div class="loginImage">
+      <img
+        class="loginImg"
+        src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80"
+        alt="Mechanic working on a car engine"
+      />
+      <div class="loginOverlay"></div>
+      <div class="loginImageContent">
+        <div class="brandMark">MS</div>
+        <h2>Mechanic Shop</h2>
+        <p class="muted sm">Professional auto repair and AI-powered diagnostics.</p>
+      </div>
+    </div>
+
+    <!-- Form side -->
+    <div class="loginForm">
+      <div class="loginCard">
+        <div class="loginBrand">
+          <div class="brandMark">MS</div>
+          <div>
+            <b>Mechanic Shop</b>
+            <div class="loginSub">Workshop management · Sign in</div>
+          </div>
+        </div>
+
+        <form class="card form" (ngSubmit)="submit()">
+          <h2 class="title">Welcome back</h2>
+          <p class="lead">Sign in to your workshop account to manage vehicles, work orders, and appointments.</p>
+
+          <label class="field">
+            <span>Email address</span>
+            <input
+              class="input"
+              type="email"
+              autocomplete="username"
+              placeholder="manager@mechanicshop.dev"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              [disabled]="auth.busy()"
+              required>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <input
+              class="input"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••••"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              [disabled]="auth.busy()"
+              required>
+          </label>
+
+          @if (error(); as msg) {
+            <div class="al al--err">{{ msg }}</div>
+          }
+
+          <button class="btn btn--primary btn--full" type="submit" [disabled]="auth.busy()">
+            {{ auth.busy() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+
+        <div class="loginFooter">
+          <p class="muted sm">Not a customer yet? <a routerLink="/home">Visit our website</a></p>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <form class="card form" (ngSubmit)="submit()">
-    <h1 class="title">Sign in</h1>
-
-    <label class="field">
-      <span>Email</span>
-      <input
-        class="input"
-        type="email"
-        autocomplete="username"
-        placeholder="manager@mechanicshop.dev"
-        [ngModel]="email()"
-        (ngModelChange)="email.set($event)"
-        [disabled]="auth.busy()"
-        required>
-    </label>
-
-    <label class="field">
-      <span>Password</span>
-      <input
-        class="input"
-        type="password"
-        autocomplete="current-password"
-        placeholder="••••••••••"
-        [ngModel]="password()"
-        (ngModelChange)="password.set($event)"
-        [disabled]="auth.busy()"
-        required>
-    </label>
-
-    @if (error(); as msg) {
-      <div class="al al--err">{{ msg }}</div>
-    }
-
-    <button class="btn btn--brand wide" type="submit" [disabled]="auth.busy()">
-      {{ auth.busy() ? 'Signing in…' : 'Sign in' }}
-    </button>
-  </form>
 </div>

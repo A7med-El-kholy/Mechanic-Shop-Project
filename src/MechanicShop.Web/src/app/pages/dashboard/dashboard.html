@@ -1,99 +1,143 @@
-<div class="head">
-  <div>
+<div class="pageHeader">
+  <div class="pageHeader__text">
     <h1>Dashboard</h1>
-    <p class="muted sm">Live counters straight from the shop API.</p>
+    <p class="muted">Live counters straight from the shop API.</p>
+  </div>
+  <a routerLink="/work-orders/new" class="btn btn--primary">+ New Work Order</a>
+</div>
+
+<div class="grid grid--4" style="margin-bottom: 2rem">
+  <a class="card statCard" [routerLink]="['work-orders']">
+    <div class="stat__icon">📋</div>
+    <div class="stat__body">
+      <span class="stat__num">{{ workOrderCount() }}</span>
+      <span class="stat__label">Work Orders</span>
+    </div>
+  </a>
+  <a class="card statCard" [routerLink]="['technicians']">
+    <div class="stat__icon">👷</div>
+    <div class="stat__body">
+      <span class="stat__num">{{ technicianCount() }}</span>
+      <span class="stat__label">Technicians</span>
+    </div>
+  </a>
+  <a class="card statCard" [routerLink]="['services']">
+    <div class="stat__icon">🔧</div>
+    <div class="stat__body">
+      <span class="stat__num">{{ serviceCount() }}</span>
+      <span class="stat__label">Service Tasks</span>
+    </div>
+  </a>
+  <a class="card statCard" [routerLink]="['customers']">
+    <div class="stat__icon">👥</div>
+    <div class="stat__body">
+      <span class="stat__num">{{ customerCount() }}</span>
+      <span class="stat__label">Customers</span>
+    </div>
+  </a>
+</div>
+
+<div class="grid grid--2" style="gap: 2rem; margin-bottom: 2rem">
+  <div class="card table-card">
+    <div class="card__header">
+      <h2>Next Scheduled Jobs</h2>
+      <a routerLink="/work-orders" class="btn btn--sm btn--outline">View All</a>
+    </div>
+
+    @if (!loaded()) {
+      <p class="muted sm empty__text" style="text-align:center; padding: 2rem 0">Loading…</p>
+    } @else if (recent().length === 0) {
+      <div class="empty" style="padding: 2rem 0">
+        <span class="empty__icon">📋</span>
+        <h3>No work orders yet</h3>
+        <p class="muted sm">They appear here the moment one is booked.</p>
+      </div>
+    } @else {
+      <table class="plain">
+        <thead>
+          <tr>
+            <th style="width: 13%">Date</th>
+            <th style="width: 14%">Time</th>
+            <th style="width: 8%">Bay</th>
+            <th>Vehicle</th>
+            <th>Customer</th>
+            <th style="width: 16%">Technician</th>
+            <th style="width: 12%">Status</th>
+            <th style="width: 10%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (wo of recent(); track wo.workOrderId) {
+            <tr>
+              <td>{{ fmtDate(wo.scheduledDate) }}</td>
+              <td>{{ fmtMinute(wo.startsAtMinute) }}–{{ fmtMinute(wo.endsAtMinute) }}</td>
+              <td class="bay">{{ 'ABC'[wo.spot] }}</td>
+              <td>
+                <b>{{ wo.vehicleInfo }}</b>
+                <div class="muted sm">{{ wo.licensePlate }}</div>
+              </td>
+              <td>{{ wo.customerName }}</td>
+              <td>{{ wo.technicianName }}</td>
+              <td><span class="badge" [class]="'badge badge--' + wo.state">{{ stateLabel(wo.state) }}</span></td>
+              <td><a [routerLink]="['/work-orders', wo.workOrderId]" class="btn btn--sm btn--ghost">Open</a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <div class="card table-card">
+    <div class="card__header">
+      <h2>Appointment Requests <span class="count">{{ pending().length }}</span></h2>
+    </div>
+
+    @if (loaded() && pending().length > 0) {
+      <table class="plain">
+        <thead>
+          <tr>
+            <th style="width: 14%">Requested For</th>
+            <th>Customer</th>
+            <th>Vehicle</th>
+            <th style="width: 22%">Service</th>
+            <th style="width: 13%">Urgency</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (request of pending(); track request.appointmentRequestId) {
+            <tr>
+              <td>{{ fmtDate(request.preferredDate) }}</td>
+              <td>{{ request.customerName }}</td>
+              <td>
+                <b>{{ request.vehicleInfo }}</b>
+                <div class="muted sm">{{ request.licensePlate }}</div>
+              </td>
+              <td>
+                {{ request.serviceTaskName ?? 'Not sure — inspection' }}
+                @if (request.notes) {
+                  <div class="muted sm rpt" [title]="request.notes">{{ reportLine(request.notes) }}</div>
+                }
+              </td>
+              <td>
+                @if (request.urgency !== null) {
+                  <span [class]="'badge badge--u' + request.urgency">
+                    {{ ['Low', 'Medium', 'High'][request.urgency] }}
+                  </span>
+                } @else {
+                  <span class="muted sm">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="muted sm">Confirm by booking the work order on the work-orders screen — a request is not a booking.</p>
+    } @else {
+      <div class="empty" style="padding: 2rem 0">
+        <span class="empty__icon">📩</span>
+        <h3>No pending requests</h3>
+        <p class="muted sm">Customers' appointment requests appear here.</p>
+      </div>
+    }
   </div>
 </div>
-
-<div class="stats">
-  <a class="card stat" [routerLink]="['work-orders']">
-    <span class="num">{{ workOrderCount() }}</span>
-    <span class="label">Work orders</span>
-  </a>
-  <a class="card stat" [routerLink]="['appointments']">
-    <span class="num">{{ technicianCount() }}</span>
-    <span class="label">Technicians</span>
-  </a>
-  <a class="card stat" [routerLink]="['services']">
-    <span class="num">{{ serviceCount() }}</span>
-    <span class="label">Service tasks</span>
-  </a>
-  <a class="card stat" [routerLink]="['customers']">
-    <span class="num">{{ customerCount() }}</span>
-    <span class="label">Customers</span>
-  </a>
-</div>
-
-<div class="card table-card">
-  <h2>Next scheduled jobs</h2>
-
-  @if (!loaded()) {
-    <p class="muted">Loading…</p>
-  } @else if (recent().length === 0) {
-    <p class="muted">No work orders yet — they appear here the moment one is booked.</p>
-  } @else {
-    <table class="plain">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Block</th>
-          <th>Bay</th>
-          <th>Vehicle</th>
-          <th>Customer</th>
-          <th>Technician</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (wo of recent(); track wo.workOrderId) {
-          <tr>
-            <td>{{ fmtDate(wo.scheduledDate) }}</td>
-            <td>{{ fmtMinute(wo.startsAtMinute) }}–{{ fmtMinute(wo.endsAtMinute) }}</td>
-            <td class="bay">{{ 'ABC'[wo.spot] }}</td>
-            <td>
-              <b>{{ wo.vehicleInfo }}</b>
-              <div class="muted sm">{{ wo.licensePlate }}</div>
-            </td>
-            <td>{{ wo.customerName }}</td>
-            <td>{{ wo.technicianName }}</td>
-            <td><span class="badge" [class]="'badge badge--' + wo.state">{{ stateLabel(wo.state) }}</span></td>
-            <td><a [routerLink]="['/work-orders', wo.workOrderId]">Open</a></td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  }
-</div>
-
-@if (loaded() && pending().length > 0) {
-  <div class="card table-card requests">
-    <h2>Appointment requests <span class="count">{{ pending().length }}</span></h2>
-
-    <table class="plain">
-      <thead>
-        <tr>
-          <th>Requested for</th>
-          <th>Customer</th>
-          <th>Vehicle</th>
-          <th>Service</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (request of pending(); track request.appointmentRequestId) {
-          <tr>
-            <td>{{ fmtDate(request.preferredDate) }}</td>
-            <td>{{ request.customerName }}</td>
-            <td>
-              <b>{{ request.vehicleInfo }}</b>
-              <div class="muted sm">{{ request.licensePlate }}</div>
-            </td>
-            <td>{{ request.serviceTaskName ?? 'Not sure — inspection' }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-
-    <p class="muted sm">Confirm by booking the work order on the work-orders screen — a request is not a booking.</p>
-  </div>
-}

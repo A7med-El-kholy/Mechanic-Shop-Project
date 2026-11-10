@@ -1,4 +1,5 @@
 using MechanicShop.Domain.Common.Results;
+using MechanicShop.Domain.Employees.Enums;
 
 namespace MechanicShop.Domain.Employees;
 
@@ -27,4 +28,17 @@ public static class EmployeeErrors
         Error.Conflict(
             "Employee_AssignedToWorkOrders",
             $"Employee '{employeeId}' appears on work orders (past or scheduled) and cannot be removed from the roster.");
+
+    public static Error UserIdRequired =>
+        Error.Validation("Employee_UserId_Required", "A user account id is required to link a roster entry.");
+
+    public static Error AlreadyLinked(Guid employeeId) =>
+        Error.Conflict(
+            "Employee_AlreadyLinked",
+            $"Employee '{employeeId}' is already linked to a staff account.");
+
+    public static Error RoleMismatch(string role, EmployeeRole employeeRole) =>
+        Error.Validation(
+            "Employee_RoleMismatch",
+            $"Staff account is '{role}', but the roster entry is a '{employeeRole}'. Provision the matching role.");
 }

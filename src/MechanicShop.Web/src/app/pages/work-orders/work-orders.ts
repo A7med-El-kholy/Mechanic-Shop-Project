@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { problemMessage } from '../../core/api';
+import { AuthStore } from '../../core/auth-store';
 import { fmtDate, fmtMinute, workOrderRef } from '../../core/format';
 import {
   PaginatedList,
@@ -26,6 +27,7 @@ const PAGE_SIZE = 10;
 })
 export class WorkOrdersPage {
   private readonly http = inject(HttpClient);
+  protected readonly auth = inject(AuthStore);
 
   protected readonly data = signal<PaginatedList<WorkOrderSummary> | null>(null);
   protected readonly page = signal(1);
