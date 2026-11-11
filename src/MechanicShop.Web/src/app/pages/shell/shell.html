@@ -1,13 +1,22 @@
 <div class="shell">
   <aside class="side">
     <div class="sideHead">
-      <a class="brandLink" routerLink="/home">
+      <a class="brandLink" routerLink="/dashboard">
         <div class="brandMark">MS</div>
-        <div>
+        <div class="brandTitleGroup">
           <b>Mechanic Shop</b>
-          <div class="sideSub">Staff Counter</div>
+          <div class="sideSub">Workshop OS · Staff</div>
         </div>
       </a>
+    </div>
+
+    <!-- Quick AI Promo Banner in Sidebar -->
+    <div class="sideAiBanner">
+      <div class="sideAiPill">
+        <span class="aiDot"></span>
+        <span>AI Engine Active</span>
+      </div>
+      <p class="sideAiDesc">OBD-II & Triage Assistance</p>
     </div>
 
     <nav class="nav">
@@ -18,28 +27,56 @@
           [class.on]="currentPath() === item.path || currentPath() === '' && item.path === 'dashboard'"
         >
           <span class="ico">{{ item.icon }}</span>
-          <span>{{ item.label }}</span>
+          <span class="navLabel">{{ item.label }}</span>
+          @if (item.path === 'ai-assistant') {
+            <span class="navBadge navBadge--ai">AI</span>
+          }
           @if (item.path === 'notifications' && badge.unread() > 0) {
-            <span class="badge badge--brand">{{ badge.unread() }}</span>
+            <span class="navBadge">{{ badge.unread() }}</span>
           }
         </a>
       }
     </nav>
 
     <div class="sideFoot">
-      <button class="btn btn--outline btn--full" type="button" (click)="logout()">
-        Sign out
+      <div class="systemStatus">
+        <span class="statusDot"></span>
+        <span>Connected to Local API</span>
+      </div>
+      <button class="btn btn--outline btn--full signoutBtn" type="button" (click)="logout()">
+        <span>Sign out</span>
+        <span>↳</span>
       </button>
     </div>
   </aside>
 
   <div class="main">
     <header class="top">
-      <div class="user">
-        <div class="avatar">{{ initials() }}</div>
-        <div>
-          <b>{{ auth.fullName() }}</b>
-          <div class="sideSub muted sm">{{ auth.primaryRole() }}</div>
+      <div class="topSearch">
+        <div class="shopStatusPill">
+          <span class="livePulse"></span>
+          <span>Workshop Bays A · B · C Operational</span>
+        </div>
+      </div>
+
+      <div class="topActions">
+        <a routerLink="/ai-assistant" class="topAiBtn">
+          <span>🤖</span>
+          <span>AI Diagnostics</span>
+        </a>
+
+        @if (auth.isManager()) {
+          <a routerLink="/work-orders/new" class="topNewBtn">
+            <span>+ New Work Order</span>
+          </a>
+        }
+
+        <div class="user">
+          <div class="avatar">{{ initials() }}</div>
+          <div class="userInfo">
+            <b>{{ auth.fullName() }}</b>
+            <span class="userRole">{{ auth.primaryRole() }}</span>
+          </div>
         </div>
       </div>
     </header>

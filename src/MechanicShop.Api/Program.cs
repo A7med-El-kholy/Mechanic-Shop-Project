@@ -147,7 +147,20 @@ builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var app = builder.Build();
 
-// Seed roles and the optional bootstrap manager before serving requests.
+// Health checks and CORS
+builder.Services.AddHealthChecks();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost", "http://localhost:80")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// existing services ... (keep existing lines unchanged)
+
 // Idempotent: only inserts what is not already present, and migrates first.
 await SeedData.SeedAsync(app.Services);
 

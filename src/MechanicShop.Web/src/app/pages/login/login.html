@@ -1,72 +1,190 @@
 <div class="loginPage">
-  <div class="loginSplit">
-    <!-- Image side -->
-    <div class="loginImage">
-      <img
-        class="loginImg"
-        src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80"
-        alt="Mechanic working on a car engine"
-      />
-      <div class="loginOverlay"></div>
-      <div class="loginImageContent">
-        <div class="brandMark">MS</div>
-        <h2>Mechanic Shop</h2>
-        <p class="muted sm">Professional auto repair and AI-powered diagnostics.</p>
-      </div>
-    </div>
+  <!-- Dynamic ambient lighting layers -->
+  <div class="ambientGlow glow-1"></div>
+  <div class="ambientGlow glow-2"></div>
 
-    <!-- Form side -->
-    <div class="loginForm">
-      <div class="loginCard">
-        <div class="loginBrand">
+  <div class="loginContainer">
+    <!-- Showcase panel (left) -->
+    <div class="showcasePanel">
+      <div class="showcaseBg">
+        <img
+          class="showcaseImg"
+          src="https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1600&q=85"
+          alt="Luxury performance vehicle in workshop"
+        />
+        <div class="showcaseVignette"></div>
+      </div>
+
+      <div class="showcaseContent">
+        <div class="brandBadge">
           <div class="brandMark">MS</div>
-          <div>
-            <b>Mechanic Shop</b>
-            <div class="loginSub">Workshop management · Sign in</div>
+          <div class="brandText">
+            <span class="brandName">Mechanic Shop</span>
+            <span class="brandTagline">Workshop Pro · OS</span>
           </div>
         </div>
 
-        <form class="card form" (ngSubmit)="submit()">
-          <h2 class="title">Welcome back</h2>
-          <p class="lead">Sign in to your workshop account to manage vehicles, work orders, and appointments.</p>
+        <div class="showcaseHero">
+          <div class="statusPill">
+            <span class="pulseDot"></span>
+            System Live · AI Diagnostics Ready
+          </div>
+          <h1 class="heroTitle">Precision Engineering for Modern Garages.</h1>
+          <p class="heroSubtitle">
+            Unified management for work orders, multi-bay scheduling, technician telemetry, and AI-driven triage.
+          </p>
+        </div>
 
-          <label class="field">
-            <span>Email address</span>
-            <input
-              class="input"
-              type="email"
-              autocomplete="username"
-              placeholder="manager@mechanicshop.dev"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-              [disabled]="auth.busy()"
-              required>
-          </label>
+        <div class="featureCards">
+          <div class="fCard">
+            <span class="fIcon">⚡</span>
+            <div>
+              <strong>Instant Dispatch</strong>
+              <small>Real-time Bay A-B-C scheduling</small>
+            </div>
+          </div>
+          <div class="fCard">
+            <span class="fIcon">🤖</span>
+            <div>
+              <strong>AI Diagnostic Triage</strong>
+              <small>Pre-inspection symptom analysis</small>
+            </div>
+          </div>
+          <div class="fCard">
+            <span class="fIcon">🛡️</span>
+            <div>
+              <strong>Role Security</strong>
+              <small>JWT Manager & Technician RBAC</small>
+            </div>
+          </div>
+        </div>
 
-          <label class="field">
-            <span>Password</span>
-            <input
-              class="input"
-              type="password"
-              autocomplete="current-password"
-              placeholder="••••••••••"
-              [ngModel]="password()"
-              (ngModelChange)="password.set($event)"
-              [disabled]="auth.busy()"
-              required>
-          </label>
+        <div class="showcaseFooter">
+          <span>Enterprise Edition · v2.5</span>
+          <span class="footerDot">·</span>
+          <a routerLink="/home" class="publicLink">Visit Public Website →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login form panel (right) -->
+    <div class="formPanel">
+      <div class="formCard">
+        <div class="formHeader">
+          <div class="mobileBrand">
+            <div class="brandMark">MS</div>
+            <strong>Mechanic Shop</strong>
+          </div>
+          <h2>Sign in to Counter</h2>
+          <p class="formLead">Enter your credentials to access the workshop dashboard.</p>
+        </div>
+
+        <!-- Quick-Fill Demo Helpers -->
+        <div class="demoHelpers">
+          <div class="demoLabel">Quick Demo Access:</div>
+          <div class="demoButtons">
+            <button
+              type="button"
+              class="demoBtn demoBtn--manager"
+              (click)="fillCredentials('manager')"
+              title="Click to fill Manager credentials"
+            >
+              <span class="demoRoleIcon">👑</span>
+              <span>Manager</span>
+              <span class="demoHint">Auto-Fill</span>
+            </button>
+            <button
+              type="button"
+              class="demoBtn demoBtn--tech"
+              (click)="fillCredentials('tech')"
+              title="Click to fill Technician credentials"
+            >
+              <span class="demoRoleIcon">🔧</span>
+              <span>Technician</span>
+              <span class="demoHint">Auto-Fill</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Actual Sign-In Form -->
+        <form class="authForm" (ngSubmit)="submit()">
+          <div class="inputGroup">
+            <label class="inputLabel" for="emailInput">Email Address</label>
+            <div class="inputWrapper">
+              <span class="inputIcon">✉</span>
+              <input
+                id="emailInput"
+                class="formInput"
+                type="email"
+                autocomplete="username"
+                placeholder="manager@mechanicshop.dev"
+                [ngModel]="email()"
+                (ngModelChange)="email.set($event)"
+                name="email"
+                [disabled]="auth.busy()"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="inputGroup">
+            <div class="labelRow">
+              <label class="inputLabel" for="passwordInput">Password</label>
+              <span class="defaultPassHint">Default: <code>Manager&#64;Dev2026</code></span>
+            </div>
+            <div class="inputWrapper">
+              <span class="inputIcon">🔒</span>
+              <input
+                id="passwordInput"
+                class="formInput"
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="••••••••••••"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)"
+                name="password"
+                [disabled]="auth.busy()"
+                required
+              />
+              <button
+                type="button"
+                class="togglePassBtn"
+                (click)="togglePassword()"
+                tabindex="-1"
+                [title]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                {{ showPassword() ? '👁️' : '👁️‍🗨️' }}
+              </button>
+            </div>
+          </div>
 
           @if (error(); as msg) {
-            <div class="al al--err">{{ msg }}</div>
+            <div class="authAlert errorAlert">
+              <span class="alertIcon">⚠️</span>
+              <span>{{ msg }}</span>
+            </div>
           }
 
-          <button class="btn btn--primary btn--full" type="submit" [disabled]="auth.busy()">
-            {{ auth.busy() ? 'Signing in…' : 'Sign in' }}
+          <button
+            class="submitBtn"
+            type="submit"
+            [disabled]="auth.busy()"
+          >
+            @if (auth.busy()) {
+              <span class="btnSpinner"></span>
+              <span>Authenticating…</span>
+            } @else {
+              <span>Sign in to Dashboard</span>
+              <span class="btnArrow">→</span>
+            }
           </button>
         </form>
 
-        <div class="loginFooter">
-          <p class="muted sm">Not a customer yet? <a routerLink="/home">Visit our website</a></p>
+        <div class="formFooter">
+          <p>
+            Customer wanting to book repairs?
+            <a routerLink="/home" class="switchLink">Explore Customer Portal</a>
+          </p>
         </div>
       </div>
     </div>

@@ -1,97 +1,259 @@
-<div class="head">
-  <div>
-    <h1>Vehicles</h1>
-    <p class="muted sm">Every car the shop keeps records for. Search by plate, VIN, or owner name.</p>
-  </div>
-  <button class="btn btn--brand" type="button" (click)="openCreate()">+ New vehicle</button>
-</div>
-
-@if (alert()) {
-  <p class="al al--ok">{{ alert() }}</p>
-}
-
-<div class="card">
-  <div class="toolbar">
-    <input
-      class="input search"
-      type="search"
-      placeholder="Search plate, VIN, owner…"
-      [ngModel]="search()"
-      (ngModelChange)="search.set($event)"
-      (keyup.enter)="startSearch()"
-    />
-    <button class="btn" type="button" (click)="startSearch()">Search</button>
-
-    <span class="spacer"></span>
-
-    <label class="check">
-      <input type="checkbox" [ngModel]="includeArchived()" (ngModelChange)="toggleArchived($event)" />
-      Show archived
-    </label>
-  </div>
-
-  @if (loading()) {
-    <p class="muted">Loading…</p>
-  } @else if (pageError()) {
-    <p class="al al--err">{{ pageError() }}</p>
-  } @else if (data()!.items.length === 0) {
-    <p class="muted">
-      @if (includeArchived()) {
-        Nothing on file for that search.
-      } @else {
-        No live vehicles match. Archived cars stay out of sight until "Show archived" is on.
-      }
-    </p>
-  } @else {
-    <table class="plain">
-      <thead>
-        <tr>
-          <th>Owner</th>
-          <th>Plate</th>
-          <th>Vehicle</th>
-          <th>Year</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (vehicle of data()!.items; track vehicle.vehicleId) {
-          <tr>
-            <td><a [routerLink]="['/', 'customers', vehicle.customerId]">{{ vehicle.customerName }}</a></td>
-            <td><b>{{ vehicle.licensePlate }}</b></td>
-            <td>{{ vehicle.make }} {{ vehicle.model }}</td>
-            <td>{{ vehicle.year }}</td>
-            <td>
-              @if (vehicle.isArchived) {
-                <span class="badge badge--3">Archived</span>
-              } @else {
-                <span class="badge badge--0">Active</span>
-              }
-            </td>
-            <td class="rowActionsCell">
-              <div class="rowActions">
-                <button class="btn" type="button" (click)="openEdit(vehicle)">Edit</button>
-                @if (vehicle.isArchived) {
-                  <button class="btn" type="button" (click)="restore(vehicle)">Restore</button>
-                } @else {
-                  <button class="btn" type="button" (click)="archive(vehicle)">Archive</button>
-                }
-                <button class="btn btn--danger" type="button" (click)="remove(vehicle)">Delete</button>
-              </div>
-            </td>
-          </tr>
+<div class="vehiclesPage">
+  <!-- Header -->
+  <div class="pageHeader">
+    <div class="headerText">
+      <div class="titleRow">
+        <h1>Workshop Vehicles Fleet</h1>
+        @if (data()) {
+          <span class="countBadge">{{ data()!.totalCount }} on record</span>
         }
-      </tbody>
-    </table>
+      </div>
+      <p class="muted">Live garage registry. Search and manage vehicles, owner records, and service status.</p>
+    </div>
+    <button class="btn btn--primary newVehBtn" type="button" (click)="openCreate()">
+      <span>+ Register New Vehicle</span>
+    </button>
+  </div>
 
-    <div class="pager">
-      <button class="btn" type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">‹ Prev</button>
-      <span>Page {{ page() }} of {{ data()!.totalPages }} · {{ data()!.totalCount }} total</span>
-      <button class="btn" type="button" [disabled]="page() >= data()!.totalPages" (click)="goToPage(page() + 1)">Next ›</button>
+  @if (alert()) {
+    <div class="al al--ok alertBanner">
+      <span>✓</span>
+      <span>{{ alert() }}</span>
+    </div>
+  }
+
+  <!-- Controls & Search Toolbar -->
+  <div class="toolbarCard">
+    <div class="searchArea">
+      <div class="searchBox">
+        <span class="searchIcon">🔍</span>
+        <input
+          class="input searchInput"
+          type="search"
+          placeholder="Search plate, VIN, make, model, owner…"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          (keyup.enter)="startSearch()"
+        />
+      </div>
+      <button class="btn btn--primary searchBtn" type="button" (click)="startSearch()">
+        Search
+      </button>
+    </div>
+
+    <div class="toolbarOptions">
+      <label class="archivedToggle">
+        <input
+          type="checkbox"
+          [ngModel]="includeArchived()"
+          (ngModelChange)="toggleArchived($event)"
+        />
+        <span>Show archived fleet</span>
+      </label>
+
+      <!-- View Switcher -->
+      <div class="viewSwitcher">
+        <button
+          type="button"
+          class="switchBtn"
+          [class.active]="viewMode() === 'grid'"
+          (click)="setViewMode('grid')"
+          title="Grid Cards with real car photos"
+        >
+          <span>⊞</span>
+          <span>Grid</span>
+        </button>
+        <button
+          type="button"
+          class="switchBtn"
+          [class.active]="viewMode() === 'table'"
+          (click)="setViewMode('table')"
+          title="Compact Table view"
+        >
+          <span>☰</span>
+          <span>Table</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State Views -->
+  @if (loading()) {
+    <div class="loadingCard">
+      <div class="spinner"></div>
+      <p>Loading vehicle telemetry and garage fleet…</p>
+    </div>
+  } @else if (pageError()) {
+    <div class="al al--err">{{ pageError() }}</div>
+  } @else if (!data() || data()!.items.length === 0) {
+    <div class="emptyCard">
+      <div class="emptyIcon">🚗</div>
+      <h3>No vehicles found</h3>
+      <p class="muted">
+        @if (includeArchived()) {
+          No vehicles match your search filter.
+        } @else {
+          No active vehicles match. Try toggling "Show archived fleet" or clear the search.
+        }
+      </p>
+    </div>
+  } @else {
+    <!-- VIEW 1: Grid Cards View with Real Photos -->
+    @if (viewMode() === 'grid') {
+      <div class="vehicleGrid">
+        @for (vehicle of data()!.items; track vehicle.vehicleId; let idx = $index) {
+          <div class="vCard" [style.--anim-idx]="idx">
+            <div class="vCardMedia">
+              <img
+                [src]="getVehicleImage(vehicle)"
+                [alt]="vehicle.make + ' ' + vehicle.model"
+                class="vCardImg"
+                loading="lazy"
+              />
+              <span class="plateTag">{{ vehicle.licensePlate }}</span>
+              <span
+                class="statusTag"
+                [class.statusTag--active]="!vehicle.isArchived"
+                [class.statusTag--archived]="vehicle.isArchived"
+              >
+                {{ vehicle.isArchived ? 'Archived' : 'Active' }}
+              </span>
+            </div>
+
+            <div class="vCardBody">
+              <div class="vCardHeader">
+                <div>
+                  <h3 class="vName">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</h3>
+                  <div class="vVin">
+                    <span class="vinLabel">VIN:</span>
+                    <code>{{ vehicle.vin }}</code>
+                  </div>
+                </div>
+              </div>
+
+              <div class="vOwnerRow">
+                <span class="ownerLabel">Owner:</span>
+                <a [routerLink]="['/', 'customers', vehicle.customerId]" class="ownerLink">
+                  👤 {{ vehicle.customerName }}
+                </a>
+              </div>
+
+              <div class="vActionsRow">
+                <button type="button" class="btn btn--sm btn--outline" (click)="openEdit(vehicle)">
+                  Edit
+                </button>
+                @if (vehicle.isArchived) {
+                  <button type="button" class="btn btn--sm btn--ghost" (click)="restore(vehicle)">
+                    Restore
+                  </button>
+                } @else {
+                  <button type="button" class="btn btn--sm btn--ghost" (click)="archive(vehicle)">
+                    Archive
+                  </button>
+                }
+                <button type="button" class="btn btn--sm btn--danger deleteBtn" (click)="remove(vehicle)">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- VIEW 2: Table View with Real Thumbnail Images -->
+    @if (viewMode() === 'table') {
+      <div class="tableCard">
+        <table class="plain modernTable">
+          <thead>
+            <tr>
+              <th style="width: 100px">Vehicle</th>
+              <th>Make & Model</th>
+              <th>License Plate</th>
+              <th>Owner</th>
+              <th>Year</th>
+              <th>VIN</th>
+              <th>Status</th>
+              <th style="text-align: right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (vehicle of data()!.items; track vehicle.vehicleId; let idx = $index) {
+              <tr class="tableRowAnim" [style.--anim-idx]="idx">
+                <td>
+                  <img
+                    [src]="getVehicleImage(vehicle)"
+                    [alt]="vehicle.make + ' ' + vehicle.model"
+                    class="tableThumb"
+                    loading="lazy"
+                  />
+                </td>
+                <td>
+                  <strong>{{ vehicle.make }} {{ vehicle.model }}</strong>
+                </td>
+                <td>
+                  <span class="plateTag">{{ vehicle.licensePlate }}</span>
+                </td>
+                <td>
+                  <a [routerLink]="['/', 'customers', vehicle.customerId]" class="ownerLink">
+                    {{ vehicle.customerName }}
+                  </a>
+                </td>
+                <td>{{ vehicle.year }}</td>
+                <td>
+                  <code class="vinCode">{{ vehicle.vin }}</code>
+                </td>
+                <td>
+                  @if (vehicle.isArchived) {
+                    <span class="badge badge--danger">Archived</span>
+                  } @else {
+                    <span class="badge badge--ok">Active</span>
+                  }
+                </td>
+                <td style="text-align: right">
+                  <div class="tableActions">
+                    <button class="btn btn--sm btn--ghost" type="button" (click)="openEdit(vehicle)">Edit</button>
+                    @if (vehicle.isArchived) {
+                      <button class="btn btn--sm btn--ghost" type="button" (click)="restore(vehicle)">Restore</button>
+                    } @else {
+                      <button class="btn btn--sm btn--ghost" type="button" (click)="archive(vehicle)">Archive</button>
+                    }
+                    <button class="btn btn--sm btn--danger" type="button" (click)="remove(vehicle)">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button
+        class="btn btn--outline"
+        type="button"
+        [disabled]="page() <= 1"
+        (click)="goToPage(page() - 1)"
+      >
+        ‹ Previous
+      </button>
+      <span class="pagerText">
+        Page <strong>{{ page() }}</strong> of <strong>{{ data()!.totalPages }}</strong> · {{ data()!.totalCount }} vehicles total
+      </span>
+      <button
+        class="btn btn--outline"
+        type="button"
+        [disabled]="page() >= data()!.totalPages"
+        (click)="goToPage(page() + 1)"
+      >
+        Next ›
+      </button>
     </div>
   }
 </div>
 
+<!-- Modal Form -->
 @if (formOpen()) {
   <app-vehicle-form
     [initial]="editing() ? { make: editing()!.make, model: editing()!.model, year: editing()!.year, licensePlate: editing()!.licensePlate, vin: editing()!.vin } : null"
@@ -106,7 +268,7 @@
           <label class="field"><span>Owner</span><input class="input" value="Loading customers…" disabled /></label>
         } @else {
           <label class="field">
-            <span>Owner — pick who this car belongs to</span>
+            <span>Owner — assign customer to vehicle</span>
             <select class="input" [ngModel]="ownerId()" (ngModelChange)="ownerId.set($event)" required>
               <option value="" disabled>Choose a customer…</option>
               @for (owner of owners(); track owner.customerId) {

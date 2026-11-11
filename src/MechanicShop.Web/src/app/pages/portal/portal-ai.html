@@ -1,202 +1,262 @@
-<div class="aiPage">
-  <!-- Header -->
-  <header class="aiHeader">
-    <div class="container">
-      <a routerLink="/portal" class="btn btn--ghost btn--sm">← Back to Portal</a>
-      <div style="flex:1"></div>
-      <span class="badge badge--ai">AI Assistant · Triage</span>
+<div class="aiWorkspace">
+  <!-- Top Navigation & Vehicle Selector -->
+  <header class="aiTopNav">
+    <div class="container topNavInner">
+      <div class="topNavLeft">
+        <a routerLink="/portal" class="backBtn">
+          <span>←</span>
+          <span>Back to Portal</span>
+        </a>
+        <div class="aiBrandPill">
+          <span class="aiGlowIcon">🤖</span>
+          <strong>AI Master Diagnostics</strong>
+          <span class="liveBadge">Neural Engine 4.2</span>
+        </div>
+      </div>
+
+      <div class="topNavRight">
+        @if (vehicles().length > 0) {
+          <div class="vehicleSelectWrapper">
+            <span class="vLabel">Target Vehicle:</span>
+            <select
+              class="vSelect"
+              [ngModel]="vehicleId()"
+              (ngModelChange)="onVehicleChange($event)"
+            >
+              @for (v of vehicles(); track v.vehicleId) {
+                <option [value]="v.vehicleId">{{ v.make }} {{ v.model }} ({{ v.licensePlate }})</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="vehicleSelectWrapper">
+            <span class="vBadge">{{ selectedVehicleText() }}</span>
+          </div>
+        }
+      </div>
     </div>
   </header>
 
-  <div class="container">
-    @if (loading()) {
-      <div class="card" style="text-align:center; padding: 4rem 0">
-        <div style="font-size:3rem; margin-bottom:1rem">⚡</div>
-        <p class="muted">Loading your vehicles…</p>
-      </div>
-    } @else if (pageError()) {
-      <div class="al al--err">{{ pageError() }}</div>
-    } @else if (vehicles().length === 0) {
-      <div class="card glassPanel" style="text-align:center">
-        <div style="font-size:3rem; margin-bottom:1rem">🚗</div>
-        <h2>No vehicles on file</h2>
-        <p class="muted">The workshop needs to register your vehicle first. Please contact them.</p>
-      </div>
-    } @else {
-      @if (step() === 0) {
-        <!-- Step 0: Vehicle + description -->
-        <div class="glassPanel fadeIn">
-          <div class="stepHeader">
-            <span class="badge badge--brand">Step 1 of 4</span>
-            <h2>Tell us about your car</h2>
+  <!-- Main AI Grid -->
+  <main class="container aiMainGrid">
+    <!-- Left Column: Chat & Symptom Triage -->
+    <section class="chatColumn">
+      <div class="chatCard">
+        <div class="chatHeader">
+          <div>
+            <h3>Symptom Investigation Console</h3>
+            <p>Describe your issue or click a common symptom below for instant analysis.</p>
           </div>
+          <span class="chipOnline">● Connected</span>
+        </div>
 
-          <div class="grid grid--2" style="margin-bottom: 2rem">
-            <div class="field">
-              <span>Vehicle <span class="req">*</span></span>
-              <select class="select" [ngModel]="vehicleId()" (ngModelChange)="vehicleId.set($event)">
-                <option value="" disabled>Choose a vehicle…</option>
-                @for (vehicle of vehicles(); track vehicle.vehicleId) {
-                  <option [value]="vehicle.vehicleId">
-                    {{ vehicle.licensePlate }} — {{ vehicle.vehicleInfo }}
-                  </option>
-                }
-              </select>
+        <!-- Quick Symptoms Tray -->
+        <div class="symptomTray">
+          <span class="trayLabel">Quick Presets:</span>
+          <div class="symptomChips">
+            @for (s of quickSymptoms; track s.label) {
+              <button
+                type="button"
+                class="symptomChip"
+                (click)="useSymptom(s.query)"
+                [disabled]="analyzing()"
+              >
+                {{ s.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Message Stream -->
+        <div class="chatStream" #streamContainer>
+          @for (m of messages(); track m.time + m.text) {
+            <div class="messageItem" [class.messageItem--user]="m.sender === 'user'" [class.messageItem--ai]="m.sender === 'ai'">
+              <div class="msgAvatar">
+                {{ m.sender === 'ai' ? '🤖' : '👤' }}
+              </div>
+              <div class="msgContent">
+                <div class="msgBubble">
+                  <p class="msgText">{{ m.text }}</p>
+                </div>
+                <span class="msgTime">{{ m.time }}</span>
+              </div>
             </div>
-          </div>
-
-          <div class="field">
-            <span>Describe what you notice <span class="req">*</span></span>
-            <textarea
-              class="textarea"
-              [ngModel]="report()"
-              (ngModelChange)="report.set($event)"
-              placeholder="e.g. My front brakes grind when I stop, and there's a burning smell."
-              rows="5"></textarea>
-            <div class="muted sm">Be specific — noises, smells, warning lights, when it happens.</div>
-          </div>
-
-          @if (pageError()) {
-            <div class="al al--err">{{ pageError() }}</div>
           }
 
-          <button class="btn btn--primary btn--full" (click)="continueToQuestions()">
-            Next →
-          </button>
+          @if (analyzing()) {
+            <div class="messageItem messageItem--ai">
+              <div class="msgAvatar">🤖</div>
+              <div class="msgContent">
+                <div class="msgBubble analyzingBubble">
+                  <span class="analyzingDot"></span>
+                  <span class="analyzingDot"></span>
+                  <span class="analyzingDot"></span>
+                  <span class="analyzingText">Analyzing mechanical telemetry & DTC codes…</span>
+                </div>
+              </div>
+            </div>
+          }
         </div>
-      }
 
-      @if (step() === 1) {
-        <!-- Step 1-3: Questions (chat style) -->
-        <div class="grid grid--2" style="gap: 2rem">
-          <!-- Chat transcript -->
-          <div class="card glassPanel" style="min-height: 500px; display:flex; flex-direction:column">
-            <div class="stepHeader">
-              <span class="badge badge--ai">Step 2 of 4</span>
-              <h2>Quick Questions</h2>
-            </div>
-            <div class="chatWindow">
-              <div class="msg msg--you">
-                <div class="msgBubble">{{ report() }}</div>
-              </div>
-              @for (pair of answeredPairs(); track pair.question) {
-                <div class="msg msg--ai">
-                  <div class="msgBubble">{{ pair.question }}</div>
-                  <div class="msgBubble msgBubble--answer">{{ pair.answer }}</div>
-                </div>
-              }
-              <div class="msg msg--ai typing">
-                <div class="msgBubble">{{ currentQuestion().text }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Options -->
-          <div class="card glassPanel">
-            <div class="stepHeader">
-              <span class="badge badge--brand">Pick one</span>
-              <h2>{{ currentQuestion().text }}</h2>
-            </div>
-            <div class="optionGrid">
-              @for (option of currentQuestion().options; track option) {
-                <button
-                  class="optionChip"
-                  (click)="answer(option)"
-                  [class.selected]="false"
-                >
-                  {{ option }}
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      }
-
-      @if (step() === 2) {
-        <!-- Step 2: Review -->
-        <div class="grid grid--2" style="gap: 2rem">
-          <div class="card glassPanel">
-            <div class="stepHeader">
-              <span class="badge badge--brand">Step 3 of 4</span>
-              <h2>Review before sending</h2>
-            </div>
-            <div class="reviewCard">
-              <div class="reviewRow">
-                <span class="muted sm">Vehicle</span>
-                <div>
-                  <strong>{{ chosenVehicle()?.vehicleInfo }}</strong>
-                  <span class="muted sm block">{{ chosenVehicle()?.licensePlate }}</span>
-                </div>
-              </div>
-              <div class="reviewRow">
-                <span class="muted sm">What you reported</span>
-                <div style="white-space: pre-wrap">{{ report() }}</div>
-              </div>
-              <div class="reviewRow">
-                <span class="muted sm">Conversation</span>
-                <div style="white-space: pre-wrap; font-size:0.9rem; color:var(--muted)">{{ triage().transcript }}</div>
-              </div>
-              <div class="reviewRow">
-                <span class="muted sm">Areas to inspect</span>
-                <div style="color:var(--ink-2)">{{ triage().areas }}</div>
-              </div>
-              <div class="reviewRow urgencyRow">
-                <span class="muted sm">Suggested urgency</span>
-                <div style="display:flex; align-items:center; gap:0.75rem">
-                  <span class="badge" [class]="'badge badge--u' + triage().urgencyIndex" style="color:var(--ink)">
-                    {{ triage().urgencyIndex === 2 ? '▲' : '●' }} {{ triage().label }}
-                  </span>
-                  <span class="muted sm" style="font-style:italic">{{ triage().advice }}</span>
-                </div>
-              </div>
-              <div class="al al--warn" style="font-size:0.85rem">
-                ⚠ This is an AI suggestion, not a diagnosis. A mechanic will review and confirm.
-              </div>
-            </div>
-          </div>
-
-          <div class="card glassPanel" style="display:flex; flex-direction:column; height:fit-content">
-            <div class="stepHeader">
-              <span class="badge badge--primary">Send</span>
-              <h2>Submit for Review</h2>
-            </div>
-            <p class="muted sm" style="margin-bottom: 1.5rem">
-              The workshop will review your request and contact you. Nothing is booked automatically.
-            </p>
-
-            @if (submitError()) {
-              <div class="al al--err">{{ submitError() }}</div>
-            }
-
+        <!-- Input Bar -->
+        <div class="chatInputArea">
+          <form class="inputForm" (ngSubmit)="sendQuery()">
+            <input
+              type="text"
+              class="chatInput"
+              placeholder="e.g. Grinding noise when braking, smoke from exhaust, code P0420…"
+              [ngModel]="prompt()"
+              (ngModelChange)="prompt.set($event)"
+              name="promptInput"
+              [disabled]="analyzing()"
+            />
             <button
-              class="btn btn--primary btn--full"
-              (click)="submitForReview()"
-              [disabled]="busy()"
+              type="submit"
+              class="sendBtn"
+              [disabled]="!prompt().trim() || analyzing()"
             >
-              {{ busy() ? 'Sending…' : 'Submit for Human Review' }}
+              <span>Analyze</span>
+              <span class="btnIco">⚡</span>
             </button>
+          </form>
+        </div>
+      </div>
+    </section>
 
-            <button class="btn btn--ghost btn--full" style="margin-top:0.75rem" (click)="editDescription()">
-              Edit description
-            </button>
+    <!-- Right Column: Live Diagnostic Telemetry HUD -->
+    <aside class="hudColumn">
+      @if (latestDiagnostic(); as d) {
+        <div class="hudCard fadeIn">
+          <div class="hudHeader">
+            <span class="hudTag">Real-Time Diagnostic Result</span>
+            <span class="urgencyPill" [style.backgroundColor]="d.urgencyColor + '22'" [style.borderColor]="d.urgencyColor" [style.color]="d.urgencyColor">
+              Urgency: {{ d.urgency }}
+            </span>
+          </div>
+
+          <h2 class="diagTitle">{{ d.title }}</h2>
+
+          <!-- Metric strip -->
+          <div class="metricStrip">
+            <div class="metricBox">
+              <span class="mLabel">Est. Repair Cost</span>
+              <strong class="mValue mValue--brand">{{ d.estimatedCost }}</strong>
+            </div>
+            <div class="metricBox">
+              <span class="mLabel">Est. Labor Time</span>
+              <strong class="mValue">{{ d.laborTime }}</strong>
+            </div>
+            <div class="metricBox">
+              <span class="mLabel">Safe to Drive</span>
+              <strong class="mValue" [style.color]="d.safeToDrive ? '#22c55e' : '#ef4444'">
+                {{ d.safeToDrive ? '✓ Caution' : '✕ No - Risk' }}
+              </strong>
+            </div>
+          </div>
+
+          <!-- Driving Advisory -->
+          <div class="advisoryBox" [class.advisoryBox--danger]="!d.safeToDrive">
+            <span class="advisoryIcon">{{ d.safeToDrive ? 'ℹ️' : '⚠️' }}</span>
+            <div class="advisoryText">
+              <strong>Advisory:</strong> {{ d.drivingAdvice }}
+            </div>
+          </div>
+
+          <!-- Likely Root Causes -->
+          <div class="hudSection">
+            <h4 class="sectionHeading">Probable Root Causes</h4>
+            <div class="causeList">
+              @for (c of d.likelyCauses; track c.name) {
+                <div class="causeItem">
+                  <div class="causeHeader">
+                    <span class="causeName">{{ c.name }}</span>
+                    <span class="causeProb">{{ c.probability }}</span>
+                  </div>
+                  <p class="causeDesc">{{ c.description }}</p>
+                  <div class="probBarTrack">
+                    <div class="probBarFill" [style.width]="c.probability"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Recommended Actions -->
+          <div class="hudSection">
+            <h4 class="sectionHeading">Mechanic Recommended Inspection</h4>
+            <ul class="actionList">
+              @for (act of d.recommendedActions; track act) {
+                <li>
+                  <span class="checkMark">✓</span>
+                  <span>{{ act }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Parts Needed -->
+          <div class="hudSection">
+            <h4 class="sectionHeading">Associated Parts & Consumables</h4>
+            <div class="partsBadges">
+              @for (part of d.partsNeeded; track part) {
+                <span class="partBadge">🔧 {{ part }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Submit to Workshop Booking -->
+          <div class="bookSection">
+            @if (bookingSuccess()) {
+              <div class="bookingAlert successAlert">
+                <span class="bIcon">🎉</span>
+                <div>
+                  <strong>Appointment Request Sent to Workshop!</strong>
+                  <p>Our workshop manager will review this triage and assign Bay A/B/C.</p>
+                </div>
+              </div>
+            } @else {
+              @if (submitError()) {
+                <div class="bookingAlert errorAlert">
+                  <span>⚠️</span>
+                  <span>{{ submitError() }}</span>
+                </div>
+              }
+
+              <button
+                type="button"
+                class="bookPriorityBtn"
+                (click)="bookPrioritySlot()"
+                [disabled]="bookingBusy()"
+              >
+                @if (bookingBusy()) {
+                  <span>Booking Priority Dispatch…</span>
+                } @else {
+                  <span>⚡ Submit Triage & Request Booking</span>
+                }
+              </button>
+              <small class="bookHint">Sends this full diagnosis directly to the manager dashboard.</small>
+            }
           </div>
         </div>
-      }
-
-      @if (step() === 3) {
-        <!-- Step 3: Sent -->
-        <div class="glassPanel fadeIn" style="text-align:center; max-width:560px; margin:0 auto">
-          <div style="font-size:4rem; margin-bottom:1.5rem; display:block">✓</div>
-          <h2>Sent to the workshop</h2>
-          <p class="muted" style="margin-bottom: 2rem">
-            A team member will review your request and contact you. No appointment or repair has been created yet.
+      } @else {
+        <!-- Empty HUD Placeholder -->
+        <div class="hudEmptyCard">
+          <div class="emptyRadar">
+            <span class="radarCircle c1"></span>
+            <span class="radarCircle c2"></span>
+            <span class="radarIcon">🔍</span>
+          </div>
+          <h3>Awaiting Diagnostic Input</h3>
+          <p>
+            Type a mechanical symptom or select a quick preset on the left. The AI neural engine will calculate cost projections, safety alerts, and parts requirements here.
           </p>
-          <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap">
-            <button class="btn btn--outline" (click)="restart()">New Description</button>
-            <a routerLink="/portal/appointments" class="btn btn--primary">View My Requests</a>
+          <div class="hudEmptyBadges">
+            <span>✓ OBD-II Scanner Ready</span>
+            <span>✓ Bay Load Balancing</span>
+            <span>✓ Labor Time Guide</span>
           </div>
         </div>
       }
-    }
-  </div>
+    </aside>
+  </main>
 </div>

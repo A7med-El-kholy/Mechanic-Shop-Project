@@ -26,6 +26,7 @@ export class ShellPage {
 
   protected readonly managerNav = [
     { path: 'dashboard', label: 'Dashboard', icon: '▦' },
+    { path: 'ai-assistant', label: 'AI Diagnostics', icon: '🤖' },
     { path: 'customers', label: 'Customers', icon: '☰' },
     { path: 'vehicles', label: 'Vehicles', icon: '⌂' },
     { path: 'work-orders', label: 'Work Orders', icon: '≡' },
@@ -39,6 +40,7 @@ export class ShellPage {
 
   protected readonly technicianNav = [
     { path: 'tech-home', label: 'My Dashboard', icon: '▦' },
+    { path: 'ai-assistant', label: 'AI Diagnostics', icon: '🤖' },
     { path: 'work-orders', label: 'My Work Orders', icon: '≡' },
     { path: 'appointments', label: 'My Schedule', icon: '◷' },
     { path: 'notifications', label: 'Notifications', icon: '◔' },

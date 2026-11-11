@@ -1,34 +1,37 @@
 <div class="pageHeader">
   <div class="pageHeader__text">
-    <h1>Dashboard</h1>
-    <p class="muted">Live counters straight from the shop API.</p>
+    <h1>Workshop Dashboard</h1>
+    <p class="muted">Live operational counters, bay telemetry, and upcoming work orders.</p>
   </div>
-  <a routerLink="/work-orders/new" class="btn btn--primary">+ New Work Order</a>
+  <div class="headerActions" style="display: flex; gap: 0.75rem">
+    <a routerLink="/ai-assistant" class="btn btn--ai">⚡ AI Diagnostics</a>
+    <a routerLink="/work-orders/new" class="btn btn--primary">+ New Work Order</a>
+  </div>
 </div>
 
 <div class="grid grid--4" style="margin-bottom: 2rem">
-  <a class="card statCard" [routerLink]="['work-orders']">
+  <a class="card statCard" [routerLink]="['/work-orders']">
     <div class="stat__icon">📋</div>
     <div class="stat__body">
       <span class="stat__num">{{ workOrderCount() }}</span>
       <span class="stat__label">Work Orders</span>
     </div>
   </a>
-  <a class="card statCard" [routerLink]="['technicians']">
+  <a class="card statCard" [routerLink]="['/technicians']">
     <div class="stat__icon">👷</div>
     <div class="stat__body">
       <span class="stat__num">{{ technicianCount() }}</span>
       <span class="stat__label">Technicians</span>
     </div>
   </a>
-  <a class="card statCard" [routerLink]="['services']">
+  <a class="card statCard" [routerLink]="['/inventory']">
     <div class="stat__icon">🔧</div>
     <div class="stat__body">
       <span class="stat__num">{{ serviceCount() }}</span>
       <span class="stat__label">Service Tasks</span>
     </div>
   </a>
-  <a class="card statCard" [routerLink]="['customers']">
+  <a class="card statCard" [routerLink]="['/customers']">
     <div class="stat__icon">👥</div>
     <div class="stat__body">
       <span class="stat__num">{{ customerCount() }}</span>

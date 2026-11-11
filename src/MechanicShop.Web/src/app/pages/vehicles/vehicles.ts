@@ -8,12 +8,8 @@ import { VehicleForm } from '../../shared/vehicle-form';
 import { VehiclePayload } from '../../shared/vehicle-fields';
 import { problemMessage } from '../../core/api';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
-/** The whole garage as one searchable table. The default list answers "what can
- * the shop still call in?" (archived cars hidden); the toggle answers "what ever
- * arrived here?". Deletion keeps the history rule from the API: a car with any
- * work-order history is archived, never erased. */
 @Component({
   selector: 'app-vehicles',
   imports: [RouterLink, FormsModule, VehicleForm],
@@ -26,6 +22,7 @@ export class VehiclesPage {
 
   protected readonly search = signal('');
   protected readonly includeArchived = signal(false);
+  protected readonly viewMode = signal<'grid' | 'table'>('grid');
   protected readonly page = signal(1);
   protected readonly data = signal<PaginatedList<VehicleListItem> | null>(null);
   protected readonly loading = signal(true);
@@ -47,6 +44,53 @@ export class VehiclesPage {
     this.load();
   }
 
+  protected setViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode.set(mode);
+  }
+
+  /** Resolves realistic high-definition vehicle photography according to vehicle make/model */
+  protected getVehicleImage(vehicle: VehicleListItem): string {
+    const make = (vehicle.make || '').toLowerCase();
+    const model = (vehicle.model || '').toLowerCase();
+
+    if (make.includes('bmw')) {
+      return 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('mercedes') || make.includes('benz')) {
+      return 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('porsche')) {
+      return 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('audi')) {
+      return 'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('ford') || model.includes('mustang')) {
+      return 'https://images.unsplash.com/photo-1494976388531-d1058494cba5?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('toyota') || model.includes('corolla') || model.includes('camry') || model.includes('yaris')) {
+      return 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('honda') || model.includes('civic') || model.includes('accord')) {
+      return 'https://images.unsplash.com/photo-1619682817481-e994891cd1f5?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('hyundai') || make.includes('kia') || model.includes('picanto') || model.includes('elantra')) {
+      return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('nissan')) {
+      return 'https://images.unsplash.com/photo-1570733117311-d990c3816c47?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('tesla')) {
+      return 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=700&q=80';
+    }
+    if (make.includes('chevrolet') || make.includes('chevy') || model.includes('camaro')) {
+      return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=700&q=80';
+    }
+
+    // Default luxury vehicle photo
+    return 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=700&q=80';
+  }
+
   protected load(): void {
     this.loading.set(true);
     this.pageError.set(null);
@@ -58,7 +102,6 @@ export class VehiclesPage {
     });
 
     const search = this.search().trim();
-
     if (search.length > 0) {
       params.set('search', search);
     }
@@ -66,7 +109,7 @@ export class VehiclesPage {
     this.http
       .get<PaginatedList<VehicleListItem>>(`/api/vehicles?${params}`)
       .subscribe({
-        next: data => {
+        next: (data) => {
           this.data.set(data);
           this.loading.set(false);
         },
@@ -120,8 +163,6 @@ export class VehiclesPage {
     this.formBusy.set(true);
     this.formError.set(null);
 
-    // Create mode needs the owner picked beside the form; keep the API call off
-    // the wire until it is.
     if (!editing && this.ownerId() === '') {
       this.formBusy.set(false);
       this.formError.set('Pick the owner of this car first.');
@@ -153,8 +194,8 @@ export class VehiclesPage {
     this.http
       .get<PaginatedList<{ customerId: string; name: string }>>('/api/customers?page=1&pageSize=100')
       .subscribe({
-        next: data => {
-          this.owners.set(data.items.map(c => ({ customerId: c.customerId, name: c.name })));
+        next: (data) => {
+          this.owners.set(data.items.map((c) => ({ customerId: c.customerId, name: c.name })));
           this.ownersBusy.set(false);
         },
         error: () => this.ownersBusy.set(false),

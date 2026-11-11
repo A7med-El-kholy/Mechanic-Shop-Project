@@ -17,6 +17,9 @@
             [class.navLink--active]="isActive(item.path)"
           >
             {{ item.label }}
+            @if (item.path === 'portal/ai-assistant') {
+              <span class="badge badge--ai" style="padding: 2px 7px; margin-left: 4px; font-size: 0.68rem">AI</span>
+            }
             @if (item.path === 'portal/notifications' && badge.unread() > 0) {
               <span class="badge badge--neutral" style="padding:2px 6px">{{ badge.unread() }}</span>
             }

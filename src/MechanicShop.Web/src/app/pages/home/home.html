@@ -18,10 +18,10 @@
       </p>
       <div class="hero__actions">
         @if (auth.isAuthenticated()) {
-          <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Try AI Assistant</a>
+          <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Try AI Assistant</a>
           <a routerLink="/portal/appointments" class="btn btn--outline btn--lg">Book Appointment</a>
         } @else {
-          <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Try AI Assistant</a>
+          <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Try AI Assistant</a>
           <a routerLink="/login" class="btn btn--outline btn--lg">Sign In</a>
         }
       </div>
@@ -110,7 +110,7 @@
     </div>
 
     <div style="text-align: center">
-      <a routerLink="/portal/ai-assistant" class="btn btn--ai btn--lg">Launch AI Assistant</a>
+      <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Launch AI Assistant</a>
     </div>
   </div>
 </section>

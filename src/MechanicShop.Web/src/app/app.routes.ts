@@ -43,6 +43,11 @@ export const routes: Routes = [
     component: LoginPage,
     title: 'Sign in · Mechanic Shop',
   },
+  {
+    path: 'ai-assistant',
+    component: PortalAiPage,
+    title: 'AI Diagnostic Assistant · Mechanic Shop',
+  },
   // The customer side. Same token, different role — customers never render the
   // staff shell and staff never land here (both guards bounce wrong-area users).
   {
@@ -105,6 +110,11 @@ export const routes: Routes = [
         component: DashboardPage,
         canActivate: [managerGuard],
         title: 'Dashboard · Mechanic Shop',
+      },
+      {
+        path: 'ai-assistant',
+        component: PortalAiPage,
+        title: 'AI Diagnostics · Mechanic Shop',
       },
       {
         path: 'customers',

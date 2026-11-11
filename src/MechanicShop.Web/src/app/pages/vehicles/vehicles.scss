@@ -1,11 +1,418 @@
-.head {
+.vehiclesPage {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  gap: 12px;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.rowActionsCell .rowActions {
+/* Page Header */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pageHeader h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.newVehBtn {
+  box-shadow: 0 10px 20px -5px var(--brand-glow);
+}
+
+.alertBanner {
+  animation: slideDown 250ms ease-out;
+}
+
+/* Toolbar Card */
+.toolbarCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.searchArea {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 520px;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  padding-left: 2.4rem !important;
+  border-radius: 12px !important;
+  background: var(--surface-2) !important;
+}
+
+.searchBtn {
+  border-radius: 12px !important;
+  padding: 0.85rem 1.5rem !important;
+  flex-shrink: 0;
+}
+
+.toolbarOptions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.archivedToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* View Switcher */
+.viewSwitcher {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.switchBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.switchBtn.active {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Grid Cards View */
+.vehicleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.vCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: all 250ms ease;
+  animation: cardFadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--anim-idx, 0) * 45ms);
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.vCardMedia {
+  position: relative;
+  height: 185px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.vCardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 600ms cubic-bezier(0.2, 0, 0.3, 1);
+}
+
+.vCard:hover .vCardImg {
+  transform: scale(1.06);
+}
+
+.plateTag {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.85rem;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 2px solid #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.statusTag {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.statusTag--active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.statusTag--archived {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.vCardBody {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+}
+
+.vName {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 0.35rem;
+  line-height: 1.3;
+}
+
+.vVin {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.vinLabel {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.vVin code {
+  color: var(--ink-2);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
+
+.vOwnerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ownerLabel {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ownerLink {
+  color: var(--brand-2);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.ownerLink:hover {
+  text-decoration: underline;
+}
+
+.vActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.deleteBtn:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+/* Table View */
+.tableCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.modernTable {
+  width: 100%;
+}
+
+.tableRowAnim {
+  animation: cardFadeIn 300ms ease both;
+  animation-delay: calc(var(--anim-idx, 0) * 35ms);
+}
+
+.tableThumb {
+  width: 80px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vinCode {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tableActions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+.pagerText {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.pagerText strong {
+  color: var(--ink);
+}
+
+/* Loading & Empty */
+.loadingCard,
+.emptyCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+  margin-bottom: 1rem;
+}
+
+.emptyIcon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .toolbarCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchArea {
+    max-width: none;
+  }
+
+  .toolbarOptions {
+    justify-content: space-between;
+  }
 }
