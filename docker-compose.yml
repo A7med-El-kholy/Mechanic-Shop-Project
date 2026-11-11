@@ -19,6 +19,9 @@ services:
 
   # The API: JWT auth, EF Core + SQL Server, Swagger at /swagger.
   api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     image: mechanic-shop-api:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -38,6 +41,9 @@ services:
 
   # The customer portal (Angular + nginx). /api calls proxied to the api container.
   spa:
+    build:
+      context: .
+      dockerfile: Dockerfile.spa
     image: mechanic-shop-spa:latest
     ports:
       - "80:80"
