@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   Router,
   RouterLink,
@@ -7,6 +14,7 @@ import {
 } from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
+import { ApiHealthService } from '../../core/health';
 import { NotificationBadgeService } from '../../core/notifications';
 
 /** Staff shell. The nav is the role's map: managers see the whole shop, technicians
@@ -23,6 +31,17 @@ export class ShellPage {
 
   protected readonly auth = inject(AuthStore);
   protected readonly badge = inject(NotificationBadgeService);
+  protected readonly health = inject(ApiHealthService);
+
+  constructor() {
+    this.health.start();
+  }
+
+  /** Desktop starts open; phones start closed so the drawer never covers content. */
+  protected readonly sidebarOpen = signal(
+    typeof window === 'undefined' ? true : window.innerWidth > 900);
+
+  private wasMobile = typeof window !== 'undefined' && window.innerWidth <= 900;
 
   protected readonly managerNav = [
     { path: 'dashboard', label: 'Dashboard', icon: '▦' },
@@ -64,6 +83,31 @@ export class ShellPage {
 
   ngOnInit(): void {
     this.badge.refresh('staff');
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarOpen.update((open) => !open);
+  }
+
+  protected closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
+
+  /** Mobile links close the drawer; desktop links leave the sidebar as-is. */
+  protected onNavClick(): void {
+    if (window.innerWidth <= 900) {
+      this.sidebarOpen.set(false);
+    }
+  }
+
+  @HostListener('window:resize')
+  protected onResize(): void {
+    const isMobile = window.innerWidth <= 900;
+
+    if (isMobile !== this.wasMobile) {
+      this.sidebarOpen.set(!isMobile);
+      this.wasMobile = isMobile;
+    }
   }
 
   protected logout(): void {

@@ -18,11 +18,13 @@ public static class AuthEndpoints
         var group = endpoints.MapGroup("/api/auth").WithTags("Auth");
 
         group.MapPost("/register", RegisterAsync)
+            .RequireRateLimiting("auth")
             .WithName("Register")
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/login", LoginAsync)
+            .RequireRateLimiting("auth")
             .WithName("Login")
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
@@ -31,6 +33,13 @@ public static class AuthEndpoints
             .WithName("Me")
             .RequireAuthorization()
             .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/change-password", ChangePasswordAsync)
+            .WithName("ChangePassword")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return endpoints;
@@ -42,11 +51,11 @@ public static class AuthEndpoints
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var result = await identityService.RegisterAsync(
+        var result = await identityService.RegisterCustomerAsync(
             request.Email,
             request.Password,
             request.FullName,
-            AppRoles.Customer,
+            request.PhoneNumber,
             cancellationToken);
 
         if (result.IsError)
@@ -98,5 +107,38 @@ public static class AuthEndpoints
         }
 
         return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        IIdentityService identityService,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var userId = httpContext.User.FindFirst("sub")?.Value
+            ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Error.Unauthorized("Auth.NoUserClaim", "Token is missing a user identifier.")
+                .ToProblem(httpContext);
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return Error.Validation("Auth.PasswordRequired", "Both the current and new password are required.")
+                .ToProblem(httpContext);
+        }
+
+        var result = await identityService.ChangePasswordAsync(
+            userId,
+            request.CurrentPassword,
+            request.NewPassword,
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.NoContent();
     }
 }

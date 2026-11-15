@@ -1,195 +1,452 @@
-<!-- Hero -->
-<section class="hero">
-  <div class="hero__bg">
-    <img class="hero__img car-img" src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80" alt="Mechanic working on a car" />
-  </div>
-  <div class="container">
-    <div class="hero__content fadeIn">
-      <div class="hero__kicker">
-        <span></span>
-        Open 7 Days · AI-Powered Diagnostics
-      </div>
-      <h1>Your car, in expert hands.</h1>
-      <p class="hero__lead">
-        Full-service auto repair and maintenance — diagnostics, brakes,
-        electrical, tyres and pre-purchase inspections. Honest quotes,
-        certified mechanics, and AI-assisted triage so you know what's
-        wrong before you even book.
-      </p>
-      <div class="hero__actions">
+<!-- ══════════════════════════════ PUBLIC NAV ══════════════════════════════ -->
+<header class="pubNav">
+  <div class="pubNav__inner">
+    <a routerLink="/home" class="pubBrand">
+      <span class="pubBrand__mark">MS</span>
+      <span class="pubBrand__text">
+        <b>Mechanic Shop</b>
+        <small>Precision Auto Care</small>
+      </span>
+    </a>
+
+    <nav class="pubNav__links">
+      <a href="#services">Services</a>
+      <a href="#how">How it works</a>
+      <a href="#ai">AI Diagnostics</a>
+      <a href="#stories">Reviews</a>
+    </nav>
+
+    <div class="pubNav__actions">
+      @if (auth.isAuthenticated()) {
+        <a
+          [routerLink]="auth.hasStaffRole() ? '/dashboard' : '/portal'"
+          class="btn btn--outline btn--sm"
+        >
+          {{ auth.hasStaffRole() ? 'Dashboard' : 'My Garage' }}
+        </a>
+        <a routerLink="/ai-assistant" class="btn btn--brand btn--sm pubNav__ai">AI Assistant</a>
+      } @else {
+        <a routerLink="/login" class="pubNav__signin">Sign in</a>
+        <a routerLink="/register" class="btn btn--outline btn--sm">Create account</a>
+        <a routerLink="/login" class="btn btn--brand btn--sm">Book a service</a>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="pubNav__toggle"
+      [attr.aria-expanded]="menuOpen()"
+      aria-label="Toggle public menu"
+      (click)="toggleMenu()"
+    >
+      <span class="pubNav__toggleLines" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
+
+    <div class="pubNav__mobile" [class.open]="menuOpen()">
+      <nav class="pubNav__mobileLinks">
+        <a href="#services" (click)="closeMenu()">Services</a>
+        <a href="#how" (click)="closeMenu()">How it works</a>
+        <a href="#ai" (click)="closeMenu()">AI Diagnostics</a>
+        <a href="#stories" (click)="closeMenu()">Reviews</a>
+      </nav>
+
+      <div class="pubNav__mobileActions">
         @if (auth.isAuthenticated()) {
-          <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Try AI Assistant</a>
-          <a routerLink="/portal/appointments" class="btn btn--outline btn--lg">Book Appointment</a>
+          <a
+            [routerLink]="auth.hasStaffRole() ? '/dashboard' : '/portal'"
+            class="btn btn--outline btn--full"
+            (click)="closeMenu()"
+          >
+            {{ auth.hasStaffRole() ? 'Dashboard' : 'My Garage' }}
+          </a>
+          <a routerLink="/ai-assistant" class="btn btn--brand btn--full" (click)="closeMenu()">AI Assistant</a>
         } @else {
-          <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Try AI Assistant</a>
-          <a routerLink="/login" class="btn btn--outline btn--lg">Sign In</a>
-        }
-      </div>
-      <div class="hero__stats">
-        @for (stat of stats; track stat.num) {
-          <div class="stat">
-            <span class="stat__num">{{ stat.num }}</span>
-            <span class="stat__lab">{{ stat.lab }}</span>
-          </div>
+          <a routerLink="/login" class="btn btn--outline btn--full" (click)="closeMenu()">Sign in</a>
+          <a routerLink="/register" class="btn btn--brand btn--full" (click)="closeMenu()">Create account</a>
         }
       </div>
     </div>
+  </div>
+</header>
 
-    <!-- Hero side image -->
-    <div class="hero__side fadeIn" style="animation-delay: 0.2s;">
-      <div class="car-hero">
-        <img class="car-img" src="https://images.unsplash.com/photo-1494976388531-d1058494cba5?w=800&q=80" alt="Modern car in workshop" />
-        <div class="car-overlay"></div>
+<!-- ══════════════════════════════ HERO ══════════════════════════════ -->
+<section class="hero">
+  <div class="hero__grid" aria-hidden="true"></div>
+  <div class="hero__glow hero__glow--orange" aria-hidden="true"></div>
+  <div class="hero__glow hero__glow--indigo" aria-hidden="true"></div>
+
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <div class="hero__eyebrow">
+        <span class="hero__eyebrowDot"></span>
+        Open 7 days · ASE-certified · AI triage
       </div>
+
+      <h1 class="hero__title">
+        Your car,<br />
+        in <span class="hero__titleAccent">expert</span> hands.
+      </h1>
+
+      <p class="hero__lead">
+        Full-service auto repair with an AI master technician on call.
+        Describe the symptom, speak it aloud, or upload a photo — get a
+        diagnosis, cost estimate and safety verdict before you book.
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/ai-assistant" class="btn btn--brand btn--lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0-3 3v1a3 3 0 0 0 0 6v1a3 3 0 0 0 3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0 3-3v-1a3 3 0 0 0 0-6v-1a3 3 0 0 0-3-3V5a3 3 0 0 0-3-3Z"/><path d="M12 8v8"/></svg>
+          Diagnose my car
+        </a>
+        <a href="#how" class="btn btn--outline btn--lg">How it works</a>
+      </div>
+
+      <div class="hero__proof">
+        <div class="hero__avatars" aria-hidden="true">
+          <span>MT</span><span>SL</span><span>JR</span><span class="hero__avatarsMore">+2k</span>
+        </div>
+        <div class="hero__proofText">
+          <div class="hero__stars" aria-hidden="true">★★★★★</div>
+          <span>Rated <b>4.9</b> by 2,400+ drivers</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__visual">
+      <div class="hero__photo">
+        <img src="/images/hero-car.jpg" alt="Vehicle in a neon-lit workshop at night" />
+        <div class="hero__photoShade"></div>
+
+        <!-- Floating telemetry card -->
+        <div class="hero__floatCard hero__floatCard--scan">
+          <div class="scanIcon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+          </div>
+          <div>
+            <b>AI scan complete</b>
+            <small>Brake pads · 78% worn</small>
+          </div>
+          <span class="scanBadge">High</span>
+        </div>
+
+        <!-- Floating rating card -->
+        <div class="hero__floatCard hero__floatCard--rating">
+          <div class="ratingNum">48<span>h</span></div>
+          <div>
+            <b>Avg. turnaround</b>
+            <small>Same-day for most jobs</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decorative chips -->
+      <div class="hero__chip hero__chip--a">🔧 Brakes</div>
+      <div class="hero__chip hero__chip--b">⚡ Electrical</div>
+      <div class="hero__chip hero__chip--c">🛞 Tyres</div>
     </div>
   </div>
 </section>
 
-<!-- Services -->
-<section class="section section--sm">
-  <div class="container">
-    <div style="text-align: center; max-width: 700px; margin: 0 auto 3rem;">
-      <h2>Our Services</h2>
-      <p class="muted" style="font-size: 1.15rem">Everything your vehicle needs, from oil changes to full engine rebuilds.</p>
-    </div>
-    <div class="grid grid--4">
-      @for (service of services; track service.title) {
-        <div class="card serviceCard fadeIn">
-          <div class="service__media">
-            <img class="car-thumb" [src]="service.img" [alt]="service.title" />
-            <span class="service__tag">{{ service.tag }}</span>
-          </div>
-          <div class="card__body">
-            <div style="font-size: 2rem; margin-bottom: 0.75rem">{{ service.icon }}</div>
-            <h3 class="service__title">{{ service.title }}</h3>
-            <p class="service__desc">{{ service.desc }}</p>
-            <div class="service__footer">
-              <span class="service__price">{{ service.price }} <span style="font-weight:500;font-size:0.85rem;color:var(--muted)">{{ service.priceUnit }}</span></span>
-              <a routerLink="/login" class="btn btn--sm btn--ghost">Book</a>
-            </div>
-          </div>
-        </div>
+<!-- ══════════════════════════════ TRUST MARQUEE ══════════════════════════════ -->
+<section class="marqueeSection" aria-label="Certifications">
+  <div class="marquee">
+    <div class="marquee__track">
+      @for (logo of trustLogos; track logo.alt) {
+        <span class="marquee__item">{{ logo.alt }}</span>
+      }
+      @for (logo of trustLogos; track logo.alt + '-dup') {
+        <span class="marquee__item" aria-hidden="true">{{ logo.alt }}</span>
       }
     </div>
   </div>
 </section>
 
-<!-- AI Centerpiece -->
-<section class="section--dark aiCenterpiece">
-  <div class="aiCenterpiece__bg"></div>
+<!-- ══════════════════════════════ SERVICES ══════════════════════════════ -->
+<section class="section services" id="services">
   <div class="container">
-    <div class="aiHeader fadeIn">
-      <div class="aiHeader__kicker">
-        <span></span>
-        Artificial Intelligence
-      </div>
-      <h2>Describe the problem. Get answers before you visit.</h2>
-      <p>
-        Our AI Assistant guides you through a quick triage — vehicle, symptoms,
-        and urgency — then submits a detailed request to the workshop for human
-        review. Nothing is booked automatically; a real mechanic confirms.
+    <div class="sectionHead">
+      <p class="sectionHead__kicker">What we do</p>
+      <h2>Everything your car needs,<br /><span class="inkMuted">under one roof.</span></h2>
+      <p class="sectionHead__lead">
+        From a ten-minute oil change to a full engine rebuild — handled by
+        certified technicians with factory-grade tooling.
       </p>
     </div>
 
-    <div class="aiSteps fadeIn" style="animation-delay: 0.1s;">
-      <div class="aiStep">
-        <div class="aiStep__num">1</div>
-        <h3>Select Vehicle</h3>
-        <p>Choose your car from your profile.</p>
-      </div>
-      <div class="aiStep">
-        <div class="aiStep__num">2</div>
-        <h3>Describe Symptoms</h3>
-        <p>Tell us what you notice — noise, smell, warning lights.</p>
-      </div>
-      <div class="aiStep">
-        <div class="aiStep__num">3</div>
-        <h3>Review & Send</h3>
-        <p>Get urgency + inspection areas, then submit for review.</p>
-      </div>
-    </div>
-
-    <div style="text-align: center">
-      <a routerLink="/ai-assistant" class="btn btn--ai btn--lg">⚡ Launch AI Assistant</a>
-    </div>
-  </div>
-</section>
-
-<!-- Why us -->
-<section class="section">
-  <div class="container">
-    <div class="feature fadeIn">
-      <div class="feature__text">
-        <h2>Why drivers choose Mechanic Shop</h2>
-        <p>
-          Certified mechanics, transparent pricing, and AI-assisted diagnostics.
-          We treat every vehicle like it's our own — from a quick oil change to
-          a full engine rebuild.
-        </p>
-        <ul class="feature__checks">
-          <li>ASE-certified technicians on every job</li>
-          <li>Upfront pricing — no hidden fees</li>
-          <li>12-month parts & labour warranty</li>
-          <li>AI triage before you book</li>
-          <li>Loaner cars available on request</li>
-        </ul>
-        <a routerLink="/login" class="btn btn--primary">Get Started</a>
-      </div>
-      <div class="feature__media">
-        <div class="car-hero">
-          <img class="car-img" src="https://images.unsplash.com/photo-1603774675286-59789361f350?w=800&q=80" alt="Workshop interior" />
-          <div class="car-overlay"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Testimonials -->
-<section class="section section--sm">
-  <div class="container">
-    <div style="text-align: center; margin-bottom: 3rem">
-      <h2>Customer Stories</h2>
-      <p class="muted" style="font-size: 1.15rem">Real people, real repairs.</p>
-    </div>
-    <div class="grid grid--3">
-      @for (t of testimonials; track t.name) {
-        <div class="card testimonial fadeIn">
-          <p class="testimonial__quote">{{ t.quote }}</p>
-          <div class="testimonial__author">
-            <img class="testimonial__avatar" [src]="t.avatar" [alt]="t.name" />
-            <div>
-              <span class="testimonial__name">{{ t.name }}</span>
-              <span class="testimonial__role">{{ t.role }}</span>
+    <div class="bento">
+      @for (service of services; track service.title; let i = $index) {
+        <article class="bentoCard" [class.bentoCard--wide]="i === 0 || i === 3">
+          <div class="bentoCard__media">
+            <img [src]="service.img" [alt]="service.title" loading="lazy" />
+            <span class="bentoCard__tag">{{ service.tag }}</span>
+          </div>
+          <div class="bentoCard__body">
+            <div class="bentoCard__titleRow">
+              <h3>{{ service.title }}</h3>
+              <span class="bentoCard__price">
+                {{ service.price }}<small>{{ service.priceUnit }}</small>
+              </span>
             </div>
+            <p>{{ service.desc }}</p>
+            <ul class="bentoCard__points">
+              @for (point of service.points; track point) {
+                <li>{{ point }}</li>
+              }
+            </ul>
+            <a routerLink="/login" class="bentoCard__link">
+              Book this service
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ HOW IT WORKS ══════════════════════════════ -->
+<section class="section section--sm how" id="how">
+  <div class="container">
+    <div class="sectionHead sectionHead--center">
+      <p class="sectionHead__kicker">Simple by design</p>
+      <h2>Three steps to a fixed car.</h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step__top">
+          <span class="step__num">01</span>
+          <div class="step__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H4"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
           </div>
         </div>
-      }
-    </div>
-  </div>
-</section>
+        <h3>Add your vehicle</h3>
+        <p>Create your garage in seconds. We remember every service, part and invoice.</p>
+      </div>
 
-<!-- Trust -->
-<section class="section--sm">
-  <div class="container">
-    <div class="trust">
-      @for (logo of trustLogos; track logo.alt) {
-        <div class="trustItem">
-          <img [src]="logo.src" [alt]="logo.alt" loading="lazy" />
-          {{ logo.alt }}
+      <div class="step">
+        <div class="step__top">
+          <span class="step__num">02</span>
+          <div class="step__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0-3 3v1a3 3 0 0 0 0 6v1a3 3 0 0 0 3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0 3-3v-1a3 3 0 0 0 0-6v-1a3 3 0 0 0-3-3V5a3 3 0 0 0-3-3Z"/></svg>
+          </div>
         </div>
+        <h3>Describe the symptom</h3>
+        <p>Type it, say it, or snap a photo. The AI triages urgency, causes and cost.</p>
+      </div>
+
+      <div class="step">
+        <div class="step__top">
+          <span class="step__num">03</span>
+          <div class="step__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+        </div>
+        <h3>Book & track</h3>
+        <p>A manager confirms your bay. Follow the repair live and pay when it's done.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ AI SHOWCASE ══════════════════════════════ -->
+<section class="aiSection" id="ai">
+  <div class="aiSection__noise" aria-hidden="true"></div>
+  <div class="container aiSection__inner">
+    <div class="aiSection__copy">
+      <p class="sectionHead__kicker sectionHead__kicker--light">AI Master Technician</p>
+      <h2>Talk to your car's<br />diagnosis.</h2>
+      <p class="aiSection__lead">
+        Our assistant listens, looks and explains — in plain language.
+        Every triage is reviewed by a human mechanic before anything is scheduled.
+      </p>
+
+      <ul class="aiSection__list">
+        <li>
+          <span class="aiSection__bullet aiSection__bullet--voice">🎙</span>
+          <div><b>Speak naturally</b><small>Voice input with live transcription</small></div>
+        </li>
+        <li>
+          <span class="aiSection__bullet aiSection__bullet--img">📷</span>
+          <div><b>Show, don't tell</b><small>Photo analysis for warning lights & leaks</small></div>
+        </li>
+        <li>
+          <span class="aiSection__bullet aiSection__bullet--speak">🔊</span>
+          <div><b>It talks back</b><small>Every diagnosis read aloud, hands-free</small></div>
+        </li>
+      </ul>
+
+      <a routerLink="/ai-assistant" class="btn btn--brand btn--lg">Launch the assistant</a>
+    </div>
+
+    <!-- Mock conversation preview -->
+    <div class="aiPreview" aria-hidden="true">
+      <div class="aiPreview__bar">
+        <span class="aiPreview__dot aiPreview__dot--r"></span>
+        <span class="aiPreview__dot aiPreview__dot--y"></span>
+        <span class="aiPreview__dot aiPreview__dot--g"></span>
+        <span class="aiPreview__title">AI Master Technician</span>
+        <span class="aiPreview__live"><i></i> Live</span>
+      </div>
+
+      <div class="aiPreview__stream">
+        <div class="aiMsg aiMsg--user">Grinding noise when I brake at low speed, and the pedal vibrates.</div>
+
+        <div class="aiMsg aiMsg--ai">
+          <span class="aiMsg__avatar">🤖</span>
+          <div class="aiMsg__bubble">
+            <b>Brake friction system wear.</b>
+            <span class="aiMsg__line">Urgency: <em class="danger">High</em></span>
+            <span class="aiMsg__line">Estimate: <em>$180 – $360</em></span>
+          </div>
+        </div>
+
+        <div class="aiVoice">
+          <span class="aiVoice__wave">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="aiVoice__label">Speaking diagnosis…</span>
+        </div>
+
+        <div class="aiTyping">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="aiPreview__input">
+        <span>Describe a symptom…</span>
+        <span class="aiPreview__mic">🎤</span>
+        <span class="aiPreview__send">➤</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ STATS ══════════════════════════════ -->
+<section class="statsBand">
+  <div class="container statsBand__inner">
+    @for (stat of stats; track stat.num) {
+      <div class="statBlock">
+        <span class="statBlock__num">{{ stat.num }}</span>
+        <span class="statBlock__label">{{ stat.lab }}</span>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ══════════════════════════════ WHY US ══════════════════════════════ -->
+<section class="section why">
+  <div class="container why__inner">
+    <div class="why__media">
+      <img src="/images/why-workshop.jpg" alt="Vehicle parked in an industrial workshop bay" loading="lazy" />
+      <div class="why__mediaCard">
+        <span class="why__mediaNum">12</span>
+        <span>years of<br />precision service</span>
+      </div>
+    </div>
+
+    <div class="why__copy">
+      <p class="sectionHead__kicker">Why drivers choose us</p>
+      <h2>Honest work, <span class="inkMuted">measured twice.</span></h2>
+      <p>
+        No upsells, no mystery fees. Every job starts with a diagnosis you can
+        read and ends with a warranty you can rely on.
+      </p>
+
+      <ul class="whyList">
+        <li><span>✓</span> ASE-certified technicians on every job</li>
+        <li><span>✓</span> Upfront pricing — the quote is the price</li>
+        <li><span>✓</span> 12-month parts & labour warranty</li>
+        <li><span>✓</span> AI triage reviewed by a human before booking</li>
+        <li><span>✓</span> Loaner cars available on request</li>
+      </ul>
+
+      <a routerLink="/login" class="btn btn--outline">Get started</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ TESTIMONIALS ══════════════════════════════ -->
+<section class="section section--sm stories" id="stories">
+  <div class="container">
+    <div class="sectionHead sectionHead--center">
+      <p class="sectionHead__kicker">Customer stories</p>
+      <h2>Real people. Real repairs.</h2>
+    </div>
+
+    <div class="storyGrid">
+      @for (t of testimonials; track t.name) {
+        <figure class="story">
+          <div class="story__stars">★★★★★</div>
+          <blockquote>{{ t.quote }}</blockquote>
+          <figcaption>
+            <img [src]="t.avatar" [alt]="t.name" loading="lazy" />
+            <div>
+              <b>{{ t.name }}</b>
+              <small>{{ t.role }}</small>
+            </div>
+          </figcaption>
+        </figure>
       }
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="ctaStrip fadeIn">
+<!-- ══════════════════════════════ CTA ══════════════════════════════ -->
+<section class="cta">
   <div class="container">
-    <h2>Ready to service your vehicle?</h2>
-    <p>Book online in under a minute. We'll confirm your slot within the hour.</p>
-    <div class="hero__actions" style="justify-content: center">
-      <a routerLink="/login" class="btn btn--primary btn--lg">Book My Appointment</a>
+    <div class="cta__card">
+      <div class="cta__glow" aria-hidden="true"></div>
+      <h2>Ready to service your vehicle?</h2>
+      <p>Book online in under a minute. We confirm your bay within the hour.</p>
+      <div class="cta__actions">
+        <a routerLink="/login" class="btn btn--brand btn--lg">Book my appointment</a>
+        <a routerLink="/ai-assistant" class="btn btn--ctaGhost btn--lg">Talk to the AI first</a>
+      </div>
     </div>
   </div>
 </section>
+
+<!-- ══════════════════════════════ FOOTER ══════════════════════════════ -->
+<footer class="siteFoot">
+  <div class="container siteFoot__inner">
+    <div class="siteFoot__brand">
+      <a routerLink="/home" class="pubBrand pubBrand--dark">
+        <span class="pubBrand__mark">MS</span>
+        <span class="pubBrand__text">
+          <b>Mechanic Shop</b>
+          <small>Precision Auto Care</small>
+        </span>
+      </a>
+      <p>Full-service auto repair, built around honest diagnostics and modern tooling.</p>
+    </div>
+
+    <div class="siteFoot__col">
+      <h4>Services</h4>
+      <a href="#services">Engine diagnostics</a>
+      <a href="#services">Brakes & tyres</a>
+      <a href="#services">Electrical & battery</a>
+      <a href="#services">Pre-purchase inspection</a>
+    </div>
+
+    <div class="siteFoot__col">
+      <h4>Company</h4>
+      <a href="#how">How it works</a>
+      <a href="#ai">AI diagnostics</a>
+      <a href="#stories">Reviews</a>
+      <a routerLink="/login">Staff sign in</a>
+    </div>
+
+    <div class="siteFoot__col">
+      <h4>Contact</h4>
+      <span>Open 7 days · 7am – 7pm</span>
+      <span>hello@mechanicshop.dev</span>
+      <span>+1 (555) 014-2026</span>
+    </div>
+  </div>
+
+  <div class="container siteFoot__base">
+    <span>© 2026 Mechanic Shop. All rights reserved.</span>
+    <span>Built with care · AI-assisted diagnostics</span>
+  </div>
+</footer>

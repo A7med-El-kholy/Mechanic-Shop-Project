@@ -1,0 +1,189 @@
+<div class="registerPage">
+  <div class="ambient ambient--brand"></div>
+  <div class="ambient ambient--indigo"></div>
+
+  <div class="registerShell">
+    <aside class="registerAside">
+      <div class="asideImage" aria-hidden="true"></div>
+      <div class="asideShade" aria-hidden="true"></div>
+
+      <div class="asideContent">
+        <a class="brand" routerLink="/home">
+          <span class="brandMark">MS</span>
+          <span class="brandText">
+            <b>Mechanic Shop</b>
+            <small>Workshop Pro · OS</small>
+          </span>
+        </a>
+
+        <div class="asideBody">
+          <span class="eyebrow">Customer Portal</span>
+          <h1>Your garage,<br /><em>under one roof.</em></h1>
+          <p class="asideLead">
+            One account for your vehicles, repair history, invoices, parts orders and the AI Master Technician.
+          </p>
+
+          <ul class="perks">
+            <li>
+              <span class="perkIcon">◈</span>
+              <div><b>Live repair tracking</b><small>See every bay update as it happens.</small></div>
+            </li>
+            <li>
+              <span class="perkIcon">◈</span>
+              <div><b>AI voice diagnostics</b><small>Describe a symptom or upload a photo.</small></div>
+            </li>
+            <li>
+              <span class="perkIcon">◈</span>
+              <div><b>Invoices &amp; bookings</b><small>Pay, book and review in one place.</small></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="asideFoot">
+          <span>Already have an account?</span>
+          <a routerLink="/login">Sign in →</a>
+        </div>
+      </div>
+    </aside>
+
+    <section class="registerMain">
+      <div class="formWrap">
+        <a class="backHome" routerLink="/home">← Back to website</a>
+
+        <header class="formHead">
+          <span class="formEyebrow">Create account</span>
+          <h2>Join the customer portal.</h2>
+          <p>Set up your profile in under a minute. No workshop visit needed.</p>
+        </header>
+
+        <form class="registerForm" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="fullName">Full name</label>
+            <div class="inputWrap">
+              <span class="inputIcon">👤</span>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="Ahmed Hassan"
+                [ngModel]="fullName()"
+                (ngModelChange)="fullName.set($event)"
+                [disabled]="auth.busy()"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="fieldRow">
+            <div class="field">
+              <label for="email">Email address</label>
+              <div class="inputWrap">
+                <span class="inputIcon">✉</span>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="you@example.com"
+                  [ngModel]="email()"
+                  (ngModelChange)="email.set($event)"
+                  [disabled]="auth.busy()"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="phone">Phone number</label>
+              <div class="inputWrap">
+                <span class="inputIcon">☎</span>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autocomplete="tel"
+                  placeholder="+20 100 123 4567"
+                  [ngModel]="phoneNumber()"
+                  (ngModelChange)="phoneNumber.set($event)"
+                  [disabled]="auth.busy()"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="fieldRow">
+            <div class="field">
+              <label for="password">Password</label>
+              <div class="inputWrap">
+                <span class="inputIcon">🔒</span>
+                <input
+                  id="password"
+                  name="password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  placeholder="At least 8 characters"
+                  [ngModel]="password()"
+                  (ngModelChange)="password.set($event)"
+                  [disabled]="auth.busy()"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="confirmPassword">Confirm password</label>
+              <div class="inputWrap">
+                <span class="inputIcon">🔒</span>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  placeholder="Repeat password"
+                  [ngModel]="confirmPassword()"
+                  (ngModelChange)="confirmPassword.set($event)"
+                  [disabled]="auth.busy()"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <label class="showPass">
+            <input type="checkbox" [ngModel]="showPassword()" (ngModelChange)="showPassword.set($event)" name="showPassword" />
+            Show passwords
+          </label>
+
+          <p class="passwordHint">Must include upper case, lower case, a number and a symbol.</p>
+
+          @if (error(); as message) {
+            <div class="formAlert" role="alert">
+              <span>⚠️</span>
+              <span>{{ message }}</span>
+            </div>
+          }
+
+          <button class="submitBtn" type="submit" [disabled]="auth.busy()">
+            @if (auth.busy()) {
+              <span class="spinner"></span>
+              <span>Creating your account…</span>
+            } @else {
+              <span>Create account</span>
+              <span>→</span>
+            }
+          </button>
+        </form>
+
+        <p class="smallPrint">
+          By creating an account you agree to let the workshop store your vehicle and service records securely.
+        </p>
+
+        <div class="mobileSwitch">
+          Already have an account? <a routerLink="/login">Sign in</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

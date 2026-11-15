@@ -10,7 +10,7 @@
     <div class="kpiGrid">
       <div class="card kpi">
         <span class="muted sm">Completion rate</span>
-        <b>{{ s.completionRatePercent !== null ? s.completionRatePercent + '%' : '—' }}</b>
+        @if (s.completionRatePercent !== null) { <b [appCountUp]="s.completionRatePercent" suffix="%"></b> } @else { <b>—</b> }
         <span class="muted sm">{{ s.workOrderCompleted }} of {{ s.workOrderTotal }} work orders completed</span>
       </div>
       <div class="card kpi">

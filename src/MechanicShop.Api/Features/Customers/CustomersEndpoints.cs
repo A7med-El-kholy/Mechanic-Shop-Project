@@ -5,6 +5,7 @@ using MechanicShop.Application.Features.Customers.Commands.AddVehicleToCustomer;
 using MechanicShop.Application.Features.Customers.Commands.CreateCustomer;
 using MechanicShop.Application.Features.Customers.Commands.RemoveCustomer;
 using MechanicShop.Application.Features.Customers.Commands.UpdateCustomer;
+using MechanicShop.Application.Features.Customers.Commands.UpdateMyCustomer;
 using MechanicShop.Application.Features.Customers.Queries.GetCustomerById;
 using MechanicShop.Application.Features.Customers.Queries.GetCustomers;
 using MechanicShop.Application.Features.Customers.Queries.GetMyCustomer;
@@ -46,6 +47,13 @@ public static class CustomersEndpoints
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapPut("/me", UpdateMeAsync)
+            .WithName("UpdateMyCustomer")
+            .RequireAuthorization(Policies.IsCustomer)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/", ListAsync)
             .WithName("GetCustomers")
@@ -131,6 +139,21 @@ public static class CustomersEndpoints
         return result.IsError
             ? result.TopError.ToProblem(httpContext)
             : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> UpdateMeAsync(
+        UpdateMyProfileRequest request,
+        ISender sender,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new UpdateMyCustomerCommand(request.Name, request.PhoneNumber),
+            cancellationToken);
+
+        return result.IsError
+            ? result.TopError.ToProblem(httpContext)
+            : Results.NoContent();
     }
 
     private static async Task<IResult> ListAsync(

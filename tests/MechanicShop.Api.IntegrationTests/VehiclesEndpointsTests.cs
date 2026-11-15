@@ -82,7 +82,7 @@ public sealed class VehiclesEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest("no-vehicle@mechanicshop.test", "Passw0rd!", "No Vehicle"),
+            new RegisterRequest("no-vehicle@mechanicshop.test", "Passw0rd!", "No Vehicle", "01000000000"),
             TestContext.Current.CancellationToken);
 
         var customerToken = await GetAccessTokenAsync(client, "no-vehicle@mechanicshop.test", "Passw0rd!");
@@ -239,7 +239,7 @@ public sealed class VehiclesEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "No List"),
+            new RegisterRequest(email, "Passw0rd!", "No List", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.EnsureSuccessStatusCode();

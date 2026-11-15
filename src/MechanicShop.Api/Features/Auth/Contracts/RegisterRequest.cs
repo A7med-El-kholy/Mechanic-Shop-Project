@@ -4,4 +4,5 @@ namespace MechanicShop.Api.Features.Auth.Contracts;
 public sealed record RegisterRequest(
     string Email,
     string Password,
-    string FullName);
+    string FullName,
+    string PhoneNumber);

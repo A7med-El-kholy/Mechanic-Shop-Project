@@ -248,7 +248,7 @@ public sealed class ServiceTasksEndpointsTests
 
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "SVC No Role"),
+            new RegisterRequest(email, "Passw0rd!", "SVC No Role", "01000000000"),
             TestContext.Current.CancellationToken);
 
         var customerToken = await GetAccessTokenAsync(client, email, "Passw0rd!");

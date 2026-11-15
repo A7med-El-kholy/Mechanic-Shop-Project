@@ -42,7 +42,7 @@ public sealed class MyCustomerFlowTests
 
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Me First"),
+            new RegisterRequest(email, "Passw0rd!", "Me First", "01000000000"),
             TestContext.Current.CancellationToken);
 
         registered.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -68,7 +68,7 @@ public sealed class MyCustomerFlowTests
         // The future customer registers themselves first — like the real flow.
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Linked Customer"),
+            new RegisterRequest(email, "Passw0rd!", "Linked Customer", "01000000000"),
             TestContext.Current.CancellationToken);
 
         registered.StatusCode.Should().Be(HttpStatusCode.OK);

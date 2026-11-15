@@ -10,6 +10,7 @@ import { InvoiceDetailPage } from './pages/invoices/invoice-detail';
 import { InvoicesPage } from './pages/invoices/invoices';
 import { InventoryPage } from './pages/inventory/inventory';
 import { LoginPage } from './pages/login/login';
+import { RegisterPage } from './pages/register/register';
 import { NotYetPage } from './pages/not-yet/not-yet';
 import { NotificationsPage } from './pages/notifications/notifications';
 import { StaffHomePage } from './pages/staff-home/staff-home';
@@ -23,13 +24,14 @@ import { WorkOrderNewPage } from './pages/work-orders/work-order-new';
 import { WorkOrdersPage } from './pages/work-orders/work-orders';
 import { PortalShellPage } from './pages/portal/portal-shell';
 import { PortalAppointmentsPage } from './pages/portal/portal-appointments';
-import { PortalAiPage } from './pages/portal/portal-ai';
+import { AIChatComponent } from './shared/ai-chat/ai-chat.component';
 import { PortalDashboardPage } from './pages/portal/portal-dashboard';
 import { PortalInvoiceDetailPage } from './pages/portal/portal-invoice-detail';
 import { PortalInvoicesPage } from './pages/portal/portal-invoices';
 import { PortalRepairDetailPage } from './pages/portal/portal-repair-detail';
 import { PortalRepairsPage } from './pages/portal/portal-repairs';
 import { PortalVehiclesPage } from './pages/portal/portal-vehicles';
+import { PortalProfilePage } from './pages/portal/portal-profile';
 import { HomePage } from './pages/home/home';
 
 export const routes: Routes = [
@@ -44,8 +46,14 @@ export const routes: Routes = [
     title: 'Sign in · Mechanic Shop',
   },
   {
+    path: 'register',
+    component: RegisterPage,
+    title: 'Create account · Mechanic Shop',
+  },
+  {
     path: 'ai-assistant',
-    component: PortalAiPage,
+    component: AIChatComponent,
+    canActivate: [authGuard],
     title: 'AI Diagnostic Assistant · Mechanic Shop',
   },
   // The customer side. Same token, different role — customers never render the
@@ -57,6 +65,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', component: PortalDashboardPage, title: 'My Shop · Mechanic Shop' },
       { path: 'vehicles', component: PortalVehiclesPage, title: 'My Vehicles · Mechanic Shop' },
+      { path: 'profile', component: PortalProfilePage, title: 'My Profile · Mechanic Shop' },
       { path: 'repairs', component: PortalRepairsPage, title: 'My Repairs · Mechanic Shop' },
       {
         path: 'repairs/:repairId',
@@ -81,7 +90,7 @@ export const routes: Routes = [
       },
       {
         path: 'ai-assistant',
-        component: PortalAiPage,
+        component: AIChatComponent,
         title: 'AI Assistant · Mechanic Shop',
       },
       {
@@ -113,7 +122,7 @@ export const routes: Routes = [
       },
       {
         path: 'ai-assistant',
-        component: PortalAiPage,
+        component: AIChatComponent,
         title: 'AI Diagnostics · Mechanic Shop',
       },
       {

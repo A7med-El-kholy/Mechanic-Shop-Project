@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
@@ -16,9 +16,11 @@ export class PortalShellPage {
 
   protected readonly auth = inject(AuthStore);
   protected readonly badge = inject(NotificationBadgeService);
+  protected readonly menuOpen = signal(false);
 
   protected readonly portalNav = [
     { path: 'portal', label: 'Dashboard', exact: true },
+    { path: 'portal/profile', label: 'My Profile', exact: false },
     { path: 'portal/vehicles', label: 'My Vehicles', exact: false },
     { path: 'portal/repairs', label: 'My Repairs', exact: false },
     { path: 'portal/invoices', label: 'Invoices', exact: false },
@@ -44,6 +46,14 @@ export class PortalShellPage {
 
   ngOnInit(): void {
     this.badge.refresh('portal');
+  }
+
+  protected toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   protected logout(): void {

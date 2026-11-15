@@ -1,0 +1,154 @@
+<section class="profilePage">
+  <header class="profileHead">
+    <div>
+      <span class="eyebrow">Account</span>
+      <h1>My Profile</h1>
+      <p class="muted">Control the details the workshop uses to contact you.</p>
+    </div>
+    <div class="identityChip">
+      <div class="identityAvatar">{{ initials() || '👤' }}</div>
+      <div>
+        <b>{{ name() || auth.fullName() }}</b>
+        <span>{{ email() }}</span>
+      </div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="card"><p class="muted">Loading your profile…</p></div>
+  } @else {
+    @if (pageError(); as message) {
+      <div class="profileAlert" role="alert">
+        <span>⚠️</span>
+        <span>{{ message }}</span>
+      </div>
+    }
+
+    @if (profile(); as current) {
+      <div class="profileGrid">
+        <div class="card profileCard">
+          <div class="cardHead">
+            <div>
+              <h2>Personal details</h2>
+              <p class="muted sm">These appear on repair orders and invoices.</p>
+            </div>
+            <span class="badge badge--neutral">Customer #{{ current.customerId.slice(0, 8) }}</span>
+          </div>
+
+          <form class="profileForm" (ngSubmit)="saveProfile()" novalidate>
+            <div class="fieldGrid">
+              <div class="field">
+                <label for="profileName">Full name</label>
+                <input
+                  id="profileName"
+                  name="profileName"
+                  type="text"
+                  autocomplete="name"
+                  [ngModel]="name()"
+                  (ngModelChange)="name.set($event)"
+                  [disabled]="saving()"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label for="profilePhone">Phone number</label>
+                <input
+                  id="profilePhone"
+                  name="profilePhone"
+                  type="tel"
+                  autocomplete="tel"
+                  [ngModel]="phoneNumber()"
+                  (ngModelChange)="phoneNumber.set($event)"
+                  [disabled]="saving()"
+                  required
+                />
+              </div>
+
+              <div class="field field--full">
+                <label for="profileEmail">Email address</label>
+                <input
+                  id="profileEmail"
+                  name="profileEmail"
+                  type="email"
+                  [ngModel]="email()"
+                  readonly
+                  disabled
+                />
+                <small class="fieldHint">This is your sign-in email. Ask the workshop to change it.</small>
+              </div>
+            </div>
+
+            <div class="formActions">
+              <button class="btn btn--brand" type="submit" [disabled]="saving()">
+                @if (saving()) { Saving… } @else { Save changes }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <aside class="card securityCard">
+          <div class="cardHead">
+            <div>
+              <h2>Security</h2>
+              <p class="muted sm">Change the password you use to sign in.</p>
+            </div>
+            <span class="securityIcon">🔐</span>
+          </div>
+
+          <form class="profileForm" (ngSubmit)="changePassword()" novalidate>
+            <div class="field">
+              <label for="currentPassword">Current password</label>
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type="password"
+                autocomplete="current-password"
+                [ngModel]="currentPassword()"
+                (ngModelChange)="currentPassword.set($event)"
+                [disabled]="passwordSaving()"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="newPassword">New password</label>
+              <input
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                autocomplete="new-password"
+                [ngModel]="newPassword()"
+                (ngModelChange)="newPassword.set($event)"
+                [disabled]="passwordSaving()"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="confirmPassword">Confirm new password</label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+                [ngModel]="confirmPassword()"
+                (ngModelChange)="confirmPassword.set($event)"
+                [disabled]="passwordSaving()"
+                required
+              />
+            </div>
+
+            <p class="fieldHint">
+              At least 8 characters with upper case, lower case, a number and a symbol.
+            </p>
+
+            <button class="btn btn--outline btn--full" type="submit" [disabled]="passwordSaving()">
+              @if (passwordSaving()) { Updating… } @else { Update password }
+            </button>
+          </form>
+        </aside>
+      </div>
+    }
+  }
+</section>

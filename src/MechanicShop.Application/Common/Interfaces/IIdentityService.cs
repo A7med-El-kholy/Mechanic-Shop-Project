@@ -19,6 +19,17 @@ public interface IIdentityService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Registers a self-service customer account AND its customer profile in one
+    /// transaction. Staff-created customers already exist; this is the public path.
+    /// </summary>
+    Task<Result<AppUserDto>> RegisterCustomerAsync(
+        string email,
+        string password,
+        string fullName,
+        string phoneNumber,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Verifies credentials. Returns a token payload on success, or a
     /// <see cref="ErrorKind.Unauthorized"/> error on failure. It deliberately does not
     /// reveal whether the email exists or the password was wrong.
@@ -36,4 +47,11 @@ public interface IIdentityService
     /// Used to link a customer profile to the account registered under the same email.
     /// </summary>
     Task<string?> FindUserIdByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>Changes the signed-in user's password after verifying the current one.</summary>
+    Task<Result<Updated>> ChangePasswordAsync(
+        string userId,
+        string currentPassword,
+        string newPassword,
+        CancellationToken cancellationToken = default);
 }

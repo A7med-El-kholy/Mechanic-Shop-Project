@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 
 using FluentValidation;
 
@@ -17,6 +18,9 @@ using MechanicShop.Api.Features.Users;
 using MechanicShop.Api.Features.ServiceTasks;
 using MechanicShop.Api.Features.Vehicles;
 using MechanicShop.Api.Features.WorkOrders;
+using MechanicShop.Api.Features.AI;
+using MechanicShop.Application.Features.AI;
+using MechanicShop.Infrastructure.AI;
 using MechanicShop.Application.Common.Behaviors;
 using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.Data;
@@ -145,37 +149,74 @@ builder.Services.AddScoped<IAppDbContext>(services => services.GetRequiredServic
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
-var app = builder.Build();
+// AI diagnostic engine — mock implementation works out of the box; swap for a
+// real provider (OpenAI / Azure OpenAI / Gemini) behind IAIService when keys
+// are configured in appsettings.
+builder.Services.AddScoped<IAIService, MockAIService>();
 
-// Health checks and CORS
+// --- Health checks + CORS must be registered BEFORE Build(): the service collection
+// is read-only afterwards, so anything added later is ignored (or throws).
 builder.Services.AddHealthChecks();
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost", "http://localhost:4200"];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost", "http://localhost:80")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+    options.AddPolicy("AllowFrontend", policy => policy
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod());
 });
 
-// existing services ... (keep existing lines unchanged)
+// --- Rate limiting: brute-force protection for the credential endpoints.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = builder.Configuration.GetValue("RateLimiting:AuthPermitPerMinute", 10),
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+});
+
+// --- Fail fast in Production when secrets were left at their dev defaults.
+if (builder.Environment.IsProduction())
+{
+    var secret = builder.Configuration["JwtSettings:Secret"];
+    if (string.IsNullOrWhiteSpace(secret) || secret.Length < 32 || secret.StartsWith("please-change-me", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException(
+            "JwtSettings:Secret must be set to a random value of at least 32 characters in Production.");
+    }
+}
+
+var app = builder.Build();
 
 // Idempotent: only inserts what is not already present, and migrates first.
 await SeedData.SeedAsync(app.Services);
 
+app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Swagger UI lives at /swagger; the root stays "Hello World!" for the smoke test.
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+// Swagger is exposed outside Production only, unless Swagger:Enabled=true.
+if (!app.Environment.IsProduction() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
-    options.RoutePrefix = "swagger";
-    options.DocumentTitle = "Mechanic Shop API";
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "Mechanic Shop API";
+    });
+}
 
 app.MapGet("/", () => "Hello World!");
+app.MapHealthChecks("/healthz");
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapCustomersEndpoints();
@@ -190,6 +231,7 @@ app.MapShopOrdersEndpoints();
 app.MapReportsEndpoints();
 app.MapNotificationsEndpoints();
 app.MapPortalEndpoints();
+app.MapAIEndpoints();
 
 app.Run();
 

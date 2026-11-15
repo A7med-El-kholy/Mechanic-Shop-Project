@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { ReportSummary } from '../../core/types';
 import { problemMessage } from '../../core/api';
+import { CountUpDirective } from '../../shared/count-up';
 
 /** The manager's Reports page: lifecycle KPIs, the money picture, and the two
  * breakdown bars — estimated value by service and minutes booked per
@@ -10,6 +11,7 @@ import { problemMessage } from '../../core/api';
  * renders. Null metrics (no data yet) show an em dash, never a fake zero. */
 @Component({
   selector: 'app-reports',
+  imports: [CountUpDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './reports.html',
   styleUrl: './reports.scss',

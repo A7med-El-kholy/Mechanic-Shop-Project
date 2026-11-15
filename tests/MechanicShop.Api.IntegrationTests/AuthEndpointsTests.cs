@@ -31,7 +31,8 @@ public sealed class AuthEndpointsTests
         var request = new RegisterRequest(
             "sarah@example.com",
             "Passw0rd!",
-            "Sarah Peter");
+            "Sarah Peter",
+            "01000000000");
 
         using var response = await client.PostAsJsonAsync(
             "/api/auth/register",
@@ -56,7 +57,8 @@ public sealed class AuthEndpointsTests
         var request = new RegisterRequest(
             "weak@example.com",
             "short",
-            "Weak Password");
+            "Weak Password",
+            "01000000000");
 
         using var response = await client.PostAsJsonAsync(
             "/api/auth/register",
@@ -74,7 +76,8 @@ public sealed class AuthEndpointsTests
         var request = new RegisterRequest(
             "dupe@example.com",
             "Passw0rd!",
-            "Dupe One");
+            "Dupe One",
+            "01000000000");
 
         using var first = await client.PostAsJsonAsync(
             "/api/auth/register",
@@ -100,7 +103,7 @@ public sealed class AuthEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Login User"),
+            new RegisterRequest(email, "Passw0rd!", "Login User", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -129,7 +132,7 @@ public sealed class AuthEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Wrong Password"),
+            new RegisterRequest(email, "Passw0rd!", "Wrong Password", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -163,7 +166,7 @@ public sealed class AuthEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Me User"),
+            new RegisterRequest(email, "Passw0rd!", "Me User", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.StatusCode.Should().Be(HttpStatusCode.OK);

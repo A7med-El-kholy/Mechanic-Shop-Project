@@ -22,10 +22,14 @@ public static class SeedData
 
         // Migrate BEFORE seeding: the AspNetRoles *table* must exist before rows go in.
         // Doing it here keeps the ordering invariant in one place so no caller can get it wrong.
-        await scope.ServiceProvider
-            .GetRequiredService<AppDbContext>()
-            .Database
-            .MigrateAsync();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await db.Database.MigrateAsync();
+
+        // SQL Server Express turns AUTO_CLOSE on for new databases. That unloads
+        // the database whenever the last connection closes, so the next request
+        // pays a 15–20s recovery cost (and can time out). Keep it online.
+        await db.Database.ExecuteSqlRawAsync("ALTER DATABASE CURRENT SET AUTO_CLOSE OFF;");
 
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SeedData");
 

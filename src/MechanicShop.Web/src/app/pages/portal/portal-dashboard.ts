@@ -5,12 +5,13 @@ import { RouterLink } from '@angular/router';
 import { Customer, WorkOrderSummary, workOrderStateLabel } from '../../core/types';
 import { fmtDate, fmtMinute } from '../../core/format';
 import { problemMessage } from '../../core/api';
+import { CountUpDirective } from '../../shared/count-up';
 
 const FEATURED_STATE = 1; // In Progress
 
 @Component({
   selector: 'app-portal-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, CountUpDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './portal-dashboard.html',
   styleUrl: './portal-dashboard.scss',

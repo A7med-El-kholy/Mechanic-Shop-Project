@@ -83,16 +83,50 @@ export class AuthStore {
         '/api/auth/login',
         { email: email.trim(), password }));
 
-      this.tokenSignal.set(response.accessToken);
-      this.userSignal.set(response.user);
-      this.expiresSignal.set(String(Date.now() + response.expiresInSeconds * 1000));
-
-      localStorage.setItem(TOKEN_KEY, response.accessToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-      localStorage.setItem(EXPIRES_KEY, String(Date.now() + response.expiresInSeconds * 1000));
+      this.applySession(response);
     } finally {
       this.busySignal.set(false);
     }
+  }
+
+  /**
+   * Public customer sign-up. The backend creates the login AND the customer
+   * profile atomically, then we sign in with the same credentials so the user
+   * lands straight in the portal instead of being bounced back to /login.
+   */
+  async register(
+    fullName: string,
+    email: string,
+    phoneNumber: string,
+    password: string): Promise<void> {
+    this.busySignal.set(true);
+
+    try {
+      await firstValueFrom(this.http.post('/api/auth/register', {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phoneNumber: phoneNumber.trim(),
+        password,
+      }));
+
+      const response = await firstValueFrom(this.http.post<AuthResponse>(
+        '/api/auth/login',
+        { email: email.trim(), password }));
+
+      this.applySession(response);
+    } finally {
+      this.busySignal.set(false);
+    }
+  }
+
+  private applySession(response: AuthResponse): void {
+    this.tokenSignal.set(response.accessToken);
+    this.userSignal.set(response.user);
+    this.expiresSignal.set(String(Date.now() + response.expiresInSeconds * 1000));
+
+    localStorage.setItem(TOKEN_KEY, response.accessToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    localStorage.setItem(EXPIRES_KEY, String(Date.now() + response.expiresInSeconds * 1000));
   }
 
   logout(): void {

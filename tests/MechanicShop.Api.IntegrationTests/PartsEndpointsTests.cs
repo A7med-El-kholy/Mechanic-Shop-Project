@@ -398,7 +398,7 @@ public sealed class PartsEndpointsTests
 
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Parts Tester"),
+            new RegisterRequest(email, "Passw0rd!", "Parts Tester", "01000000000"),
             TestContext.Current.CancellationToken);
 
         registered.EnsureSuccessStatusCode();

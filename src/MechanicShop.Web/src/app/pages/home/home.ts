@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { AuthStore } from '../../core/auth-store';
 
@@ -17,6 +17,15 @@ import { AuthStore } from '../../core/auth-store';
 })
 export class HomePage {
   readonly auth = inject(AuthStore);
+  readonly menuOpen = signal(false);
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 
   readonly services = [
     {
@@ -25,8 +34,9 @@ export class HomePage {
       desc: 'Computerized scanning and full mechanical inspection to find the root cause fast.',
       price: '$89',
       priceUnit: '/hr',
-      img: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=600&q=80',
+      img: '/images/service-diagnostics.jpg',
       tag: 'Most Popular',
+      points: ['OBD-II fault scan', 'Compression test', 'Road-test verification'],
     },
     {
       icon: '🛞',
@@ -34,8 +44,9 @@ export class HomePage {
       desc: 'Brake pad replacement, rotor resurfacing, tyre fitting, balancing and alignment.',
       price: '$65',
       priceUnit: '/hr',
-      img: 'https://images.unsplash.com/photo-1590646590354-62c92e9e18e7?w=600&q=80',
+      img: '/images/service-brakes.jpg',
       tag: 'Express',
+      points: ['Pad & rotor replacement', 'Caliper service', 'Wheel alignment'],
     },
     {
       icon: '⚡',
@@ -43,8 +54,9 @@ export class HomePage {
       desc: 'Alternator, starter, wiring faults and battery testing with factory-grade tools.',
       price: '$75',
       priceUnit: '/hr',
-      img: 'https://images.unsplash.com/photo-1618176772777-240831281130?w=600&q=80',
+      img: '/images/service-electrical.jpg',
       tag: 'Same Day',
+      points: ['Battery & alternator test', 'Wiring fault tracing', 'Module diagnostics'],
     },
     {
       icon: '🔍',
@@ -52,8 +64,9 @@ export class HomePage {
       desc: '150-point safety and mechanical check before you buy. Same-day report with photos.',
       price: '$149',
       priceUnit: 'flat',
-      img: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80',
+      img: '/images/service-inspection.jpg',
       tag: 'Recommended',
+      points: ['150-point checklist', 'Photo report', 'Same-day verdict'],
     },
   ];
 
@@ -69,19 +82,19 @@ export class HomePage {
       quote: 'Exceptional service from start to finish. They diagnosed my brake issue in minutes and had me back on the road the same day. Honest pricing, no surprises.',
       name: 'Marcus T.',
       role: 'Ford Focus owner',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1272a8e396?w=150&q=80',
+      avatar: '/images/avatar-marcus.jpg',
     },
     {
       quote: 'Best workshop in town. The team knew exactly what was wrong with my BMW and the price was exactly as quoted. Will be back for my next service.',
       name: 'Sarah L.',
       role: 'BMW 3-Series owner',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80',
+      avatar: '/images/avatar-sarah.jpg',
     },
     {
       quote: 'Pre-purchase inspection saved me from a lemon. Detailed report with photos, delivered same morning. Highly recommend.',
       name: 'James R.',
       role: 'First-time buyer',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
+      avatar: '/images/avatar-james.jpg',
     },
   ];
 

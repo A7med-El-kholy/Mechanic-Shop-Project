@@ -58,7 +58,7 @@ public sealed class CustomersEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest("plain-customer@example.com", "Passw0rd!", "Plain Customer"),
+            new RegisterRequest("plain-customer@example.com", "Passw0rd!", "Plain Customer", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.StatusCode.Should().Be(HttpStatusCode.OK);

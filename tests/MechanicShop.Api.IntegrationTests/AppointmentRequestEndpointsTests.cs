@@ -356,7 +356,7 @@ public sealed class AppointmentRequestEndpointsTests
 
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Portal Tester"),
+            new RegisterRequest(email, "Passw0rd!", "Portal Tester", "01000000000"),
             TestContext.Current.CancellationToken);
 
         EnsureOk("register", registered, vin: tag);

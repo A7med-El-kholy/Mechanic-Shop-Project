@@ -3,5 +3,10 @@
     "target": "http://localhost:5255",
     "secure": false,
     "changeOrigin": true
+  },
+  "/healthz": {
+    "target": "http://localhost:5255",
+    "secure": false,
+    "changeOrigin": true
   }
 }

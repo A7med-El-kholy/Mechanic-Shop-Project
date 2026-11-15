@@ -1,16 +1,16 @@
-# Keep the build context small: nothing that is produced by building is
-# needed inside an image, and secrets never belong in an image.
-bin/
-obj/
+**/bin/
+**/obj/
+**/node_modules
+**/dist
+**/.angular
 .git
 .gitignore
 .vs/
 *.user
 *.suo
-node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .env
-dist
 .DS_Store
+tests/

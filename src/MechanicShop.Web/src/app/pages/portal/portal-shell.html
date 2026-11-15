@@ -9,12 +9,23 @@
         </div>
       </a>
 
-      <nav class="mainNav">
+      <button
+        type="button"
+        class="portalMenuBtn"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Toggle customer menu"
+        (click)="toggleMenu()"
+      >
+        <span class="portalMenuLines" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+
+      <nav class="mainNav" [class.mainNav--open]="menuOpen()">
         @for (item of portalNav; track item.path) {
           <a
             class="navLink"
             [routerLink]="['/' + item.path]"
             [class.navLink--active]="isActive(item.path)"
+            (click)="closeMenu()"
           >
             {{ item.label }}
             @if (item.path === 'portal/ai-assistant') {
@@ -45,4 +56,9 @@
   <main class="portalMain">
     <router-outlet />
   </main>
+
+  <a routerLink="/portal/ai-assistant" class="ai-fab">
+    <span>🤖</span>
+    <span class="ai-fab-label">AI Voice Assistant</span>
+  </a>
 </div>

@@ -460,7 +460,7 @@ public sealed class NotificationsEndpointsTests
 
         using var registered = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Notif Tester"),
+            new RegisterRequest(email, "Passw0rd!", "Notif Tester", "01000000000"),
             TestContext.Current.CancellationToken);
 
         registered.EnsureSuccessStatusCode();

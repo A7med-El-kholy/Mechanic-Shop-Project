@@ -1,9 +1,23 @@
 # syntax=docker/dockerfile:1
-# Mechanic Shop API — runs from locally published output.
-# Build context must contain the publish/api folder (output of `dotnet publish -c Release`).
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY Directory.Build.props Directory.Packages.props MechanicShop.slnx ./
+COPY src/MechanicShop.Domain/*.csproj src/MechanicShop.Domain/
+COPY src/MechanicShop.Application/*.csproj src/MechanicShop.Application/
+COPY src/MechanicShop.Infrastructure/*.csproj src/MechanicShop.Infrastructure/
+COPY src/MechanicShop.Api/*.csproj src/MechanicShop.Api/
+RUN dotnet restore src/MechanicShop.Api/MechanicShop.Api.csproj
+
+COPY src/MechanicShop.Domain src/MechanicShop.Domain
+COPY src/MechanicShop.Application src/MechanicShop.Application
+COPY src/MechanicShop.Infrastructure src/MechanicShop.Infrastructure
+COPY src/MechanicShop.Api src/MechanicShop.Api
+RUN dotnet publish src/MechanicShop.Api/MechanicShop.Api.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-COPY publish/api/ .
+COPY --from=build /app .
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "MechanicShop.Api.dll"]

@@ -19,3 +19,8 @@ public sealed record UpdateCustomerRequest(
     string Name,
     string Email,
     string PhoneNumber);
+
+/// <summary>Body for PUT /api/customers/me. Email is the login identity, not editable here.</summary>
+public sealed record UpdateMyProfileRequest(
+    string Name,
+    string PhoneNumber);

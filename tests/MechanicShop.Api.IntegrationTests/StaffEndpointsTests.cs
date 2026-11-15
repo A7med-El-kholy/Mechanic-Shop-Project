@@ -75,7 +75,7 @@ public sealed class StaffEndpointsTests
 
         using var register = await client.PostAsJsonAsync(
             "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Blocked Customer"),
+            new RegisterRequest(email, "Passw0rd!", "Blocked Customer", "01000000000"),
             TestContext.Current.CancellationToken);
 
         register.StatusCode.Should().Be(HttpStatusCode.OK);

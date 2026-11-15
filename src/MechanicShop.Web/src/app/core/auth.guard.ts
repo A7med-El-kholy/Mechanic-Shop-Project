@@ -12,7 +12,11 @@ export const authGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
 
   if (!auth.isAuthenticated()) {
-    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+    // "/" is also the staff shell entry point. Guests get the public landing
+    // page there; every deeper staff URL still bounces to the login screen.
+    return state.url === '/'
+      ? router.createUrlTree(['/home'])
+      : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
   }
 
   return auth.hasStaffRole() ? true : router.createUrlTree(['/portal']);

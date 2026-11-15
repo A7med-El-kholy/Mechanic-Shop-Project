@@ -6,6 +6,7 @@ import { problemMessage } from '../../core/api';
 import { AuthStore } from '../../core/auth-store';
 import { fmtDate, fmtMinute, todayIso, workOrderRef } from '../../core/format';
 import { PaginatedList, WorkOrderSummary, workOrderStateLabel } from '../../core/types';
+import { CountUpDirective } from '../../shared/count-up';
 
 /** My Dashboard, the prototype's dT(): the technician's day on one screen —
  * assigned, in progress, next job — then the day's bookings as cards. The API
@@ -13,7 +14,7 @@ import { PaginatedList, WorkOrderSummary, workOrderStateLabel } from '../../core
  * never a filter. */
 @Component({
   selector: 'app-tech-home',
-  imports: [RouterLink],
+  imports: [RouterLink, CountUpDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tech-home.html',
   styleUrl: './tech-home.scss',

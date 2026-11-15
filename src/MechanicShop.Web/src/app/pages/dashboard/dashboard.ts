@@ -5,10 +5,11 @@ import { forkJoin } from 'rxjs';
 
 import { AppointmentRequestRow, EmployeeSummary, PaginatedList, WorkOrderSummary, workOrderStateLabel } from '../../core/types';
 import { fmtDate, fmtMinute } from '../../core/format';
+import { CountUpDirective } from '../../shared/count-up';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, CountUpDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

@@ -1,5 +1,5 @@
-<div class="shell">
-  <aside class="side">
+<div class="shell" [class.sidebar-hidden]="!sidebarOpen()">
+  <aside class="side" aria-label="Staff navigation">
     <div class="sideHead">
       <a class="brandLink" routerLink="/dashboard">
         <div class="brandMark">MS</div>
@@ -25,6 +25,7 @@
           class="navItem"
           [routerLink]="['/', item.path]"
           [class.on]="currentPath() === item.path || currentPath() === '' && item.path === 'dashboard'"
+          (click)="onNavClick()"
         >
           <span class="ico">{{ item.icon }}</span>
           <span class="navLabel">{{ item.label }}</span>
@@ -39,9 +40,9 @@
     </nav>
 
     <div class="sideFoot">
-      <div class="systemStatus">
+      <div class="systemStatus" [class.systemStatus--off]="health.online() === false">
         <span class="statusDot"></span>
-        <span>Connected to Local API</span>
+        <span>{{ health.online() === false ? 'API unreachable' : health.online() ? 'API connected' : 'Checking API…' }}</span>
       </div>
       <button class="btn btn--outline btn--full signoutBtn" type="button" (click)="logout()">
         <span>Sign out</span>
@@ -50,9 +51,26 @@
     </div>
   </aside>
 
+  <button
+    type="button"
+    class="sideBackdrop"
+    [class.show]="sidebarOpen()"
+    aria-label="Close navigation"
+    (click)="closeSidebar()"
+  ></button>
+
   <div class="main">
     <header class="top">
       <div class="topSearch">
+        <button
+          type="button"
+          class="menuBtn"
+          [attr.aria-expanded]="sidebarOpen()"
+          aria-label="Toggle navigation"
+          (click)="toggleSidebar()"
+        >
+          <span class="menuBtn__lines" aria-hidden="true"><i></i><i></i><i></i></span>
+        </button>
         <div class="shopStatusPill">
           <span class="livePulse"></span>
           <span>Workshop Bays A · B · C Operational</span>
@@ -84,5 +102,11 @@
     <main class="content">
       <router-outlet />
     </main>
+
+    <!-- Floating AI quick action -->
+    <a routerLink="/ai-assistant" class="ai-fab">
+      <span>🤖</span>
+      <span class="ai-fab-label">AI Voice Assistant</span>
+    </a>
   </div>
 </div>

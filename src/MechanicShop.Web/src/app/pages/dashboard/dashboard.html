@@ -3,44 +3,40 @@
     <h1>Workshop Dashboard</h1>
     <p class="muted">Live operational counters, bay telemetry, and upcoming work orders.</p>
   </div>
-  <div class="headerActions" style="display: flex; gap: 0.75rem">
-    <a routerLink="/ai-assistant" class="btn btn--ai">⚡ AI Diagnostics</a>
-    <a routerLink="/work-orders/new" class="btn btn--primary">+ New Work Order</a>
-  </div>
 </div>
 
 <div class="grid grid--4" style="margin-bottom: 2rem">
   <a class="card statCard" [routerLink]="['/work-orders']">
     <div class="stat__icon">📋</div>
     <div class="stat__body">
-      <span class="stat__num">{{ workOrderCount() }}</span>
+      <span class="stat__num" [appCountUp]="workOrderCount()"></span>
       <span class="stat__label">Work Orders</span>
     </div>
   </a>
   <a class="card statCard" [routerLink]="['/technicians']">
     <div class="stat__icon">👷</div>
     <div class="stat__body">
-      <span class="stat__num">{{ technicianCount() }}</span>
+      <span class="stat__num" [appCountUp]="technicianCount()"></span>
       <span class="stat__label">Technicians</span>
     </div>
   </a>
   <a class="card statCard" [routerLink]="['/inventory']">
     <div class="stat__icon">🔧</div>
     <div class="stat__body">
-      <span class="stat__num">{{ serviceCount() }}</span>
+      <span class="stat__num" [appCountUp]="serviceCount()"></span>
       <span class="stat__label">Service Tasks</span>
     </div>
   </a>
   <a class="card statCard" [routerLink]="['/customers']">
     <div class="stat__icon">👥</div>
     <div class="stat__body">
-      <span class="stat__num">{{ customerCount() }}</span>
+      <span class="stat__num" [appCountUp]="customerCount()"></span>
       <span class="stat__label">Customers</span>
     </div>
   </a>
 </div>
 
-<div class="grid grid--2" style="gap: 2rem; margin-bottom: 2rem">
+<div class="grid grid--2 dashSplit">
   <div class="card table-card">
     <div class="card__header">
       <h2>Next Scheduled Jobs</h2>
@@ -96,14 +92,14 @@
     </div>
 
     @if (loaded() && pending().length > 0) {
-      <table class="plain">
+      <table class="plain reqTable">
         <thead>
           <tr>
-            <th style="width: 14%">Requested For</th>
-            <th>Customer</th>
-            <th>Vehicle</th>
-            <th style="width: 22%">Service</th>
-            <th style="width: 13%">Urgency</th>
+            <th style="width: 16%">Requested For</th>
+            <th style="width: 15%">Customer</th>
+            <th style="width: 21%">Vehicle</th>
+            <th style="width: 32%">Service</th>
+            <th style="width: 16%">Urgency</th>
           </tr>
         </thead>
         <tbody>

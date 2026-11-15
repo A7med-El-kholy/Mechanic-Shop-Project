@@ -1,0 +1,403 @@
+<div class="ai-chat">
+  <!-- Header -->
+  <header class="ai-header">
+    <div class="ai-header__inner">
+      <a [routerLink]="auth.hasStaffRole() ? '/dashboard' : '/portal'" class="ai-back">
+        <span>←</span>
+        <span>{{ auth.hasStaffRole() ? 'Back to Dashboard' : 'Back to Portal' }}</span>
+      </a>
+
+      <div class="ai-brand">
+        <div class="ai-icon">🤖</div>
+        <div>
+          <strong>AI Master Diagnostics</strong>
+          <div class="ai-status">
+            <span class="ai-dot"></span>
+            <span>Neural Engine Online</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-actions">
+        <button
+          type="button"
+          class="ai-btn ai-btn--voice"
+          [class.ai-btn--listening]="listening()"
+          [disabled]="analyzing()"
+          (click)="toggleListening()"
+          [title]="listening() ? 'Stop listening' : 'Speak to AI'">
+          <span class="ai-voice-icon">
+            @if (listening()) {
+              <span class="ai-pulse-ring"></span>
+              🎙️
+            } @else if (micSupported()) {
+              🎤
+            } @else {
+              🔇
+            }
+          </span>
+          <span class="ai-voice-label">{{ listening() ? 'Listening…' : 'Voice Input' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="ai-btn ai-btn--stop"
+          [disabled]="!speaking()"
+          (click)="stopSpeaking()"
+          title="Stop speaking">
+          ⏹
+        </button>
+
+        <button type="button" class="ai-btn ai-btn--clear" (click)="clearError()" title="Dismiss error">
+          ✕
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Error banner -->
+  @if (submitError()) {
+    <div class="ai-error">
+      <span class="ai-error__icon">⚠️</span>
+      <span class="ai-error__text">{{ submitError() }}</span>
+    </div>
+  }
+
+  <!-- Main layout -->
+  <div class="ai-body">
+    <!-- Left: Chat -->
+    <section class="ai-chat-column">
+      <div class="ai-chat-card">
+        <div class="ai-chat-header">
+          <div>
+            <h3>Symptom Investigation Console</h3>
+            <p>Describe your issue, speak, or upload a photo.</p>
+          </div>
+          <span class="ai-chip ai-chip--online">● Connected</span>
+        </div>
+
+        <!-- Quick symptom chips -->
+        <div class="ai-symptom-tray">
+          <span class="ai-tray-label">Quick Presets:</span>
+          <div class="ai-symptom-chips">
+            @for (s of quickSymptoms; track s.label) {
+              <button
+                type="button"
+                class="ai-symptom-chip"
+                [disabled]="analyzing()"
+                (click)="useSymptom(s.query)">
+                {{ s.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Image upload -->
+        @if (imageFile() || imagePreview()) {
+          <div class="ai-image-preview">
+            <img [src]="imagePreview()" alt="Uploaded image" />
+            <span class="ai-image-remove" (click)="removeImage()">✕</span>
+            <span class="ai-image-label">Photo attached for analysis</span>
+          </div>
+        }
+
+        <!-- Message stream -->
+        <div class="ai-chat-stream" #streamContainer>
+          @for (m of messages(); track m.time + m.text) {
+            <div class="ai-message" [class.ai-message--user]="m.sender === 'user'" [class.ai-message--ai]="m.sender === 'ai'">
+              <div class="ai-avatar">
+                {{ m.sender === 'ai' ? '🤖' : '👤' }}
+              </div>
+              <div class="ai-content">
+                <div class="ai-bubble" [class.ai-bubble--user]="m.sender === 'user'">
+                  <p class="ai-text" [innerHTML]="renderText(m.text)"></p>
+                </div>
+
+                <!-- Diagnostic card inline -->
+                @if (m.diagnostic; as d) {
+                  <div class="ai-diagnostic">
+                    <div class="ai-diag-header">
+                      <span class="ai-diag-tag">Diagnostic Result</span>
+                      <span class="ai-urgency" [style.backgroundColor]="d.urgencyColor + '22'"
+                            [style.borderColor]="d.urgencyColor" [style.color]="d.urgencyColor">
+                        Urgency: {{ d.urgency }}
+                      </span>
+                    </div>
+                    <div class="ai-diag-metrics">
+                      <div class="ai-metric">
+                        <span class="ai-m-label">Est. Cost</span>
+                        <strong class="ai-m-value">{{ d.estimatedCost }}</strong>
+                      </div>
+                      <div class="ai-metric">
+                        <span class="ai-m-label">Labor Time</span>
+                        <strong class="ai-m-value">{{ d.estimatedLaborTime }}</strong>
+                      </div>
+                      <div class="ai-metric">
+                        <span class="ai-m-label">Safe to Drive</span>
+                        <strong class="ai-m-value" [style.color]="d.safeToDrive ? '#22c55e' : '#ef4444'">
+                          {{ d.safeToDrive ? '✓ Caution' : '✕ No - Risk' }}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div class="ai-advisory" [class.ai-advisory--danger]="!d.safeToDrive">
+                      <span class="ai-advisory-icon">{{ d.safeToDrive ? 'ℹ️' : '⚠️' }}</span>
+                      <div class="ai-advisory-text">
+                        <strong>Advisory:</strong> {{ d.drivingAdvice }}
+                      </div>
+                    </div>
+
+                    <div class="ai-diag-section">
+                      <h4 class="ai-section-heading">Probable Root Causes</h4>
+                      <div class="ai-cause-list">
+                        @for (c of d.likelyCauses; track c.name) {
+                          <div class="ai-cause-item">
+                            <div class="ai-cause-header">
+                              <span class="ai-cause-name">{{ c.name }}</span>
+                              <span class="ai-cause-prob">{{ c.probabilityPercent }}</span>
+                            </div>
+                            <p class="ai-cause-desc">{{ c.description }}</p>
+                            <div class="ai-prob-track">
+                              <div class="ai-prob-fill" [style.width.%]="parseProbability(c.probabilityPercent)"></div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="ai-diag-section">
+                      <h4 class="ai-section-heading">Recommended Inspection</h4>
+                      <ul class="ai-action-list">
+                        @for (act of d.recommendedActions; track act) {
+                          <li><span class="ai-check">✓</span> <span>{{ act }}</span></li>
+                        }
+                      </ul>
+                    </div>
+
+                    <div class="ai-diag-section">
+                      <h4 class="ai-section-heading">Parts & Consumables</h4>
+                      <div class="ai-parts-badges">
+                        @for (part of d.partsNeeded; track part) {
+                          <span class="ai-part-badge">🔧 {{ part }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Booking -->
+                    <div class="ai-book-section">
+                      @if (bookingSuccess()) {
+                        <div class="ai-booking-alert ai-booking-alert--success">
+                          <span class="ai-b-icon">🎉</span>
+                          <div>
+                            <strong>Appointment Request Sent!</strong>
+                            <p>The workshop manager will review this triage and assign a bay.</p>
+                          </div>
+                        </div>
+                      } @else {
+                        @if (submitError()) {
+                          <div class="ai-booking-alert ai-booking-alert--error">
+                            <span>⚠️</span>
+                            <span>{{ submitError() }}</span>
+                          </div>
+                        }
+                        <button
+                          type="button"
+                          class="ai-book-btn"
+                          [disabled]="bookingBusy()"
+                          (click)="bookPrioritySlot()">
+                          @if (bookingBusy()) {
+                            <span>Sending to Workshop…</span>
+                          } @else {
+                            <span>⚡ Submit Triage & Book</span>
+                          }
+                        </button>
+                        <small class="ai-book-hint">Sends this diagnosis to the manager dashboard.</small>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <span class="ai-time">{{ m.time }}</span>
+              </div>
+            </div>
+          }
+
+          @if (analyzing()) {
+            <div class="ai-message ai-message--ai ai-analyzing">
+              <div class="ai-avatar">🤖</div>
+              <div class="ai-content">
+                <div class="ai-bubble ai-analyzing-bubble">
+                  <div class="ai-analyzing-dots">
+                    <span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span>
+                  </div>
+                  <span class="ai-analyzing-text">Analyzing mechanical telemetry…</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Input -->
+        <div class="ai-input-area">
+          <form class="ai-input-form" (ngSubmit)="sendQuery()">
+            <div class="ai-input-wrapper">
+              <input
+                type="text"
+                class="ai-input"
+                placeholder="Type a symptom… e.g. grinding brakes, smoke, P0420"
+                [(ngModel)]="prompt"
+                name="prompt"
+                [disabled]="analyzing()"
+                (keydown.enter)="sendQuery()" />
+              <label class="ai-image-label-btn" title="Attach photo">
+                <input type="file" accept="image/*" (change)="onImageSelected($event)" style="display:none" />
+                📷
+              </label>
+            </div>
+            <button
+              type="submit"
+              class="ai-send-btn"
+              [disabled]="(!prompt().trim() && !imageFile()) || analyzing()">
+              <span>Analyze</span>
+              <span class="ai-send-icon">⚡</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Live HUD -->
+    <aside class="ai-hud-column">
+      @if (latestDiagnostic(); as d) {
+        <div class="ai-hud-card fade-in">
+          <div class="ai-hud-header">
+            <span class="ai-hud-tag">Live Diagnostic HUD</span>
+            <span class="ai-urgency-pill" [style.backgroundColor]="d.urgencyColor + '22'"
+                  [style.borderColor]="d.urgencyColor" [style.color]="d.urgencyColor">
+              Urgency: {{ d.urgency }}
+            </span>
+          </div>
+          <h2 class="ai-diag-title">{{ d.title }}</h2>
+
+          <div class="ai-metric-strip">
+            <div class="ai-metric-box">
+              <span class="ai-m-label">Est. Repair Cost</span>
+              <strong class="ai-m-value ai-m-value--brand">{{ d.estimatedCost }}</strong>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-m-label">Est. Labor Time</span>
+              <strong class="ai-m-value">{{ d.estimatedLaborTime }}</strong>
+            </div>
+            <div class="ai-metric-box">
+              <span class="ai-m-label">Safe to Drive</span>
+              <strong class="ai-m-value" [style.color]="d.safeToDrive ? '#22c55e' : '#ef4444'">
+                {{ d.safeToDrive ? '✓ Caution' : '✕ No - Risk' }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="ai-advisory" [class.ai-advisory--danger]="!d.safeToDrive">
+            <span class="ai-advisory-icon">{{ d.safeToDrive ? 'ℹ️' : '⚠️' }}</span>
+            <div class="ai-advisory-text">
+              <strong>Advisory:</strong> {{ d.drivingAdvice }}
+            </div>
+          </div>
+
+          <div class="ai-hud-section">
+            <h4 class="ai-section-heading">Probable Root Causes</h4>
+            <div class="ai-cause-list">
+              @for (c of d.likelyCauses; track c.name) {
+                <div class="ai-cause-item">
+                  <div class="ai-cause-header">
+                    <span class="ai-cause-name">{{ c.name }}</span>
+                    <span class="ai-cause-prob">{{ c.probabilityPercent }}</span>
+                  </div>
+                  <p class="ai-cause-desc">{{ c.description }}</p>
+                  <div class="ai-prob-track">
+                    <div class="ai-prob-fill" [style.width.%]="parseProbability(c.probabilityPercent)"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="ai-hud-section">
+            <h4 class="ai-section-heading">Mechanic Recommended Inspection</h4>
+            <ul class="ai-action-list">
+              @for (act of d.recommendedActions; track act) {
+                <li><span class="ai-check">✓</span> <span>{{ act }}</span></li>
+              }
+            </ul>
+          </div>
+
+          <div class="ai-hud-section">
+            <h4 class="ai-section-heading">Parts & Consumables</h4>
+            <div class="ai-parts-badges">
+              @for (part of d.partsNeeded; track part) {
+                <span class="ai-part-badge">🔧 {{ part }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="ai-book-section">
+            @if (bookingSuccess()) {
+              <div class="ai-booking-alert ai-booking-alert--success">
+                <span class="ai-b-icon">🎉</span>
+                <div>
+                  <strong>Appointment Request Sent!</strong>
+                  <p>Our workshop manager will review this triage and assign Bay A/B/C.</p>
+                </div>
+              </div>
+            } @else {
+              @if (submitError()) {
+                <div class="ai-booking-alert ai-booking-alert--error">
+                  <span>⚠️</span>
+                  <span>{{ submitError() }}</span>
+                </div>
+              }
+
+              <button
+                type="button"
+                class="ai-book-btn"
+                [disabled]="bookingBusy()"
+                (click)="bookPrioritySlot()">
+                @if (bookingBusy()) {
+                  <span>Booking Priority Dispatch…</span>
+                } @else {
+                  <span>⚡ Submit Triage & Request Booking</span>
+                }
+              </button>
+              <small class="ai-book-hint">Sends this full diagnosis to the manager dashboard.</small>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="ai-hud-empty fade-in">
+          <div class="ai-empty-radar">
+            <span class="ai-radar-icon">🔍</span>
+            <span class="ai-radar-circle ai-c1"></span>
+            <span class="ai-radar-circle ai-c2"></span>
+          </div>
+          <h3>Awaiting Diagnostic Input</h3>
+          <p>
+            Type a symptom, speak into the mic, or upload a photo on the left. The AI neural engine will calculate
+            cost projections, safety alerts, and parts requirements here.
+          </p>
+          <div class="ai-empty-badges">
+            <span>✓ OBD-II Scanner Ready</span>
+            <span>✓ Voice Triage Enabled</span>
+            <span>✓ Image Analysis Ready</span>
+          </div>
+        </div>
+      }
+    </aside>
+  </div>
+
+  <!-- Voice status banner -->
+  @if (!micSupported()) {
+    <div class="ai-voice-note">
+      <span>💡</span>
+      <span>Voice input not available in this browser. Type your symptoms instead — the assistant will still speak back.</span>
+    </div>
+  }
+</div>

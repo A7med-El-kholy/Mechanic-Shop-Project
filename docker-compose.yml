@@ -5,7 +5,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Express
-      SA_PASSWORD: ${SQL_PASSWORD:-Mech@Shop_Dev2026}
+      SA_PASSWORD: ${SQL_PASSWORD:?Set SQL_PASSWORD in .env (copy .env.example)}
     ports:
       - "1433:1433"
     volumes:
@@ -26,12 +26,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__MechanicShop: "Server=sql,1433;Database=MechanicShop;User Id=sa;Password=${SQL_PASSWORD:-Mech@Shop_Dev2026};TrustServerCertificate=True;Encrypt=False"
-      JwtSettings__Secret: ${JWT_SECRET:-please-change-me-this-is-a-dev-secret}
+      ConnectionStrings__MechanicShop: "Server=sql,1433;Database=MechanicShop;User Id=sa;Password=${SQL_PASSWORD:?Set SQL_PASSWORD in .env};TrustServerCertificate=True;Encrypt=False"
+      JwtSettings__Secret: ${JWT_SECRET:?Set JWT_SECRET in .env (>= 32 random chars)}
       JwtSettings__Issuer: MechanicShop
       JwtSettings__Audience: MechanicShopPortal
       Seed__ManagerEmail: manager@mechanicshop.dev
-      Seed__ManagerPassword: ${MANAGER_PASSWORD:-Manager@Dev2026}
+      Seed__ManagerPassword: ${MANAGER_PASSWORD:?Set MANAGER_PASSWORD in .env}
+      Swagger__Enabled: "true"
+      Cors__AllowedOrigins__0: http://localhost
     ports:
       - "5255:8080"
     depends_on:

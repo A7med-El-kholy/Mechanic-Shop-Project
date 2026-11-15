@@ -42,5 +42,6 @@ public sealed class ApiDbFactory : WebApplicationFactory<Program>, IAsyncLifetim
         builder.UseSetting("ConnectionStrings:MechanicShop", _container.GetConnectionString());
         builder.UseSetting("Seed:ManagerEmail", "manager@mechanicshop.test");
         builder.UseSetting("Seed:ManagerPassword", "ManagerP@ss1");
+        builder.UseSetting("RateLimiting:AuthPermitPerMinute", "100000");
     }
 }
