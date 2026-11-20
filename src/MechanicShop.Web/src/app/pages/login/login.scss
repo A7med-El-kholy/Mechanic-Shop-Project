@@ -579,6 +579,94 @@
   color: #475569;
 }
 
+/* --- Google sign-in --- */
+.orSeparator {
+  display: flex;
+  align-items: center;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.orLine {
+  position: relative;
+  font-size: 0.7rem;
+  color: #64748b;
+  width: 100%;
+  text-align: center;
+}
+
+.orLine::before,
+.orLine::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.orLine::before {
+  left: 0;
+  right: calc(50% + 8px);
+}
+
+.orLine::after {
+  left: calc(50% + 8px);
+  right: 0;
+}
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.12s ease;
+}
+
+.googleBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.googleBtn:active {
+  transform: translateY(0);
+}
+
+.googleBtn:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.googleIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Respect reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .googleBtn {
+    transition: none;
+  }
+
+  .googleBtn:hover {
+    transform: none;
+  }
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .loginContainer {

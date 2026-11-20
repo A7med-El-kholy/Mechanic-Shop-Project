@@ -55,7 +55,7 @@ public sealed class ReportsEndpointsTests
         // WO1: Alpha does the oil change, pays by card — completed + PAID.
         var wo1 = await ReadWorkOrderIdAsync(await CreateWorkOrderAsync(client, managerToken, vehicleId, [oilTask], techA));
         await AdvanceToCompletedAsync(client, managerToken, wo1);
-        await PayOwnInvoiceAsync(client, customerToken, wo1);
+        await PayOwnInvoiceAsync(client, customerToken, managerToken, wo1);
 
         // WO2: Beta does both jobs — completed, invoice stays unpaid.
         var wo2 = await ReadWorkOrderIdAsync(await CreateWorkOrderAsync(client, managerToken, vehicleId, [oilTask, brakeTask], techB));
@@ -74,7 +74,7 @@ public sealed class ReportsEndpointsTests
         after.CompletionRatePercent.Should().Be(
             Math.Round((before.WorkOrderCompleted + 2) * 100m / (before.WorkOrderTotal + 3), 2));
 
-        // Money: 2 invoices issued (auto on completion), 1 paid by card.
+        // Money: 2 invoices issued (auto on completion), 1 paid after cash receipt.
         after.InvoicesTotal.Should().Be(before.InvoicesTotal + 2);
         after.InvoicesPaid.Should().Be(before.InvoicesPaid + 1);
 
@@ -238,38 +238,8 @@ public sealed class ReportsEndpointsTests
         HttpClient client,
         string managerToken)
     {
-        var tag = Guid.NewGuid().ToString("N")[..5].ToUpperInvariant();
-        var email = $"reports-{Guid.NewGuid():N}@mechanicshop.test";
-
-        using var registered = await client.PostAsJsonAsync(
-            "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Reports Tester", "01000000000"),
-            TestContext.Current.CancellationToken);
-
-        registered.EnsureSuccessStatusCode();
-
-        var linkedToken = await GetAccessTokenAsync(client, email, "Passw0rd!");
-
-        using var profile = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                "/api/customers",
-                new CreateCustomerRequest(
-                    "Reports Tester",
-                    "+201234567884",
-                    email,
-                    [new CreateVehicleRequest("Honda", "Civic", 2021, $"RPT-{tag}", $"1HGCR2F59JB5{tag}")]),
-                managerToken),
-            TestContext.Current.CancellationToken);
-
-        profile.EnsureSuccessStatusCode();
-
-        var json = await profile.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-
-        return (
-            json.GetProperty("customerId").GetGuid(),
-            json.GetProperty("vehicles").EnumerateArray().First().GetProperty("vehicleId").GetGuid(),
-            linkedToken);
+        return await TestCustomerFactory.RegisterWithVehicleAsync(
+            client, managerToken, "Reports Tester", "reports", "Honda", "Civic", "RPT", "1HGCR2F59JB5");
     }
 
     private static async Task<HttpResponseMessage> CreateWorkOrderAsync(
@@ -321,9 +291,8 @@ public sealed class ReportsEndpointsTests
         response.EnsureSuccessStatusCode();
     }
 
-    /// <summary>The owning customer pays their invoice by card — the same
-    /// prototype click that marks it Paid with no card data anywhere.</summary>
-    private static async Task PayOwnInvoiceAsync(HttpClient client, string customerToken, Guid workOrderId)
+    /// <summary>The owning customer selects cash and the manager records the receipt.</summary>
+    private static async Task PayOwnInvoiceAsync(HttpClient client, string customerToken, string managerToken, Guid workOrderId)
     {
         using var list = await client.SendAsync(
             RequestMessage(HttpMethod.Get, "/api/portal/invoices", null, customerToken),
@@ -337,11 +306,15 @@ public sealed class ReportsEndpointsTests
             .GetProperty("invoiceId")
             .GetGuid();
 
-        using var paid = await client.SendAsync(
-            RequestMessage(HttpMethod.Post, $"/api/portal/invoices/{invoiceId}/pay", new { method = 0 }, customerToken),
+        using var selected = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, $"/api/portal/invoices/{invoiceId}/pay", new { method = 1 }, customerToken),
             TestContext.Current.CancellationToken);
 
-        paid.EnsureSuccessStatusCode();
+        selected.EnsureSuccessStatusCode();
+        using var received = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, $"/api/invoices/{invoiceId}/record-cash-payment", null, managerToken),
+            TestContext.Current.CancellationToken);
+        received.EnsureSuccessStatusCode();
     }
 
     private static HttpRequestMessage RequestMessage(HttpMethod method, string uri, object? body, string token)

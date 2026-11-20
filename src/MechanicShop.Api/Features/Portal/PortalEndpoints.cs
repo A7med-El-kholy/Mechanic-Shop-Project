@@ -23,12 +23,12 @@ using MediatR;
 
 namespace MechanicShop.Api.Features.Portal;
 
-/// <summary>The pay choice as the client sends it: 0 = card, 1 = cash. No card
-/// details exist — the prototype agrees ("no card data is stored").</summary>
+/// <summary>The customer payment selection. Only 1 = cash at the shop is currently available;
+/// card selection is rejected until a gateway is configured.</summary>
 public sealed record PayMyInvoiceRequest(int Method);
 
-/// <summary>Parts checkout: the cart lines and the payment choice (0 card,
-/// 1 cash). Quantities are validated server-side; the cart itself is UI state.</summary>
+/// <summary>Parts checkout: cart lines and payment choice. Only 1 = cash at pickup
+/// is currently available; quantities are validated server-side.</summary>
 public sealed record PlaceMyShopOrderRequest(List<ShopOrderItemPayload> Items, int Method);
 
 public sealed record ShopOrderItemPayload(Guid PartId, int Quantity);

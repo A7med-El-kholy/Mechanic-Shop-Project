@@ -22,6 +22,9 @@ public sealed class Part : Entity
     /// <summary>Reorder level: at or below this the shelf is "Low stock".</summary>
     public int MinimumQuantity { get; private set; }
 
+    /// <summary>SQL Server concurrency token protecting competing stock updates.</summary>
+    public byte[] RowVersion { get; private set; } = [];
+
 #pragma warning disable CS8618
 
     private Part()
@@ -86,8 +89,8 @@ public sealed class Part : Entity
         return new Part(id, name.Trim(), (PartCategory)category, price, quantity, minimumQuantity);
     }
 
-    /// <summary>Adds or removes stock. Removing below zero clamps at zero —
-    /// the shelf only follows reality, and a negative shelf is impossible.</summary>
+    /// <summary>Adds or removes stock. An outbound movement that exceeds available
+    /// stock is rejected so the transaction history and shelf quantity stay aligned.</summary>
     public Result<Updated> Adjust(int delta)
     {
         if (delta == 0)
@@ -95,9 +98,13 @@ public sealed class Part : Entity
             return PartErrors.DeltaInvalid;
         }
 
-        var next = Quantity + delta;
+        var next = (long)Quantity + delta;
+        if (next < 0 || next > int.MaxValue)
+        {
+            return PartErrors.QuantityInvalid;
+        }
 
-        Quantity = next < 0 ? 0 : next;
+        Quantity = (int)next;
 
         return Result.Updated;
     }

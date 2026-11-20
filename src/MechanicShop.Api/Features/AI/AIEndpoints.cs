@@ -6,6 +6,7 @@ using MechanicShop.Application.Features.AI.DTOs;
 using MechanicShop.Domain.Common.Results;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
 /// <summary>
 /// AI diagnostic surface: text diagnosis, image diagnosis, speech-to-text,
@@ -26,6 +27,7 @@ public static class AIEndpoints
         group.MapPost("/diagnose-image", DiagnoseImageAsync)
             .WithName("DiagnoseImage")
             .Accepts<IFormFile>("multipart/form-data")
+            .DisableAntiforgery()
             .Produces<DiagnoseResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status413RequestEntityTooLarge);
@@ -33,6 +35,7 @@ public static class AIEndpoints
         group.MapPost("/transcribe", TranscribeAudioAsync)
             .WithName("TranscribeAudio")
             .Accepts<IFormFile>("multipart/form-data")
+            .DisableAntiforgery()
             .Produces<TranscribeResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status413RequestEntityTooLarge);
@@ -61,8 +64,8 @@ public static class AIEndpoints
                 .ToProblem(httpContext);
         }
 
-        var result = await aiService.DiagnoseTextAsync(request, cancellationToken);
-        return Results.Ok(result);
+        return await HandleProviderCallAsync(async () =>
+            Results.Ok(await aiService.DiagnoseTextAsync(request, cancellationToken)), cancellationToken);
     }
 
     private static async Task<IResult> DiagnoseImageAsync(
@@ -87,15 +90,41 @@ public static class AIEndpoints
                 .ToProblem(httpContext);
         }
 
+        var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
+        var supported = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            [".jpg"] = ["image/jpeg"], [".jpeg"] = ["image/jpeg"],
+            [".png"] = ["image/png"], [".webp"] = ["image/webp"],
+        };
+        if (!supported.TryGetValue(extension, out var contentTypes) ||
+            !contentTypes.Contains(image.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            return Error.Validation("AI.ImageFormatUnsupported", "Upload a JPG, JPEG, PNG, or WEBP image.")
+                .ToProblem(httpContext);
+        }
+
         using var ms = new MemoryStream();
         await image.CopyToAsync(ms, cancellationToken);
+        if (!HasImageSignature(ms.ToArray(), image.ContentType))
+        {
+            return Error.Validation("AI.InvalidImage", "The uploaded file is not a valid image of the selected format.")
+                .ToProblem(httpContext);
+        }
 
-        var result = await aiService.DiagnoseImageAsync(
+        return await HandleProviderCallAsync(async () => Results.Ok(await aiService.DiagnoseImageAsync(
             new DiagnoseImageRequest(image.FileName, image.ContentType, ms.ToArray(), description, vehicleId),
-            cancellationToken);
-
-        return Results.Ok(result);
+            cancellationToken)), cancellationToken);
     }
+
+    private static bool HasImageSignature(byte[] bytes, string contentType) => contentType.ToLowerInvariant() switch
+    {
+        "image/jpeg" => bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+        "image/png" => bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }),
+        "image/webp" => bytes.Length >= 12 &&
+            System.Text.Encoding.ASCII.GetString(bytes, 0, 4) == "RIFF" &&
+            System.Text.Encoding.ASCII.GetString(bytes, 8, 4) == "WEBP",
+        _ => false,
+    };
 
     private static async Task<IResult> TranscribeAudioAsync(
         IFormFile audio,
@@ -119,11 +148,9 @@ public static class AIEndpoints
         using var ms = new MemoryStream();
         await audio.CopyToAsync(ms, cancellationToken);
 
-        var result = await aiService.TranscribeAudioAsync(
+        return await HandleProviderCallAsync(async () => Results.Ok(await aiService.TranscribeAudioAsync(
             new TranscribeAudioRequest(audio.FileName, audio.ContentType, ms.ToArray()),
-            cancellationToken);
-
-        return Results.Ok(result);
+            cancellationToken)), cancellationToken);
     }
 
     private static async Task<IResult> SpeakTextAsync(
@@ -138,8 +165,7 @@ public static class AIEndpoints
                 .ToProblem(httpContext);
         }
 
-        var result = await aiService.SpeakTextAsync(request, cancellationToken);
-        return Results.Ok(result);
+        return await HandleProviderCallAsync(async () => Results.Ok(await aiService.SpeakTextAsync(request, cancellationToken)), cancellationToken);
     }
 
     private static async Task<IResult> GetVoicesAsync(
@@ -148,5 +174,27 @@ public static class AIEndpoints
     {
         var voices = await aiService.GetVoicesAsync(cancellationToken);
         return Results.Ok(voices);
+    }
+
+    private static async Task<IResult> HandleProviderCallAsync(Func<Task<IResult>> operation, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await operation();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (TaskCanceledException)
+        {
+            return Results.Problem("The AI provider timed out. Please try again.", statusCode: StatusCodes.Status504GatewayTimeout,
+                title: "AI provider timeout");
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException or InvalidOperationException)
+        {
+            return Results.Problem("The AI provider is unavailable or returned an invalid response. Please try again.",
+                statusCode: StatusCodes.Status503ServiceUnavailable, title: "AI service unavailable");
+        }
     }
 }

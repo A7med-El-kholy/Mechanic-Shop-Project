@@ -15,6 +15,8 @@
   <ItemGroup>
     <!-- Bearer-token authentication middleware; validates the JWTs issued by Infrastructure's TokenProvider. -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <!-- Google OAuth2 handler (Sign-in with Google). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
     <!-- Design-time only: EF tools require this on the startup project to run migrations.
          PrivateAssets=all keeps it out of any project that references the Api. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />

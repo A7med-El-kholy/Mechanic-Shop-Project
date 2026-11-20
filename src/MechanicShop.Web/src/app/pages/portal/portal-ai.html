@@ -44,15 +44,15 @@
       <div class="chatCard">
         <div class="chatHeader">
           <div>
-            <h3>Symptom Investigation Console</h3>
-            <p>Describe your issue or click a common symptom below for instant analysis.</p>
+            <h3>Describe a vehicle problem</h3>
+            <p>Enter symptoms to get a workshop triage and suggested next steps.</p>
           </div>
-          <span class="chipOnline">● Connected</span>
+          <span class="liveBadge" title="This workshop is using offline rule based diagnosis">Rule based demo</span>
         </div>
 
         <!-- Quick Symptoms Tray -->
         <div class="symptomTray">
-          <span class="trayLabel">Quick Presets:</span>
+          <span class="trayLabel">Common symptoms</span>
           <div class="symptomChips">
             @for (s of quickSymptoms; track s.label) {
               <button
@@ -91,7 +91,7 @@
                   <span class="analyzingDot"></span>
                   <span class="analyzingDot"></span>
                   <span class="analyzingDot"></span>
-                  <span class="analyzingText">Analyzing mechanical telemetry & DTC codes…</span>
+                  <span class="analyzingText">Reviewing your symptoms…</span>
                 </div>
               </div>
             </div>
@@ -100,6 +100,9 @@
 
         <!-- Input Bar -->
         <div class="chatInputArea">
+          @if (submitError()) {
+            <p class="aiRequestError" role="alert">{{ submitError() }}</p>
+          }
           <form class="inputForm" (ngSubmit)="sendQuery()">
             <input
               type="text"
@@ -241,20 +244,11 @@
       } @else {
         <!-- Empty HUD Placeholder -->
         <div class="hudEmptyCard">
-          <div class="emptyRadar">
-            <span class="radarCircle c1"></span>
-            <span class="radarCircle c2"></span>
-            <span class="radarIcon">🔍</span>
-          </div>
-          <h3>Awaiting Diagnostic Input</h3>
+          <div class="radarIcon">🔧</div>
+          <h3>Your diagnosis will appear here</h3>
           <p>
-            Type a mechanical symptom or select a quick preset on the left. The AI neural engine will calculate cost projections, safety alerts, and parts requirements here.
+            Describe what you hear, feel, or see. We’ll return likely causes, a safety assessment, and recommended inspection steps.
           </p>
-          <div class="hudEmptyBadges">
-            <span>✓ OBD-II Scanner Ready</span>
-            <span>✓ Bay Load Balancing</span>
-            <span>✓ Labor Time Guide</span>
-          </div>
         </div>
       }
     </aside>

@@ -15,6 +15,8 @@
     <!-- EF Core tooling for design-time migrations; PrivateAssets=all keeps it out of
          referencing projects (Api/Infrastructure consumers never need it at runtime). -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- IHttpClientFactory for OpenAIService (AI provider calls). -->
+    <PackageReference Include="Microsoft.Extensions.Http" />
     <!-- JWT signing/validation used by TokenProvider. -->
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <!-- Transitive System.Security.Cryptography.Pkcs 9.0.x carries known advisories

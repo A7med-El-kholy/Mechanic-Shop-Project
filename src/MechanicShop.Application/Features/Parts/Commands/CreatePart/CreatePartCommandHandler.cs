@@ -12,11 +12,12 @@ using Microsoft.Extensions.Logging;
 
 namespace MechanicShop.Application.Features.Parts.Commands.CreatePart;
 
-public sealed class CreatePartCommandHandler(IAppDbContext context, ILogger<CreatePartCommandHandler> logger)
+public sealed class CreatePartCommandHandler(IAppDbContext context, IUser user, ILogger<CreatePartCommandHandler> logger)
     : IRequestHandler<CreatePartCommand, Result<PartDto>>
 {
     private readonly IAppDbContext _context = context;
     private readonly ILogger<CreatePartCommandHandler> _logger = logger;
+    private readonly IUser _user = user;
 
     public async Task<Result<PartDto>> Handle(CreatePartCommand command, CancellationToken cancellationToken)
     {
@@ -49,6 +50,11 @@ public sealed class CreatePartCommandHandler(IAppDbContext context, ILogger<Crea
         }
 
         _context.Parts.Add(created.Value);
+        if (created.Value.Quantity > 0)
+        {
+            _context.StockMovements.Add(StockMovement.Create(created.Value.Id, created.Value.Quantity,
+                0, created.Value.Quantity, "Initial stock on part creation", _user.UserId));
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 

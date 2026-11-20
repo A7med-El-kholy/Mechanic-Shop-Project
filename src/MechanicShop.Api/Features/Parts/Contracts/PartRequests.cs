@@ -7,4 +7,4 @@ public sealed record CreatePartRequest(
     int Quantity,
     int MinimumQuantity);
 
-public sealed record AdjustPartRequest(int Delta);
+public sealed record AdjustPartRequest(int Delta, string Reason);

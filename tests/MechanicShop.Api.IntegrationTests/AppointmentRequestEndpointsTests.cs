@@ -349,37 +349,8 @@ public sealed class AppointmentRequestEndpointsTests
         HttpClient client,
         string managerToken)
     {
-        var attempt = _sequence++;
-
-        var tag = Guid.NewGuid().ToString("N")[..5].ToUpperInvariant(); // VIN-legal alphabet, unique per call
-        var email = $"portal-{Guid.NewGuid():N}@mechanicshop.test";
-
-        using var registered = await client.PostAsJsonAsync(
-            "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Portal Tester", "01000000000"),
-            TestContext.Current.CancellationToken);
-
-        EnsureOk("register", registered, vin: tag);
-
-        var token = await GetAccessTokenAsync(client, email, "Passw0rd!");
-
-        using var profile = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                "/api/customers",
-                new CreateCustomerRequest(
-                    "Portal Tester",
-                    "+201234567890",
-                    email,
-                    [new CreateVehicleRequest("Honda", "Civic", 2022, $"PRT-{tag}", $"1HGCR2F59JA5{tag}")]),
-                managerToken),
-            TestContext.Current.CancellationToken);
-
-        EnsureOk("profile", profile, vin: $"1HGCR2F59JA5{tag}");
-
-        var customer = await ReadCustomer(profile);
-
-        return (customer!.CustomerId, customer.Vehicles[0].VehicleId, token);
+        return await TestCustomerFactory.RegisterWithVehicleAsync(
+            client, managerToken, "Portal Tester", "portal", "Honda", "Civic", "PRT", "1HGCR2F59JA5");
     }
 
     private static void EnsureOk(string step, HttpResponseMessage response, string? vin = null)

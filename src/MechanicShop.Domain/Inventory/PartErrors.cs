@@ -31,6 +31,12 @@ public static class PartErrors
     public static Error DeltaInvalid =>
         Error.Validation("Part_DeltaInvalid", "Stock adjustment must be a non-zero delta.");
 
+    public static Error MovementReasonRequired =>
+        Error.Validation("Part_MovementReasonRequired", "A stock movement reason is required.");
+
+    public static Error StockChanged =>
+        Error.Conflict("Part_StockChanged", "Stock changed while this movement was being saved. Refresh and try again.");
+
     public static Error CitedByTasks =>
         Error.Conflict("Part_CitedByTasks", "This part is referenced by service tasks and cannot be removed.");
 }

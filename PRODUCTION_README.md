@@ -32,6 +32,12 @@ Wait for all containers to be healthy, then open:
 - Manager: `manager@mechanicshop.dev` / `Manager@Dev2026`
 - Or register your own customer account at `http://localhost/login`
 
+### Sign in with Google
+
+Click **Continue with Google** on the login page. The flow is: SPA → `GET /api/auth/google` → Google → `GET /api/auth/google-callback-complete` (redirects back to the SPA with the JWT in the URL fragment) → `/auth/callback`. The backend exchanges the token for a JWT; the SPA stores it and lands on the portal or the requested destination. Accounts are linked by email, so an existing local account or a Google-only account can't be duplicated.
+
+> **Setup:** create a Google OAuth client in the [Google Cloud Console](https://console.cloud.google.com/), add authorized redirect URIs (`http://localhost/auth/callback` for docker, `http://localhost:4200/auth/callback` for the dev SPA), and set the Client ID/Secret via user-secrets (`dotnet user-secrets set GoogleAuth:ClientId/Secret`) or `.env` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`). See [GoogleOAuth.md](GoogleOAuth.md) for the full checklist and [AIProvider.md](AIProvider.md) for AI setup.
+
 ### Option 2: Frontend Only (Development)
 
 ```bash
@@ -62,7 +68,11 @@ The AI Master Technician supports four modes of interaction:
 
 **To access:** Click the floating 🤖 AI Voice Assistant button (bottom-right), or navigate to **AI Assistant**.
 
-**No API key required:** The built-in Mock AI engine provides realistic diagnoses for brakes, overheating, battery, transmission, and engine issues. To connect a real AI provider (OpenAI / Azure OpenAI / Gemini), implement `IAIService` and swap the registration in `Program.cs`.
+**No API key required:** The built-in Mock AI engine provides realistic diagnoses for brakes, overheating, battery, transmission, and engine issues. To connect a real AI provider, set `AISettings:Provider=OpenAI` and configure `AISettings:OpenAI:ApiKey` (see [AIProvider.md](AIProvider.md)) — the same `IAIService` interface allows swapping to Gemini or any OpenAI-compatible server by changing `AISettings:OpenAI:BaseUrl`.
+
+### Payments and demo data
+
+The portal currently supports cash-at-shop/pickup reservations. Card requests are rejected until a payment gateway is configured; selecting a payment method never marks an invoice paid. A manager records cash received in the workshop. Docker demo seeding is controlled by `DEMO_SEED_DATA` (`true` in `.env.example`); set it to `false` for real production data to avoid inserting sample customers, vehicles, appointments, work orders, parts, and services.
 
 ---
 

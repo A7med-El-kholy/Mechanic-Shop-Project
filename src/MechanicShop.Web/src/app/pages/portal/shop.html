@@ -1,7 +1,7 @@
 <div class="viewHead">
   <div>
     <h1>Parts Shop</h1>
-    <p class="muted">Genuine parts from the workshop. Pay by card, or choose cash and pick up at the shop.</p>
+    <p class="muted">Genuine parts from the workshop. Reserve what you need and pay in cash when you pick it up.</p>
   </div>
   <span class="cartPill" [class.has-items]="cartCount() > 0">
     🛍 Cart · {{ cartCount() }}
@@ -78,22 +78,15 @@
       </div>
 
       <div class="payChoice">
-        <button class="chip" type="button" [class.active]="payChoice() === 'card'"
-                (click)="pickPay('card')">💳 Pay by card</button>
-        <button class="chip" type="button" [class.active]="payChoice() === 'cash'"
-                (click)="pickPay('cash')">💵 Cash, pick up at shop</button>
+        <button class="chip active" type="button" disabled>💵 Cash, pick up at shop</button>
       </div>
 
-      @if (payChoice() === 'card') {
-        <p class="muted sm">Prototype only: no real payment is processed and no card data is stored.</p>
-      } @else {
-        <div class="al">We reserve your parts. Pay in cash when you collect them; the order shows Cash Pending until the workshop confirms.</div>
-      }
+      <div class="al">We reserve your parts. Pay in cash when you collect them; the order shows Cash Pending until the workshop confirms.</div>
 
       <div class="checkoutRow">
         <button class="btn btn--brand" type="button" [disabled]="placing()"
                 (click)="checkout()">
-          {{ placing() ? 'Placing…' : (payChoice() === 'card' ? 'Pay ' + money.format(cartTotal()) : 'Reserve order') }}
+          {{ placing() ? 'Placing…' : 'Reserve order' }}
         </button>
       </div>
     }

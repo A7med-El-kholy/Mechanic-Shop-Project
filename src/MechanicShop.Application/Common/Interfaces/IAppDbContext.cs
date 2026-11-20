@@ -36,6 +36,12 @@ public interface IAppDbContext
 
     DbSet<Part> Parts { get; }
 
+    DbSet<StockMovement> StockMovements { get; }
+
+    DbSet<Supplier> Suppliers { get; }
+
+    DbSet<PurchaseOrder> PurchaseOrders { get; }
+
     DbSet<PartOrder> ShopOrders { get; }
 
     DbSet<Notification> Notifications { get; }

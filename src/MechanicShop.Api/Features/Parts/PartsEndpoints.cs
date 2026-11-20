@@ -4,6 +4,8 @@ using MechanicShop.Api.Features.Parts.Contracts;
 using MechanicShop.Application.Features.Parts.Commands.AdjustStock;
 using MechanicShop.Application.Features.Parts.Commands.CreatePart;
 using MechanicShop.Application.Features.Parts.Queries.GetParts;
+using MechanicShop.Application.Common.Interfaces;
+using MechanicShop.Application.Features.Parts.Queries.GetStockMovements;
 
 using MechanicShop.Domain.Common.Results;
 
@@ -40,6 +42,12 @@ public static class PartsEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapGet("/{partId:guid}/movements", GetMovementsAsync)
+            .WithName("GetPartStockMovements")
+            .RequireAuthorization(Policies.IsStaff)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 
@@ -73,14 +81,22 @@ public static class PartsEndpoints
     private static async Task<IResult> AdjustAsync(
         Guid partId,
         AdjustPartRequest request,
+        IUser user,
         ISender sender,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new AdjustStockCommand(partId, request.Delta), cancellationToken);
+        var result = await sender.Send(new AdjustStockCommand(partId, request.Delta, request.Reason, user.UserId), cancellationToken);
 
         return result.IsError
             ? result.TopError.ToProblem(httpContext)
             : Results.NoContent();
+    }
+
+    private static async Task<IResult> GetMovementsAsync(
+        Guid partId, ISender sender, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetStockMovementsQuery(partId), cancellationToken);
+        return result.IsError ? result.TopError.ToProblem(httpContext) : Results.Ok(result.Value);
     }
 }

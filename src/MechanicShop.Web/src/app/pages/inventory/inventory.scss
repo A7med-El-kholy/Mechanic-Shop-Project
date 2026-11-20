@@ -18,3 +18,76 @@ h2 {
   align-items: center;
   gap: 8px;
 }
+
+.inventory-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--muted, #667085);
+  font-size: 0.9rem;
+}
+
+.inventory-search input {
+  width: min(100%, 360px);
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line, #d0d5dd);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
+.movement-row > td {
+  padding: 16px 20px;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.purchasing-card {
+  display: grid;
+  gap: 12px;
+}
+
+.purchasing-card h3 {
+  margin: 4px 0 0;
+}
+
+.purchasing-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.purchasing-form input,
+.purchasing-form select {
+  min-height: 40px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #d0d5dd);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+
+@media (max-width: 760px) {
+  .inventory-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inventory-search input {
+    width: 100%;
+  }
+
+  .purchasing-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .purchasing-form input,
+  .purchasing-form select {
+    width: 100%;
+    max-width: none;
+  }
+}

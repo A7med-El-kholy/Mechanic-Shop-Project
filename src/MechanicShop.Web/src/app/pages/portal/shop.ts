@@ -6,8 +6,8 @@ import { fmtDate } from '../../core/format';
 import { problemMessage } from '../../core/api';
 
 /** The customer's parts shop, straight from the prototype: filtered grid with
- * stock badges, a cart with the 15% tax math, checkout by card (paid now) or
- * cash at pickup (reserved — the workshop closes it later). Every successful
+ * stock badges, a cart with the 15% tax math, checkout reserved for cash at
+ * pickup (the workshop closes it later). Every successful
  * order already deducts stock server-side; out-of-stock stays un-buyable. */
 @Component({
   selector: 'app-portal-shop',
@@ -28,7 +28,6 @@ export class PortalShopPage {
   protected readonly alertKind = signal<'ok' | 'err'>('ok');
   protected readonly cart = signal<Record<string, number>>({});
   protected readonly selectedCategory = signal('All');
-  protected readonly payChoice = signal<'card' | 'cash'>('card');
   protected readonly placing = signal(false);
 
   protected readonly fmtDate = fmtDate;
@@ -105,10 +104,6 @@ export class PortalShopPage {
     this.selectedCategory.set(label);
   }
 
-  protected pickPay(choice: 'card' | 'cash'): void {
-    this.payChoice.set(choice);
-  }
-
   protected addToCart(part: PartRow): void {
     if (part.stockState === 2) {
       return;
@@ -140,27 +135,18 @@ export class PortalShopPage {
       return;
     }
 
-    const total = this.money.format(this.cartTotal());
-
-    if (this.payChoice() === 'card' &&
-        !window.confirm(`Pay ${total} by card? Prototype only — no real payment is processed and no card data is stored.`)) {
-      return;
-    }
-
     this.placing.set(true);
     this.alert.set(null);
 
     this.http.post<PartOrderRow>('/api/portal/shop/orders', {
       items: lines.map(line => ({ partId: line.part.partId, quantity: line.quantity })),
-      method: this.payChoice() === 'card' ? 0 : 1,
+      method: 1,
     }).subscribe({
       next: order => {
         this.placing.set(false);
         this.cart.set({});
         this.alertKind.set('ok');
-        this.alert.set(order.status === 0
-          ? `Order #${order.orderNumber} placed and paid — receipt kept on your account.`
-          : `Order #${order.orderNumber} reserved. Pay in cash when you collect your parts.`);
+        this.alert.set(`Order #${order.orderNumber} reserved. Pay in cash when you collect your parts.`);
         this.load();
       },
       error: (error: HttpErrorResponse) => {

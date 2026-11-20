@@ -24,7 +24,7 @@
     <div class="al">Cash payment chosen. Pay at the shop when you collect your vehicle; the workshop marks it paid.</div>
   }
   @if (invoice()!.status === 1) {
-    <p class="muted sm">Paid{{ invoice()!.paymentMethod === 0 ? ' by card' : ' in cash' }} — receipt kept on your account.</p>
+    <p class="muted sm">Paid — receipt kept on your account.</p>
   }
 
   <div class="card">
@@ -53,11 +53,10 @@
     <div class="card payRow">
       <div>
         <h3>Pay this invoice</h3>
-        <span class="muted sm">Prototype only: no real payment is processed and no card data is stored.</span>
+        <span class="muted sm">Card payments are unavailable until a payment provider is configured. You can choose to pay in cash at the workshop.</span>
       </div>
       <div class="gap">
-        <button class="btn btn--brand" type="button" [disabled]="busy()" (click)="pay('card')">Pay by card</button>
-        <button class="btn" type="button" [disabled]="busy()" (click)="pay('cash')">Cash at the shop</button>
+        <button class="btn btn--brand" type="button" [disabled]="busy()" (click)="pay()">Choose cash at the shop</button>
       </div>
     </div>
   }

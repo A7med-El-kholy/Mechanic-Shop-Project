@@ -6,9 +6,8 @@ import { InvoiceRow, invoiceStatusLabel } from '../../core/types';
 import { fmtDate } from '../../core/format';
 import { problemMessage } from '../../core/api';
 
-/** The customer's invoices. Payment happens one level deeper: pay by card
- * right away (a prototype click — nothing real is charged) or choose cash at
- * the shop and the workshop closes it when the money is counted. */
+/** The customer's invoices. They can choose cash at the shop; only the workshop
+ * can close the invoice as paid after confirming receipt. */
 @Component({
   selector: 'app-portal-invoices',
   imports: [RouterLink],

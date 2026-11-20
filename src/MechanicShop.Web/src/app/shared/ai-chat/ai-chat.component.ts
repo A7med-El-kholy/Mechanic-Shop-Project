@@ -222,8 +222,9 @@ export class AIChatComponent implements AfterViewInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.submitError.set('Please upload a valid image file.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type.toLowerCase()) ||
+        !/\.(jpe?g|png|webp)$/i.test(file.name)) {
+      this.submitError.set('Please upload a JPG, PNG, or WEBP image.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -294,6 +295,7 @@ export class AIChatComponent implements AfterViewInit, OnDestroy {
       void this.speak(result.responseText, true);
       this.scrollToBottom();
     } catch (err: unknown) {
+      if (!this.imageFile()) this.prompt.set(text);
       this.submitError.set(err instanceof Error ? err.message : 'Something went wrong.');
       console.error('AI query failed:', err);
     } finally {

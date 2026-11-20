@@ -22,12 +22,16 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
     <!-- JWT bearer authentication middleware (Api layer). -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <!-- Google OAuth2 handler (Api layer, used for Sign-in with Google). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.13" />
     <!-- JWT token generation (Infrastructure TokenProvider). -->
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
     <!-- Transitive System.Security.Cryptography.Pkcs 9.0.x carries known advisories
          (NU1902/NU1903, escalated to errors by TreatWarningsAsErrors). Pin the patched
          10.0.13 so the whole graph resolves a safe version. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <!-- IHttpClientFactory for OpenAIService (AI provider calls). -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
   </ItemGroup>
 
   <!-- OpenAPI UI for the API (first real use: F16 portal demo story). Version 8.x

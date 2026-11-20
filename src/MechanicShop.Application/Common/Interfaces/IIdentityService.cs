@@ -54,4 +54,16 @@ public interface IIdentityService
         string currentPassword,
         string newPassword,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds an existing account by email, or creates a new Customer account for a Google
+    /// sign-in, and links the Google external login (providerKey) so the user can return
+    /// with Google on later visits. Never creates duplicate accounts for the same email.
+    /// </summary>
+    Task<Result<AppUserDto>> FindOrCreateByGoogleAsync(
+        string email,
+        string? fullName,
+        string providerKey,
+        string providerDisplayName,
+        CancellationToken cancellationToken = default);
 }

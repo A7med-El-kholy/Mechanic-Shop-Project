@@ -34,6 +34,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 
     public DbSet<Part> Parts { get; set; }
 
+    public DbSet<StockMovement> StockMovements { get; set; }
+
+    public DbSet<Supplier> Suppliers { get; set; }
+
+    public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+
     public DbSet<PartOrder> ShopOrders { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }

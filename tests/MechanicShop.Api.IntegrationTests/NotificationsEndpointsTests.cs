@@ -113,41 +113,35 @@ public sealed class NotificationsEndpointsTests
     }
 
     [Fact]
-    public async Task InvoicePayment_NotifiesBothSides_OnCardAndOnCashClosure()
+    public async Task InvoicePayment_RejectsCardAndNotifiesCashClosure()
     {
         using var client = _factory.CreateClient();
         var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
 
         var (_, vehicleId, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
 
-        // --- Card: paid now, both sides told ---
+        // --- Card: refused because no gateway is configured ---
         var cardTaskId = await CreateServiceTaskAsync(client, managerToken, "Paid By Card Job", 80m);
         var cardWorkOrderId = await ReadWorkOrderIdAsync(
             await CreateWorkOrderAsync(client, managerToken, vehicleId, [cardTaskId]));
         await AdvanceToCompletedAsync(client, managerToken, cardWorkOrderId);
 
-        var (cardInvoiceId, cardInvoiceNumber) = await FindMyInvoiceAsync(client, customerToken, cardWorkOrderId);
+        var (cardInvoiceId, _) = await FindMyInvoiceAsync(client, customerToken, cardWorkOrderId);
 
-        using (var paid = await client.SendAsync(
+        using (var cardAttempt = await client.SendAsync(
             RequestMessage(HttpMethod.Post, $"/api/portal/invoices/{cardInvoiceId}/pay", new { method = 0 }, customerToken),
             TestContext.Current.CancellationToken))
         {
-            paid.EnsureSuccessStatusCode();
+            cardAttempt.StatusCode.Should().Be(HttpStatusCode.Conflict);
         }
 
         var customerRows = await ReadCustomerNotificationsAsync(client, customerToken);
-        var receipt = customerRows.Single(n =>
-            RowWorkOrderId(n) == cardWorkOrderId &&
+        customerRows.Should().NotContain(n => RowWorkOrderId(n) == cardWorkOrderId &&
             n.GetProperty("title").GetString() == "Payment received");
 
-        receipt.GetProperty("category").GetInt32().Should().Be(1);
-        receipt.GetProperty("message").GetString().Should().Contain(cardInvoiceNumber).And.Contain("card");
-
         var staffRows = await ReadStaffNotificationsAsync(client, managerToken);
-        staffRows.Should().Contain(n =>
-            RowWorkOrderId(n) == cardWorkOrderId &&
-            n.GetProperty("title").GetString() == "Invoice paid" &&
-            n.GetProperty("message").GetString()!.Contains(cardInvoiceNumber));
+        staffRows.Should().NotContain(n => RowWorkOrderId(n) == cardWorkOrderId &&
+            n.GetProperty("title").GetString() == "Invoice paid");
 
         // --- Cash: chosen now (staff told), closed by the manager (owner told) ---
         var cashTaskId = await CreateServiceTaskAsync(client, managerToken, "Paid By Cash Job", 60m);
@@ -455,38 +449,8 @@ public sealed class NotificationsEndpointsTests
         HttpClient client,
         string managerToken)
     {
-        var tag = Guid.NewGuid().ToString("N")[..5].ToUpperInvariant();
-        var email = $"notif-{Guid.NewGuid():N}@mechanicshop.test";
-
-        using var registered = await client.PostAsJsonAsync(
-            "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Notif Tester", "01000000000"),
-            TestContext.Current.CancellationToken);
-
-        registered.EnsureSuccessStatusCode();
-
-        var linkedToken = await GetAccessTokenAsync(client, email, "Passw0rd!");
-
-        using var profile = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                "/api/customers",
-                new CreateCustomerRequest(
-                    "Notif Tester",
-                    "+201234567891",
-                    email,
-                    [new CreateVehicleRequest("Toyota", "Corolla", 2022, $"NTF-{tag}", $"1HGCR2F59JB5{tag}")]),
-                managerToken),
-            TestContext.Current.CancellationToken);
-
-        profile.EnsureSuccessStatusCode();
-
-        var json = await profile.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-
-        return (
-            json.GetProperty("customerId").GetGuid(),
-            json.GetProperty("vehicles").EnumerateArray().First().GetProperty("vehicleId").GetGuid(),
-            linkedToken);
+        return await TestCustomerFactory.RegisterWithVehicleAsync(
+            client, managerToken, "Notif Tester", "notif", "Toyota", "Corolla", "NTF", "1HGCR2F59JB5");
     }
 
     private static async Task<HttpResponseMessage> CreateWorkOrderAsync(

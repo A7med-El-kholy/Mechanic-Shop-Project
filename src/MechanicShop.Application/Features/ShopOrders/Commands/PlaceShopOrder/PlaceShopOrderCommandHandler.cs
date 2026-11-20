@@ -23,7 +23,7 @@ public sealed class PlaceShopOrderCommandHandler(
     ILogger<PlaceShopOrderCommandHandler> logger)
     : IRequestHandler<PlaceShopOrderCommand, Result<PartOrderDto>>
 {
-    private static readonly List<PaymentMethod> ValidMethods = [PaymentMethod.Card, PaymentMethod.Cash];
+    private static readonly List<PaymentMethod> ValidMethods = [PaymentMethod.Cash];
 
     private readonly IAppDbContext _context = context;
     private readonly IUser _user = user;
@@ -36,6 +36,10 @@ public sealed class PlaceShopOrderCommandHandler(
             return Error.Unauthorized("Auth_NoUserClaim", "Token is missing a user identifier.");
         }
 
+        if (command.Method == PaymentMethod.Card)
+        {
+            return PartOrderErrors.GatewayUnavailable;
+        }
         if (!ValidMethods.Contains(command.Method))
         {
             return PartOrderErrors.MethodInvalid;
@@ -127,6 +131,7 @@ public sealed class PlaceShopOrderCommandHandler(
         foreach (var (partId, quantity) in requested)
         {
             var part = parts.Single(p => p.Id == partId);
+            var quantityBefore = part.Quantity;
 
             var deduction = part.Adjust(-quantity);
 
@@ -134,19 +139,21 @@ public sealed class PlaceShopOrderCommandHandler(
             {
                 return deduction.Errors;
             }
+
+            _context.StockMovements.Add(StockMovement.Create(part.Id, -quantity, quantityBefore,
+                part.Quantity, $"Shop order {order.Value.Number}", _user.UserId));
         }
 
         _context.ShopOrders.Add(order.Value);
 
         var now = DateTimeOffset.UtcNow;
         var placed = order.Value;
-        var paidNow = command.Method == PaymentMethod.Card;
 
         var staffOrder = Notification.ForStaff(
             Guid.NewGuid(),
             "New shop order",
             $"{placed.Number} from {customer.Name}, {NotificationFormat.Money(placed.TotalAmount)} " +
-            $"({(paidNow ? "paid by card" : "cash at pickup")}).",
+            "(cash at pickup).",
             NotificationCategory.Orders,
             null,
             now);
@@ -162,9 +169,7 @@ public sealed class PlaceShopOrderCommandHandler(
             Guid.NewGuid(),
             customer.Id,
             "Order confirmed",
-            paidNow
-                ? $"{placed.Number} is paid — collect your parts at the shop."
-                : $"{placed.Number} is reserved — pay in cash when you collect your parts.",
+            $"{placed.Number} is reserved — pay in cash when you collect your parts.",
             NotificationCategory.Orders,
             null,
             now);
@@ -196,7 +201,15 @@ public sealed class PlaceShopOrderCommandHandler(
             _context.Notifications.Add(lowStock.Value);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            _logger.LogInformation(exception, "Shop order rejected because inventory changed during checkout.");
+            return PartOrderErrors.StockChanged;
+        }
 
         _logger.LogInformation(
             "Shop order {OrderNumber} placed by customer {CustomerId}: {LineCount} line(s), {Method} — {Status}.",

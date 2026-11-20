@@ -32,8 +32,24 @@ services:
       JwtSettings__Audience: MechanicShopPortal
       Seed__ManagerEmail: manager@mechanicshop.dev
       Seed__ManagerPassword: ${MANAGER_PASSWORD:?Set MANAGER_PASSWORD in .env}
+      Seed__DemoData: ${DEMO_SEED_DATA:-false}
+      AISettings__Provider: ${AI_PROVIDER:-Mock}
+      AISettings__OpenAI__ApiKey: ${OPENAI_API_KEY:-}
+      AISettings__OpenAI__BaseUrl: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      AISettings__OpenAI__Model: ${OPENAI_MODEL:-gpt-4o-mini}
       Swagger__Enabled: "true"
+      # CORS origins for the SPA. Allowed: localhost (docker SPA) + the dev
+      # ng-serve port + the API port + their 127.0.0.1 loopback equivalents.
       Cors__AllowedOrigins__0: http://localhost
+      Cors__AllowedOrigins__1: http://localhost:4200
+      Cors__AllowedOrigins__2: http://localhost:5255
+      Cors__AllowedOrigins__3: http://127.0.0.1
+      Cors__AllowedOrigins__4: http://127.0.0.1:4200
+      Cors__AllowedOrigins__5: http://127.0.0.1:5255
+      # Google OAuth (Sign in with Google). Optional — see GoogleOAuth.md for setup.
+      GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
+      GoogleAuth__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Frontend__BaseUrl: ${FRONTEND_BASE_URL:-http://localhost}
     ports:
       - "5255:8080"
     depends_on:

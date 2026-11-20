@@ -256,6 +256,104 @@ public sealed class IdentityService(
         return Result.Updated;
     }
 
+    public async Task<Result<AppUserDto>> FindOrCreateByGoogleAsync(
+        string email,
+        string? fullName,
+        string providerKey,
+        string providerDisplayName,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var name = string.IsNullOrWhiteSpace(fullName) ? normalizedEmail : fullName.Trim();
+
+        // 1. Existing local account with this email? Link Google to it (no duplicates).
+        var existingUser = await _userManager.FindByEmailAsync(normalizedEmail);
+
+        if (existingUser is not null)
+        {
+            var alreadyLinked = (await _userManager.GetLoginsAsync(existingUser))
+                .Any(l => l.LoginProvider == "Google" && l.ProviderKey == providerKey);
+
+            if (!alreadyLinked)
+            {
+                var linkResult = await _userManager.AddLoginAsync(
+                    existingUser,
+                    new UserLoginInfo("Google", providerKey, providerDisplayName));
+
+                if (!linkResult.Succeeded)
+                {
+                    var description = string.Join(" ", linkResult.Errors.Select(e => e.Description));
+                    return Error.Validation("Identity.GoogleLinkFailed", description);
+                }
+            }
+
+            return await BuildDtoAsync(existingUser);
+        }
+
+        // 2. No existing account — provision a new Customer account with no password
+        //    (Google-only auth) plus its customer profile.
+        var user = new AppUser
+        {
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
+            FullName = name,
+            EmailConfirmed = true,
+        };
+
+        var createResult = await _userManager.CreateAsync(user);
+
+        if (!createResult.Succeeded)
+        {
+            var description = string.Join(" ", createResult.Errors.Select(e => e.Description));
+            return Error.Validation("Identity.GoogleCreateFailed", description);
+        }
+
+        var addToRoleResult = await _userManager.AddToRoleAsync(user, AppRoles.Customer);
+
+        if (!addToRoleResult.Succeeded)
+        {
+            var description = string.Join(" ", addToRoleResult.Errors.Select(e => e.Description));
+            return Error.Validation("Identity.GoogleRoleFailed", description);
+        }
+
+        var addLoginResult = await _userManager.AddLoginAsync(
+            user,
+            new UserLoginInfo("Google", providerKey, providerDisplayName));
+
+        if (!addLoginResult.Succeeded)
+        {
+            var description = string.Join(" ", addLoginResult.Errors.Select(e => e.Description));
+            return Error.Validation("Identity.GoogleLinkFailed", description);
+        }
+
+        // Customer profile (mirrors RegisterCustomerAsync, minus the password).
+        var customerResult = Customer.Create(Guid.NewGuid(), name, string.Empty, normalizedEmail, []);
+
+        if (customerResult.IsError)
+        {
+            return customerResult.Errors;
+        }
+
+        var customer = customerResult.Value;
+
+        var linkCustomerResult = customer.LinkUserAccount(user.Id);
+
+        if (linkCustomerResult.IsError)
+        {
+            return linkCustomerResult.Errors;
+        }
+
+        _dbContext.Customers.Add(customer);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Google account {UserId} created and linked to customer {CustomerId}.",
+            user.Id,
+            customer.Id);
+
+        return await BuildDtoAsync(user);
+    }
+
     private async Task<AppUserDto> BuildDtoAsync(AppUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);

@@ -17,8 +17,8 @@ public enum PartStockState
     OutOfStock = 2,
 }
 
-/// <summary>Mirrors the invoice's payment story: card closes immediately,
-/// cash reserves and the manager confirms receipt later.</summary>
+/// <summary>Cash reservations remain pending until the workshop confirms receipt.
+/// Paid is recorded only after payment is actually received.</summary>
 public enum PartOrderStatus
 {
     Paid = 0,

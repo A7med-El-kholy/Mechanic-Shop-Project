@@ -201,4 +201,32 @@ public sealed class AuthEndpointsTests
         user!.Email.Should().Be(email);
         user.Roles.Should().ContainSingle().Which.Should().Be("Customer");
     }
+
+    // ------------------------------------------------------------------
+    // Sign-in with Google (the non-browser endpoints; the full Google flow
+    // needs a real provider, so these exercise the config + cookie guards).
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task GoogleChallenge_WithoutCredentials_ReturnsValidationProblem()
+    {
+        // The test factory does not configure GoogleAuth:ClientId/ClientSecret,
+        // so the challenge reports "not configured" rather than a 302.
+        using var client = _factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/auth/google", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GoogleCallbackComplete_WithoutCookie_ReturnsUnauthorized()
+    {
+        using var client = _factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            "/api/auth/google-callback-complete", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

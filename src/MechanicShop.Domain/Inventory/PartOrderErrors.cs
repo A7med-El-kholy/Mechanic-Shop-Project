@@ -11,7 +11,13 @@ public static class PartOrderErrors
         Error.Conflict("ShopOrder_AlreadyPaid", "This shop order is already paid.");
 
     public static Error MethodInvalid =>
-        Error.Validation("ShopOrder_MethodInvalid", "Payment method must be Card (0) or Cash (1).");
+        Error.Validation("ShopOrder_MethodInvalid", "Payment method must be Cash (1).");
+
+    public static Error GatewayUnavailable =>
+        Error.Conflict("ShopOrder_GatewayUnavailable", "Card payments are unavailable until a payment gateway is configured. Choose cash at pickup.");
+
+    public static Error StockChanged =>
+        Error.Conflict("ShopOrder_StockChanged", "Inventory changed while placing this order. Refresh your cart and try again.");
 
     public static Error ItemsRequired =>
         Error.Validation("ShopOrder_ItemsRequired", "A shop order needs at least one item.");

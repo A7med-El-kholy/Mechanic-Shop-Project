@@ -26,7 +26,13 @@ public sealed class AdjustStockCommandHandler(IAppDbContext context, ILogger<Adj
             return PartErrors.NotFound(command.PartId);
         }
 
+        if (string.IsNullOrWhiteSpace(command.Reason) || command.Reason.Trim().Length > 200)
+        {
+            return PartErrors.MovementReasonRequired;
+        }
+
         var before = part.StockState;
+        var quantityBefore = part.Quantity;
 
         var adjusted = part.Adjust(command.Delta);
 
@@ -35,7 +41,18 @@ public sealed class AdjustStockCommandHandler(IAppDbContext context, ILogger<Adj
             return adjusted.Errors;
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        _context.StockMovements.Add(StockMovement.Create(part.Id, command.Delta, quantityBefore,
+            part.Quantity, command.Reason, command.ActorUserId));
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            _logger.LogInformation(exception, "Concurrent stock update rejected for part {PartId}.", part.Id);
+            return PartErrors.StockChanged;
+        }
 
         _logger.LogInformation(
             "Part {PartId} stock adjusted by {Delta}: {Before} -> {After} ({Quantity} left).",

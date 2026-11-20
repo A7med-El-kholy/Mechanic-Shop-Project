@@ -6,6 +6,7 @@ using MediatR;
 using MechanicShop.Application.Features.Invoices;
 using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Invoices;
+using MechanicShop.Domain.Inventory;
 using MechanicShop.Domain.Notifications;
 using MechanicShop.Domain.Notifications.Enums;
 using MechanicShop.Domain.WorkOrders;
@@ -162,12 +163,16 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
             {
                 if (task.Part is not null)
                 {
+                    var quantityBefore = task.Part.Quantity;
                     var consumed = task.Part.Adjust(-1);
 
                     if (consumed.IsError)
                     {
                         return consumed.Errors;
                     }
+
+                    _context.StockMovements.Add(StockMovement.Create(task.Part.Id, -1, quantityBefore,
+                        task.Part.Quantity, $"Work order {workOrder.Id}: {task.Name}", _caller.UserId));
 
                     _logger.LogInformation(
                         "Part {PartId} ({State}) deducted for completed task {TaskId}.",
@@ -199,7 +204,16 @@ public sealed class UpdateWorkOrderStatusCommandHandler(
             }
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            _logger.LogInformation(exception,
+                "Work order {WorkOrderId} completion conflicted with another stock update.", workOrder.Id);
+            return PartErrors.StockChanged;
+        }
 
         _logger.LogInformation(
             "Work order {WorkOrderId} moved to {WorkOrderState}.",

@@ -110,8 +110,8 @@ public sealed class Invoice
         };
     }
 
-    /// <summary>Customer pays (card online = prototype click, no card data) or the
-    /// workshop records cash. Paid is terminal.</summary>
+    /// <summary>Closes an invoice after confirmed payment. Customer-facing card
+    /// collection is unavailable until a gateway is configured.</summary>
     public Result<Updated> Pay(PaymentMethod method)
     {
         if (Status == InvoiceStatus.Paid)

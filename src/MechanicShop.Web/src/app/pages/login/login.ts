@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AuthStore } from '../../core/auth-store';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -39,6 +40,14 @@ export class LoginPage {
 
   protected togglePassword(): void {
     this.showPassword.update(s => !s);
+  }
+
+  /** Start the backend Google OAuth flow. The backend redirects the browser to
+   * Google, and Google sends it back to `/auth/callback#access_token=...` which
+   * exchanges the token and lands the user on their destination. */
+  protected googleLogin(): void {
+    const returnUrl = this.returnUrl ?? '/portal';
+    window.location.href = `${environment.apiUrl}/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
   protected async submit(): Promise<void> {

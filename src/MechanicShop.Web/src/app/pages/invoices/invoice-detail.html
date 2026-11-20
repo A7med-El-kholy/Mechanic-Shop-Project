@@ -29,7 +29,7 @@
     <p class="al al--warn">Customer chose cash at the shop — confirm receipt here.</p>
   }
   @if (invoice()!.status === 1) {
-    <p class="muted sm">Paid{{ invoice()!.paymentMethod === 0 ? ' by card (prototype click)' : ' in cash at the shop' }}.</p>
+    <p class="muted sm">Paid — receipt recorded.</p>
   }
 
   <div class="card">

@@ -33,3 +33,28 @@ public sealed record PartOrderDto(
     decimal TaxAmount,
     decimal TotalAmount,
     List<PartOrderLineDto> Lines);
+
+public sealed record StockMovementDto(
+    Guid MovementId,
+    Guid PartId,
+    int Delta,
+    int QuantityBefore,
+    int QuantityAfter,
+    string Reason,
+    string? ActorUserId,
+    DateTimeOffset RecordedAt);
+
+public sealed record SupplierDto(Guid SupplierId, string Name, string? ContactName, string? Email, string? Phone, bool IsActive);
+
+public sealed record PurchaseOrderLineDto(Guid PartId, string PartName, int Quantity, decimal UnitCost, decimal LineTotal);
+
+public sealed record PurchaseOrderDto(
+    Guid PurchaseOrderId,
+    string Number,
+    Guid SupplierId,
+    string SupplierName,
+    DateOnly OrderedOn,
+    DateOnly? ReceivedOn,
+    int Status,
+    decimal Subtotal,
+    List<PurchaseOrderLineDto> Lines);

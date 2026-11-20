@@ -14,8 +14,8 @@ namespace MechanicShop.Api.IntegrationTests;
 
 /// <summary>
 /// The shelf contract: the manager reads and moves stock with clear, derived
-/// states (in / low / out from the minimum level), customers buy from the shop
-/// paying by card now or cash-at-shop later, every purchase RESERVES its units
+/// states (in / low / out from the minimum level), customers reserve shop orders
+/// for cash-at-pickup, every purchase RESERVES its units
 /// immediately, and completing a job consumes one unit of its cited part.
 /// Nobody edits their own money state and nobody buys stock that isn't there.
 /// </summary>
@@ -52,7 +52,7 @@ public sealed class PartsEndpointsTests
     }
 
     [Fact]
-    public async Task AdjustStock_MovesQuantity_AndClampsAtZero()
+    public async Task AdjustStock_RecordsHistory_AndRejectsOversell()
     {
         using var client = _factory.CreateClient();
         var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
@@ -61,13 +61,23 @@ public sealed class PartsEndpointsTests
 
         await AdjustAsync(client, managerToken, partId, -1);
         await AdjustAsync(client, managerToken, partId, 5);
-        await AdjustAsync(client, managerToken, partId, -100); // reality check: the shelf clamps
+        using var rejected = await client.SendAsync(
+            RequestMessage(HttpMethod.Post, $"/api/parts/{partId}/adjust",
+                new { delta = -100, reason = "Oversell test" }, managerToken),
+            TestContext.Current.CancellationToken);
+        rejected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var parts = await ReadPartsAsync(client, managerToken);
         var part = parts.Single(p => p.GetProperty("partId").GetGuid() == partId);
 
-        part.GetProperty("quantity").GetInt32().Should().Be(0);
-        part.GetProperty("stockState").GetInt32().Should().Be(2);
+        part.GetProperty("quantity").GetInt32().Should().Be(14);
+        part.GetProperty("stockState").GetInt32().Should().Be(0);
+
+        using var history = await client.SendAsync(RequestMessage(HttpMethod.Get, $"/api/parts/{partId}/movements", null, managerToken), TestContext.Current.CancellationToken);
+        history.StatusCode.Should().Be(HttpStatusCode.OK);
+        var movements = await history.Content.ReadFromJsonAsync<JsonElement[]>(TestContext.Current.CancellationToken);
+        movements.Should().HaveCount(3);
+        movements![0].GetProperty("quantityAfter").GetInt32().Should().Be(14);
     }
 
     [Fact]
@@ -150,6 +160,12 @@ public sealed class PartsEndpointsTests
         // 2 - 1 consumed = 1, which sits exactly at the minimum: Low stock.
         part.GetProperty("quantity").GetInt32().Should().Be(1);
         part.GetProperty("stockState").GetInt32().Should().Be(1);
+
+        using var history = await client.SendAsync(RequestMessage(HttpMethod.Get, $"/api/parts/{partId}/movements", null, managerToken), TestContext.Current.CancellationToken);
+        var movements = await history.Content.ReadFromJsonAsync<JsonElement[]>(TestContext.Current.CancellationToken);
+        movements.Should().ContainSingle(movement =>
+            movement.GetProperty("delta").GetInt32() == -1 &&
+            movement.GetProperty("reason").GetString()!.Contains("Work order", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -172,28 +188,27 @@ public sealed class PartsEndpointsTests
     }
 
     [Fact]
-    public async Task CardOrder_IsPaidImmediately_AndReservesStock()
+    public async Task CardOrder_IsRejected_WhenNoGatewayIsConfigured()
     {
         using var client = _factory.CreateClient();
         var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
 
-        var (_, vehicleId, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
+        var (_, _, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
 
         var partId = await CreatePartAsync(client, managerToken, "Order Card Shelf", price: 60m, quantity: 10, minimum: 2);
 
-        var order = await PlaceOrderAsync(client, customerToken, [(partId, 3)], method: 0);
-
-        order.GetProperty("status").GetInt32().Should().Be(0); // Paid
-        order.GetProperty("paymentMethod").GetInt32().Should().Be(0); // Card
-        order.GetProperty("orderNumber").GetString()!.Should().StartWith("ORD-");
-        order.GetProperty("subtotal").GetDouble().Should().Be(180.00);
-        order.GetProperty("taxRate").GetDouble().Should().Be(0.15);
-        order.GetProperty("taxAmount").GetDouble().Should().Be(27.00);
-        order.GetProperty("totalAmount").GetDouble().Should().Be(207.00);
+        using var rejected = await client.SendAsync(RequestMessage(HttpMethod.Post, "/api/portal/shop/orders",
+            new { items = new[] { new { partId, quantity = 3 } }, method = 0 }, customerToken),
+            TestContext.Current.CancellationToken);
+        rejected.StatusCode.Should().Be(HttpStatusCode.Conflict);
 
         var parts = await ReadPartsAsync(client, managerToken);
         parts.Single(p => p.GetProperty("partId").GetGuid() == partId)
-            .GetProperty("quantity").GetInt32().Should().Be(7);
+            .GetProperty("quantity").GetInt32().Should().Be(10);
+
+        using var history = await client.SendAsync(RequestMessage(HttpMethod.Get, $"/api/parts/{partId}/movements", null, managerToken), TestContext.Current.CancellationToken);
+        var movements = await history.Content.ReadFromJsonAsync<JsonElement[]>(TestContext.Current.CancellationToken);
+        movements.Should().ContainSingle(movement => movement.GetProperty("delta").GetInt32() == 10);
     }
 
     [Fact]
@@ -208,6 +223,11 @@ public sealed class PartsEndpointsTests
         var order = await PlaceOrderAsync(client, customerToken, [(partId, 2)], method: 1);
 
         order.GetProperty("status").GetInt32().Should().Be(1); // CashPending
+        order.GetProperty("paymentMethod").GetInt32().Should().Be(1); // Cash
+
+        using var stockHistory = await client.SendAsync(RequestMessage(HttpMethod.Get, $"/api/parts/{partId}/movements", null, managerToken), TestContext.Current.CancellationToken);
+        var movements = await stockHistory.Content.ReadFromJsonAsync<JsonElement[]>(TestContext.Current.CancellationToken);
+        movements.Should().ContainSingle(movement => movement.GetProperty("delta").GetInt32() == -2);
 
         var orderId = order.GetProperty("orderId").GetGuid();
 
@@ -264,7 +284,7 @@ public sealed class PartsEndpointsTests
         var (_, _, strangerToken) = await CreateLinkedCustomerAsync(client, managerToken);
 
         var partId = await CreatePartAsync(client, managerToken, "Private Order Shelf", price: 12m, quantity: 10, minimum: 2);
-        var order = await PlaceOrderAsync(client, ownerToken, [(partId, 1)], method: 0);
+        var order = await PlaceOrderAsync(client, ownerToken, [(partId, 1)], method: 1);
         var orderId = order.GetProperty("orderId").GetGuid();
 
         var strangerOrders = await ReadMyOrdersAsync(client, strangerToken);
@@ -287,7 +307,7 @@ public sealed class PartsEndpointsTests
         var (customerId, _, customerToken) = await CreateLinkedCustomerAsync(client, managerToken);
 
         var partId = await CreatePartAsync(client, managerToken, "Anchored Shelf", price: 9m, quantity: 10, minimum: 2);
-        await PlaceOrderAsync(client, customerToken, [(partId, 1)], method: 0);
+        await PlaceOrderAsync(client, customerToken, [(partId, 1)], method: 1);
 
         using var deletion = await client.SendAsync(
             RequestMessage(HttpMethod.Delete, $"/api/customers/{customerId}", null, managerToken),
@@ -349,7 +369,11 @@ public sealed class PartsEndpointsTests
     private static async Task AdjustAsync(HttpClient client, string token, Guid partId, int delta)
     {
         using var response = await client.SendAsync(
-            RequestMessage(HttpMethod.Post, $"/api/parts/{partId}/adjust", new { delta }, token),
+            RequestMessage(HttpMethod.Post, $"/api/parts/{partId}/adjust", new
+            {
+                delta,
+                reason = delta > 0 ? "Integration test restock" : "Integration test stock-out",
+            }, token),
             TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
@@ -393,38 +417,8 @@ public sealed class PartsEndpointsTests
         HttpClient client,
         string managerToken)
     {
-        var tag = Guid.NewGuid().ToString("N")[..5].ToUpperInvariant();
-        var email = $"parts-{Guid.NewGuid():N}@mechanicshop.test";
-
-        using var registered = await client.PostAsJsonAsync(
-            "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Parts Tester", "01000000000"),
-            TestContext.Current.CancellationToken);
-
-        registered.EnsureSuccessStatusCode();
-
-        var linkedToken = await GetAccessTokenAsync(client, email, "Passw0rd!");
-
-        using var profile = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                "/api/customers",
-                new CreateCustomerRequest(
-                    "Parts Tester",
-                    "+201234567882",
-                    email,
-                    [new CreateVehicleRequest("Toyota", "Corolla", 2022, $"PRT-{tag}", $"1HGCR2F59JB3{tag}")]),
-                managerToken),
-            TestContext.Current.CancellationToken);
-
-        profile.EnsureSuccessStatusCode();
-
-        var json = await profile.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-
-        return (
-            json.GetProperty("customerId").GetGuid(),
-            json.GetProperty("vehicles").EnumerateArray().First().GetProperty("vehicleId").GetGuid(),
-            linkedToken);
+        return await TestCustomerFactory.RegisterWithVehicleAsync(
+            client, managerToken, "Parts Tester", "parts", "Toyota", "Corolla", "PRT", "1HGCR2F59JB3");
     }
 
     private static async Task<(Guid CustomerId, Guid VehicleId)> CreateCustomerWithVehicleAsync(HttpClient client, string managerToken)

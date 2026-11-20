@@ -29,6 +29,8 @@ using MechanicShop.Infrastructure.Identity;
 using MediatR;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -63,7 +65,10 @@ builder.Services
 // long ClaimTypes.NameIdentifier URI, which is what AuthEndpoints' /me lookup expects.
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
-builder.Services
+var googleClientId = builder.Configuration["GoogleAuth:ClientId"];
+var googleClientSecret = builder.Configuration["GoogleAuth:ClientSecret"];
+
+var authBuilder = builder.Services
     .AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,7 +90,45 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1),
         };
+    })
+    // --- External-login cookie: short-lived cookie used ONLY while completing a
+    // third-party sign-in (Google). It is NOT the session for regular users — that
+    // is the JWT above. Kept separate so the regular auth surface stays cookie-free.
+    .AddCookie("External", options =>
+    {
+        options.Cookie.Name = "MechanicShop.External";
+        options.Cookie.Path = "/api"; // visible at every external-login endpoint
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+        options.SlidingExpiration = false;
     });
+
+// --- Google OAuth2 — ONLY registered when both credentials are configured.
+// ASP.NET Core's OAuthOptions.Validate() throws on an empty ClientId when the
+// Google handler is instantiated, so an unconfigured scheme would 500 every
+// request. Instead, /api/auth/google reports a clear "not configured" error.
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(options =>
+    {
+        options.SignInScheme = "External";
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.CallbackPath = "/api/auth/signin-google";
+        options.SaveTokens = true;
+        options.Events.OnRemoteFailure = context =>
+        {
+            context.Response.Redirect(
+                $"/api/auth/google-failure?error={Uri.EscapeDataString(context.Failure?.Message ?? "unknown")}");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+    });
+}
 
 builder.Services.AddAuthorization(options =>
 {
@@ -149,10 +192,25 @@ builder.Services.AddScoped<IAppDbContext>(services => services.GetRequiredServic
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
-// AI diagnostic engine — mock implementation works out of the box; swap for a
-// real provider (OpenAI / Azure OpenAI / Gemini) behind IAIService when keys
-// are configured in appsettings.
-builder.Services.AddScoped<IAIService, MockAIService>();
+// AI diagnostic engine. Default is the offline rule-based MockAIService (works
+// out of the box); set AISettings:Provider to "OpenAI" and configure the key to
+// use the OpenAI-compatible provider instead. Both are registered; the factory
+// below picks the active one so real calls happen only when credentials exist.
+builder.Services.AddScoped<OpenAIService>();
+builder.Services.AddScoped<MockAIService>();
+builder.Services.AddScoped<IAIService>(sp =>
+{
+    var useOpenAi = string.Equals(
+        builder.Configuration["AISettings:Provider"],
+        "OpenAI", StringComparison.OrdinalIgnoreCase)
+        && !string.IsNullOrWhiteSpace(builder.Configuration["AISettings:OpenAI:ApiKey"]);
+
+    return useOpenAi ? sp.GetRequiredService<OpenAIService>() : sp.GetRequiredService<MockAIService>();
+});
+
+var openAiTimeout = TimeSpan.FromSeconds(
+    builder.Configuration.GetValue("AISettings:OpenAI:TimeoutSeconds", 30));
+builder.Services.AddHttpClient("AI", client => client.Timeout = openAiTimeout);
 
 // --- Health checks + CORS must be registered BEFORE Build(): the service collection
 // is read-only afterwards, so anything added later is ignored (or throws).
@@ -194,10 +252,24 @@ if (builder.Environment.IsProduction())
     }
 }
 
+var configuredAiProvider = builder.Configuration["AISettings:Provider"] ?? "Mock";
+if (!configuredAiProvider.Equals("Mock", StringComparison.OrdinalIgnoreCase) &&
+    !configuredAiProvider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException("AISettings:Provider must be either 'Mock' or 'OpenAI'.");
+}
+if (configuredAiProvider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase) &&
+    string.IsNullOrWhiteSpace(builder.Configuration["AISettings:OpenAI:ApiKey"]))
+{
+    throw new InvalidOperationException("AISettings:OpenAI:ApiKey is required when AISettings:Provider is 'OpenAI'.");
+}
+
 var app = builder.Build();
 
 // Idempotent: only inserts what is not already present, and migrates first.
-await SeedData.SeedAsync(app.Services);
+await SeedData.SeedAsync(
+    app.Services,
+    includeDemoData: !app.Environment.IsProduction() || app.Configuration.GetValue<bool>("Seed:DemoData"));
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
@@ -227,6 +299,8 @@ app.MapEmployeesEndpoints();
 app.MapAppointmentRequestsEndpoints();
 app.MapInvoicesEndpoints();
 app.MapPartsEndpoints();
+app.MapSuppliersEndpoints();
+app.MapPurchaseOrdersEndpoints();
 app.MapShopOrdersEndpoints();
 app.MapReportsEndpoints();
 app.MapNotificationsEndpoints();

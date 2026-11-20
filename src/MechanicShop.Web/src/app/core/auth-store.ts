@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import { environment } from '../../environments/environment';
 import { AppUser, AuthResponse } from './types';
 
 const TOKEN_KEY = 'shop.token';
@@ -43,6 +45,7 @@ function readUser(): AppUser | null {
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
   private readonly busySignal = signal(false);
   readonly busy = this.busySignal.asReadonly();
@@ -117,6 +120,40 @@ export class AuthStore {
     } finally {
       this.busySignal.set(false);
     }
+  }
+
+  /**
+   * Completes a sign-in initiated by a third-party provider (Google callback).
+   * The backend already issued the JWT and redirected us here with the token in
+   * the URL fragment, so all that is left is to store the session and fetch the
+   * user profile, then navigate to the original destination.
+   */
+  async startExternalSession(
+    accessToken: string,
+    expiresInSeconds: number,
+    returnUrl: string,
+  ): Promise<void> {
+    this.busySignal.set(true);
+
+    try {
+      const expiresAt = String(Date.now() + expiresInSeconds * 1000);
+
+      this.tokenSignal.set(accessToken);
+      this.expiresSignal.set(expiresAt);
+      localStorage.setItem(TOKEN_KEY, accessToken);
+      localStorage.setItem(EXPIRES_KEY, expiresAt);
+
+      const user = await firstValueFrom(
+        this.http.get<AppUser>(`${environment.apiUrl}/api/auth/me`),
+      );
+
+      this.userSignal.set(user);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } finally {
+      this.busySignal.set(false);
+    }
+
+    await this.router.navigateByUrl(returnUrl);
   }
 
   private applySession(response: AuthResponse): void {

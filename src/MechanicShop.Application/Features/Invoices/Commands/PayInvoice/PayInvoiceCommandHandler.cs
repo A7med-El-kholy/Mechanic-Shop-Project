@@ -17,8 +17,6 @@ namespace MechanicShop.Application.Features.Invoices.Commands.PayInvoice;
 public sealed class PayInvoiceCommandHandler(IAppDbContext context, IUser user, ILogger<PayInvoiceCommandHandler> logger)
     : IRequestHandler<PayInvoiceCommand, Result<Updated>>
 {
-    private static readonly List<PaymentMethod> ValidMethods = [PaymentMethod.Card, PaymentMethod.Cash];
-
     private readonly IAppDbContext _context = context;
     private readonly IUser _user = user;
     private readonly ILogger<PayInvoiceCommandHandler> _logger = logger;
@@ -30,7 +28,11 @@ public sealed class PayInvoiceCommandHandler(IAppDbContext context, IUser user, 
             return Error.Unauthorized("Auth_NoUserClaim", "Token is missing a user identifier.");
         }
 
-        if (!ValidMethods.Contains(command.Method))
+        if (command.Method == PaymentMethod.Card)
+        {
+            return InvoiceErrors.GatewayUnavailable;
+        }
+        if (command.Method != PaymentMethod.Cash)
         {
             return InvoiceErrors.MethodInvalid;
         }
@@ -59,9 +61,7 @@ public sealed class PayInvoiceCommandHandler(IAppDbContext context, IUser user, 
             return InvoiceErrors.NotFound(command.InvoiceId);
         }
 
-        var paid = command.Method == PaymentMethod.Card
-            ? invoice.Pay(PaymentMethod.Card)
-            : invoice.SelectCashAtShop();
+        var paid = invoice.SelectCashAtShop();
 
         if (paid.IsError)
         {
@@ -70,60 +70,22 @@ public sealed class PayInvoiceCommandHandler(IAppDbContext context, IUser user, 
 
         var now = DateTimeOffset.UtcNow;
 
-        if (command.Method == PaymentMethod.Card)
+        // The customer selects cash at the shop. Only a manager can later mark
+        // the invoice paid after money is physically received.
+        var cashChosen = Notification.ForStaff(
+            Guid.NewGuid(),
+            "Cash payment chosen",
+            $"{customer.Name} will pay invoice {invoice.Number} in cash at the shop.",
+            NotificationCategory.Billing,
+            invoice.WorkOrderId,
+            now);
+
+        if (cashChosen.IsError)
         {
-            // Prototype: paying by card notifies the customer (receipt) and the
-            // staff inbox (money arrived) — inside the same save as the state move.
-            var receipt = Notification.ForCustomer(
-                Guid.NewGuid(),
-                customer.Id,
-                "Payment received",
-                $"Invoice {invoice.Number} ({NotificationFormat.Money(invoice.TotalAmount)}) is paid by card.",
-                NotificationCategory.Billing,
-                invoice.WorkOrderId,
-                now);
-
-            if (receipt.IsError)
-            {
-                return receipt.Errors;
-            }
-
-            _context.Notifications.Add(receipt.Value);
-
-            var staffPaid = Notification.ForStaff(
-                Guid.NewGuid(),
-                "Invoice paid",
-                $"Invoice {invoice.Number} from {customer.Name} was paid by card.",
-                NotificationCategory.Billing,
-                invoice.WorkOrderId,
-                now);
-
-            if (staffPaid.IsError)
-            {
-                return staffPaid.Errors;
-            }
-
-            _context.Notifications.Add(staffPaid.Value);
+            return cashChosen.Errors;
         }
-        else
-        {
-            // Cash chosen: only the workshop needs to know — the customer
-            // already sees the invoice flip to Cash Pending.
-            var cashChosen = Notification.ForStaff(
-                Guid.NewGuid(),
-                "Cash payment chosen",
-                $"{customer.Name} will pay invoice {invoice.Number} in cash at the shop.",
-                NotificationCategory.Billing,
-                invoice.WorkOrderId,
-                now);
 
-            if (cashChosen.IsError)
-            {
-                return cashChosen.Errors;
-            }
-
-            _context.Notifications.Add(cashChosen.Value);
-        }
+        _context.Notifications.Add(cashChosen.Value);
 
         await _context.SaveChangesAsync(cancellationToken);
 

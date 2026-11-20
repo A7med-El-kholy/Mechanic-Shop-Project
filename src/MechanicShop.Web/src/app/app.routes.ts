@@ -25,6 +25,7 @@ import { WorkOrdersPage } from './pages/work-orders/work-orders';
 import { PortalShellPage } from './pages/portal/portal-shell';
 import { PortalAppointmentsPage } from './pages/portal/portal-appointments';
 import { AIChatComponent } from './shared/ai-chat/ai-chat.component';
+import { AuthCallbackPage } from './pages/auth-callback/auth-callback';
 import { PortalDashboardPage } from './pages/portal/portal-dashboard';
 import { PortalInvoiceDetailPage } from './pages/portal/portal-invoice-detail';
 import { PortalInvoicesPage } from './pages/portal/portal-invoices';
@@ -49,6 +50,13 @@ export const routes: Routes = [
     path: 'register',
     component: RegisterPage,
     title: 'Create account · Mechanic Shop',
+  },
+  // Backend redirects Google sign-ins here with `#access_token=...&returnUrl=...`.
+  // Public (no guards): it just exchanges the token and navigates to the real target.
+  {
+    path: 'auth/callback',
+    component: AuthCallbackPage,
+    title: 'Signing in · Mechanic Shop',
   },
   {
     path: 'ai-assistant',

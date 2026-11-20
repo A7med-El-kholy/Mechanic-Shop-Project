@@ -19,7 +19,10 @@ public static class InvoiceErrors
             "Cash payment at the shop is already chosen for this invoice.");
 
     public static Error MethodInvalid =>
-        Error.Validation("Invoice_MethodInvalid", "Payment method must be Card (0) or Cash (1).");
+        Error.Validation("Invoice_MethodInvalid", "Payment method must be Cash (1).");
+
+    public static Error GatewayUnavailable =>
+        Error.Conflict("Invoice_GatewayUnavailable", "Card payments are unavailable until a payment gateway is configured. Choose cash at the shop.");
 
     public static Error NotLinkedCustomerAssigned =>
         Error.Forbidden(

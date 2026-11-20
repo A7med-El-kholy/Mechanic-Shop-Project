@@ -16,6 +16,10 @@
 } @else {
 
   <div class="card table-card">
+    <label class="inventory-search">
+      <span>Search parts</span>
+      <input type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Name or category" />
+    </label>
     <table class="plain">
       <thead>
         <tr>
@@ -26,10 +30,11 @@
           <th>Minimum</th>
           <th>Status</th>
           <th>Adjust</th>
+          <th>History</th>
         </tr>
       </thead>
       <tbody>
-        @for (part of parts(); track part.partId) {
+        @for (part of visibleParts(); track part.partId) {
           <tr>
             <td><b>{{ part.name }}</b></td>
             <td>{{ partCategoryLabel(part.category) }}</td>
@@ -38,6 +43,7 @@
             <td>{{ part.minimumQuantity }}</td>
             <td><span [class]="'badge ' + badgeKind(part.stockState)">{{ stockLabel(part.stockState) }}</span></td>
             <td>
+              @if (auth.isManager()) {
               <div class="gap">
                 <button class="btn" type="button" [disabled]="busyPart() !== null"
                         (click)="adjust(part, -1)">−1</button>
@@ -46,13 +52,97 @@
                 <button class="btn" type="button" [disabled]="busyPart() !== null"
                         (click)="adjust(part, 5)">Restock +5</button>
               </div>
+              } @else {
+                <span class="muted sm">Manager only</span>
+              }
             </td>
+            <td><button class="btn" type="button" (click)="toggleHistory(part)">
+              {{ historyPartId() === part.partId ? 'Hide' : 'View' }}
+            </button></td>
           </tr>
+          @if (historyPartId() === part.partId) {
+            <tr class="movement-row"><td colspan="8">
+              <b>Recent stock movements</b>
+              @if (historyLoading()) {
+                <p class="muted sm">Loading stock history…</p>
+              } @else if (movements().length === 0) {
+                <p class="muted sm">No movements recorded for this part yet.</p>
+              } @else {
+                <div class="table-card"><table class="plain"><thead><tr>
+                  <th>When</th><th>Change</th><th>Before</th><th>After</th><th>Reason</th><th>Actor</th>
+                </tr></thead><tbody>
+                  @for (movement of movements(); track movement.movementId) {
+                    <tr>
+                      <td>{{ fmtMovementDate(movement.recordedAt) }}</td>
+                      <td>{{ movement.delta > 0 ? '+' : '' }}{{ movement.delta }}</td>
+                      <td>{{ movement.quantityBefore }}</td><td>{{ movement.quantityAfter }}</td>
+                      <td>{{ movement.reason }}</td><td>{{ movement.actorUserId || 'System' }}</td>
+                    </tr>
+                  }
+                </tbody></table></div>
+              }
+            </td></tr>
+          }
         }
       </tbody>
     </table>
+    @if (visibleParts().length === 0) {
+      <p class="muted sm">No parts match that search.</p>
+    }
     <p class="muted sm">Completing a work order deducts one unit of its main part automatically.</p>
   </div>
+
+  <h2>Purchase orders</h2>
+  @if (auth.isManager()) {
+    <div class="card purchasing-card">
+      <h3>Add supplier</h3>
+      <div class="purchasing-form">
+        <input aria-label="Supplier name" [value]="supplierName()" (input)="supplierName.set($any($event.target).value)" placeholder="Supplier name" />
+        <input aria-label="Supplier email" type="email" [value]="supplierEmail()" (input)="supplierEmail.set($any($event.target).value)" placeholder="Email (optional)" />
+        <button class="btn" type="button" [disabled]="!supplierName().trim()" (click)="createSupplier()">Add supplier</button>
+      </div>
+      <h3>Create purchase order</h3>
+      @if (suppliers().length === 0 || parts().length === 0) {
+        <p class="muted sm">Add a supplier and parts before creating a purchase order.</p>
+      } @else {
+        <div class="purchasing-form">
+          <select aria-label="Supplier" [value]="selectedSupplierId()" (change)="selectedSupplierId.set($any($event.target).value)">
+            @for (supplier of suppliers(); track supplier.supplierId) {
+              <option [value]="supplier.supplierId">{{ supplier.name }}</option>
+            }
+          </select>
+          <select aria-label="Part" [value]="purchasePartId()" (change)="purchasePartId.set($any($event.target).value)">
+            @for (part of parts(); track part.partId) {
+              <option [value]="part.partId">{{ part.name }}</option>
+            }
+          </select>
+          <input aria-label="Quantity" type="number" min="1" max="100000" [value]="purchaseQuantity()" (input)="purchaseQuantity.set($any($event.target).valueAsNumber)" />
+          <input aria-label="Unit cost" type="number" min="0.01" step="0.01" [value]="purchaseUnitCost()" (input)="purchaseUnitCost.set($any($event.target).valueAsNumber)" />
+          <button class="btn btn--brand" type="button" [disabled]="!canCreatePurchaseOrder()" (click)="createPurchaseOrder()">Create order</button>
+        </div>
+      }
+    </div>
+  }
+  @if (purchaseOrders().length === 0) {
+    <div class="card"><p class="muted">No supplier orders yet.</p></div>
+  } @else {
+    <div class="card table-card">
+      <table class="plain"><thead><tr><th>Order</th><th>Supplier</th><th>Items</th><th>Subtotal</th><th>Status</th><th></th></tr></thead>
+        <tbody>@for (order of purchaseOrders(); track order.purchaseOrderId) {
+          <tr>
+            <td><b>{{ order.number }}</b><div class="muted sm">Ordered {{ fmtMovementDate(order.orderedOn) }}</div></td>
+            <td>{{ order.supplierName }}</td>
+            <td>@for (line of order.lines; track line.partId) { <div>{{ line.quantity }} × {{ line.partName }} <span class="muted sm">({{ money.format(line.unitCost) }} each)</span></div> }</td>
+            <td>{{ money.format(order.subtotal) }}</td>
+            <td><span [class]="'badge ' + (order.status === 1 ? 'badge--1' : 'badge--0')">{{ order.status === 1 ? 'Received' : 'Open' }}</span></td>
+            <td>@if (auth.isManager() && order.status === 0) {
+              <button class="btn btn--brand" type="button" [disabled]="busyPurchaseOrder() !== null" (click)="receivePurchaseOrder(order)">Receive stock</button>
+            }</td>
+          </tr>
+        }</tbody>
+      </table>
+    </div>
+  }
 
   <h2>Shop orders</h2>
 

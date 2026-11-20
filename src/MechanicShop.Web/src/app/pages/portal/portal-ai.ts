@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { Customer } from '../../core/types';
 import { problemMessage } from '../../core/api';
 import { AuthStore } from '../../core/auth-store';
+import { AIService } from '../../core/ai.service';
 
 interface DiagnosticResult {
   title: string;
@@ -37,6 +38,7 @@ interface ChatMessage {
 })
 export class PortalAiPage {
   private readonly http = inject(HttpClient);
+  private readonly ai = inject(AIService);
   protected readonly auth = inject(AuthStore);
 
   protected readonly loading = signal(false);
@@ -102,7 +104,7 @@ export class PortalAiPage {
     this.sendQuery();
   }
 
-  protected sendQuery(): void {
+  protected async sendQuery(): Promise<void> {
     const text = this.prompt().trim();
     if (!text || this.analyzing()) return;
 
@@ -116,144 +118,25 @@ export class PortalAiPage {
     // Add user message
     this.messages.update((list) => [...list, { sender: 'user', text, time: now }]);
 
-    // Run AI Diagnosis Engine
-    setTimeout(() => {
-      const diag = this.generateDiagnostic(text);
+    try {
+      const result = await this.ai.diagnoseText(text, this.vehicleId() || undefined);
+      const diag: DiagnosticResult = {
+        ...result.diagnosis,
+        urgencyBadgeClass: ['High', 'Critical'].includes(result.diagnosis.urgency) ? 'badge--danger' : 'badge--warn',
+        laborTime: result.diagnosis.estimatedLaborTime,
+        likelyCauses: result.diagnosis.likelyCauses.map(c => ({ ...c, probability: c.probabilityPercent })),
+      };
       this.latestDiagnostic.set(diag);
-
-      const aiReply: ChatMessage = {
-        sender: 'ai',
-        text: `Based on your report, I have diagnosed the issue as **${diag.title}**. Urgency rating: **${diag.urgency}**. Estimated cost: **${diag.estimatedCost}**. Review the full breakdown below:`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        diagnostic: diag,
-      };
-
-      this.messages.update((list) => [...list, aiReply]);
+      this.messages.update(list => [...list, {
+        sender: 'ai', text: result.responseText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), diagnostic: diag,
+      }]);
+    } catch (err) {
+      this.prompt.set(text);
+      this.submitError.set(err instanceof Error ? err.message : 'Diagnosis failed. Please try again.');
+    } finally {
       this.analyzing.set(false);
-    }, 900);
-  }
-
-  private generateDiagnostic(query: string): DiagnosticResult {
-    const q = query.toLowerCase();
-
-    if (q.includes('brake') || q.includes('squeal') || q.includes('grind') || q.includes('stop')) {
-      return {
-        title: 'Brake Friction System Wear & Rotor Scoring',
-        urgency: 'High',
-        urgencyColor: '#ef4444',
-        urgencyBadgeClass: 'badge--danger',
-        estimatedCost: '$180 – $360',
-        laborTime: '1.2 – 2.0 hrs',
-        safeToDrive: false,
-        drivingAdvice: 'Avoid highway driving or heavy downhill loads. Brake stopping distance is degraded.',
-        likelyCauses: [
-          { name: 'Worn Ceramic / Semi-Metallic Brake Pads', probability: '90%', description: 'Wear indicator acoustic tab is rubbing directly on the brake disc.' },
-          { name: 'Scored or Grooved Brake Rotors', probability: '75%', description: 'Deep heat grooves from prolonged metal-on-metal friction.' },
-          { name: 'Seized Caliper Slide Pins', probability: '45%', description: 'Uneven wear caused by dried grease in guide pins.' },
-        ],
-        recommendedActions: [
-          'Inspect pad friction material thickness (safe minimum is 3mm).',
-          'Measure rotor runout and minimum thickness with micrometer.',
-          'Flush & bleed DOT 4 brake fluid if moisture content exceeds 3%.',
-        ],
-        partsNeeded: ['Front Ceramic Brake Pad Set', 'Vented Brake Discs (Pair)', 'Synthetic Caliper Grease'],
-      };
     }
-
-    if (q.includes('heat') || q.includes('steam') || q.includes('temp') || q.includes('coolant')) {
-      return {
-        title: 'Cooling System Thermal Failure',
-        urgency: 'Critical',
-        urgencyColor: '#dc2626',
-        urgencyBadgeClass: 'badge--danger',
-        estimatedCost: '$220 – $580',
-        laborTime: '2.0 – 3.5 hrs',
-        safeToDrive: false,
-        drivingAdvice: 'DO NOT DRIVE. Running an overheated engine risks catastrophic head gasket warp and block cracking.',
-        likelyCauses: [
-          { name: 'Failed Thermostat in Closed Position', probability: '85%', description: 'Restricts coolant circulation from engine block to radiator.' },
-          { name: 'Coolant Leak / Radiator Hose Rupture', probability: '70%', description: 'Loss of system pressure causing flash boiling.' },
-          { name: 'Water Pump Impeller Failure', probability: '50%', description: 'Bearing play or broken plastic impeller prevents circulation.' },
-        ],
-        recommendedActions: [
-          'Cooling system pressure test to detect micro-cracks under 16 PSI.',
-          'Test thermostat opening temperature.',
-          'Block test for combustion gases in coolant (head gasket check).',
-        ],
-        partsNeeded: ['OEM Thermostat Assembly & O-Ring', 'Pre-mixed OAT Antifreeze Coolant (5L)', 'Upper/Lower Radiator Hose'],
-      };
-    }
-
-    if (q.includes('battery') || q.includes('click') || q.includes('alternator') || q.includes('electric') || q.includes('start')) {
-      return {
-        title: 'Starting & Charging Circuit Depletion',
-        urgency: 'Medium',
-        urgencyColor: '#f59e0b',
-        urgencyBadgeClass: 'badge--warn',
-        estimatedCost: '$120 – $280',
-        laborTime: '0.8 – 1.5 hrs',
-        safeToDrive: true,
-        drivingAdvice: 'Turn off air conditioning, radio, and high beams. Do not shut off engine until safely parked at workshop.',
-        likelyCauses: [
-          { name: 'Degraded Battery Cell / Low Cold Cranking Amps (CCA)', probability: '85%', description: 'Battery voltage drops below 9.6V under crank load.' },
-          { name: 'Alternator Diode or Voltage Regulator Fault', probability: '60%', description: 'Charging voltage below 13.8V while engine is running.' },
-          { name: 'Corroded Negative Battery Terminal Clamp', probability: '40%', description: 'High parasitic resistance preventing high starter amperage.' },
-        ],
-        recommendedActions: [
-          'Conduct digital conductance battery health and state-of-charge test.',
-          'Perform alternator ripple and charging load test with multimeter.',
-          'Clean battery terminal posts and apply protective anti-corrosion sealant.',
-        ],
-        partsNeeded: ['AGM / EFB Heavy Duty 12V Battery', 'Terminal Clamp Cleaner Kit'],
-      };
-    }
-
-    if (q.includes('transmission') || q.includes('gear') || q.includes('slip') || q.includes('shift')) {
-      return {
-        title: 'Transmission Hydraulic Pressure & Clutch Slippage',
-        urgency: 'High',
-        urgencyColor: '#ef4444',
-        urgencyBadgeClass: 'badge--danger',
-        estimatedCost: '$250 – $750',
-        laborTime: '2.5 – 5.0 hrs',
-        safeToDrive: false,
-        drivingAdvice: 'Drive with gentle throttle input only. Avoid towing or steep hill climbs.',
-        likelyCauses: [
-          { name: 'Degraded / Low Automatic Transmission Fluid (ATF)', probability: '80%', description: 'Inadequate hydraulic line pressure to lock clutch packs.' },
-          { name: 'Sticking Shift Solenoid Valve', probability: '65%', description: 'Fluid varnish restricts electromagnetic plunger motion.' },
-          { name: 'Torque Converter Clutch Lockup Failure', probability: '40%', description: 'Slip between engine output shaft and gearbox turbine.' },
-        ],
-        recommendedActions: [
-          'Check transmission fluid level and smell for burnt clutch odor.',
-          'Scan TCM (Transmission Control Module) for trouble codes.',
-          'Execute transmission adaptation relearn procedure.',
-        ],
-        partsNeeded: ['Full Synthetic ATF Fluid (6L)', 'Transmission Filter & Pan Gasket'],
-      };
-    }
-
-    // Default Comprehensive Automotive Diagnostic
-    return {
-      title: 'Powertrain & Mechanical Anomaly Detection',
-      urgency: 'Medium',
-      urgencyColor: '#f59e0b',
-      urgencyBadgeClass: 'badge--warn',
-      estimatedCost: '$140 – $320',
-      laborTime: '1.0 – 2.0 hrs',
-      safeToDrive: true,
-      drivingAdvice: 'Vehicle can be driven with caution. Monitor instrument cluster for warning lamps.',
-      likelyCauses: [
-        { name: 'Sensor Drift or Vacuum Leak', probability: '75%', description: 'Unmetered air or MAF/MAP sensor reading deviation.' },
-        { name: 'Suspension Bushing / Ball Joint Wear', probability: '60%', description: 'Deteriorated rubber elastomer allowing metal contact.' },
-        { name: 'Ignition Coil / Spark Plug Fouling', probability: '50%', description: 'Incomplete combustion causing intermittent misfire.' },
-      ],
-      recommendedActions: [
-        'Complete 48-point electronic OBD-II live telemetry scan.',
-        'Smoke test intake manifold for micro-vacuum leaks.',
-        'Chassis stethoscope test on vehicle lift to isolate vibration source.',
-      ],
-      partsNeeded: ['Inspection Service & Diagnostic Report', 'Replacement Sensor / Consumable Hardware'],
-    };
   }
 
   protected bookPrioritySlot(): void {

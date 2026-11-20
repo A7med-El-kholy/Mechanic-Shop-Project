@@ -95,8 +95,8 @@ public sealed class PartOrder
     public static string NewNumber() =>
         "ORD-" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
 
-    /// <summary>Builds the order from the validated cart. Payment decides the
-    /// starting state: card = Paid now, cash = reserved for pickup.</summary>
+    /// <summary>Builds a validated cash-at-pickup order. It stays pending until
+    /// the workshop records cash received.</summary>
     public static Result<PartOrder> Place(
         Guid id,
         string number,
@@ -121,6 +121,15 @@ public sealed class PartOrder
             return PartOrderErrors.ItemsRequired;
         }
 
+        if (method == Invoices.PaymentMethod.Card)
+        {
+            return PartOrderErrors.GatewayUnavailable;
+        }
+        if (method != Invoices.PaymentMethod.Cash)
+        {
+            return PartOrderErrors.MethodInvalid;
+        }
+
         if (taxRate < 0 || taxRate > 1)
         {
             return PartOrderErrors.MethodInvalid;
@@ -134,9 +143,7 @@ public sealed class PartOrder
             PlacedOn = placedOn,
             Subtotal = lines.Sum(li => li.UnitPrice * li.Quantity),
             TaxRate = taxRate,
-            Status = method == Invoices.PaymentMethod.Card
-                ? PartOrderStatus.Paid
-                : PartOrderStatus.CashPending,
+            Status = PartOrderStatus.CashPending,
             PaymentMethod = method,
             Lines = lines,
         };

@@ -6,10 +6,8 @@ import { InvoiceDetail, invoiceStatusLabel } from '../../core/types';
 import { fmtDate } from '../../core/format';
 import { problemMessage } from '../../core/api';
 
-/** The customer's bill. Two honest doors per the prototype: pay by card —
- * marked paid on the spot, a demo click with no card data anywhere — or
- * choose cash at the shop, which parks the invoice in cash-pending until the
- * workshop confirms receipt. */
+/** The customer's bill. The customer may choose cash at the shop; the invoice
+ * stays pending until workshop staff confirms receipt. */
 @Component({
   selector: 'app-portal-invoice-detail',
   imports: [RouterLink],
@@ -66,15 +64,10 @@ export class PortalInvoiceDetailPage {
       });
   }
 
-  protected pay(method: 'card' | 'cash'): void {
+  protected pay(): void {
     const invoice = this.invoice();
 
     if (!invoice) {
-      return;
-    }
-
-    if (method === 'card' &&
-        !window.confirm(`Pay invoice #${invoice.invoiceNumber} (${this.money.format(invoice.totalAmount)}) by card? Prototype only — no real payment is processed.`)) {
       return;
     }
 
@@ -82,14 +75,12 @@ export class PortalInvoiceDetailPage {
     this.alert.set(null);
 
     this.http
-      .post(`/api/portal/invoices/${invoice.invoiceId}/pay`, { method: method === 'card' ? 0 : 1 })
+      .post(`/api/portal/invoices/${invoice.invoiceId}/pay`, { method: 1 })
       .subscribe({
         next: () => {
           this.busy.set(false);
           this.alertKind.set('ok');
-          this.alert.set(method === 'card'
-            ? 'Payment received — thank you!'
-            : 'Cash at the shop selected. Pay when you collect your vehicle.');
+          this.alert.set('Cash at the shop selected. Pay when you collect your vehicle.');
           this.load();
         },
         error: (error: HttpErrorResponse) => {

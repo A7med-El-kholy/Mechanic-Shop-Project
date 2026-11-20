@@ -12,10 +12,7 @@ using MechanicShop.Application.Features.Identity.Dtos;
 namespace MechanicShop.Api.IntegrationTests;
 
 /// <summary>
-/// The workshop-first customer flow: a user signs up (Customer role), the workshop
-/// creates their profile with the SAME email, and the system links them — after that
-/// GET /api/customers/me resolves the caller's own profile from the token, never from
-/// a client-supplied id.
+/// Customer registration creates and links the caller's profile immediately.
 /// </summary>
 [Collection("ApiDb")]
 public sealed class MyCustomerFlowTests
@@ -33,7 +30,7 @@ public sealed class MyCustomerFlowTests
     }
 
     [Fact]
-    public async Task Me_BeforeProfileExists_ReturnsNotFound()
+    public async Task Me_AfterRegistration_ReturnsOwnEmptyProfile()
     {
         using var client = _factory.CreateClient();
 
@@ -53,7 +50,11 @@ public sealed class MyCustomerFlowTests
             RequestMessage(HttpMethod.Get, "/api/customers/me", null, customerToken),
             TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var profile = await response.Content.ReadFromJsonAsync<CustomerDto>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, TestContext.Current.CancellationToken);
+        profile!.Email.Should().Be(email);
+        profile.Vehicles.Should().BeEmpty();
     }
 
     [Fact]
@@ -75,22 +76,21 @@ public sealed class MyCustomerFlowTests
 
         var customerToken = await GetAccessTokenAsync(client, email, "Passw0rd!");
 
-        // Sanity: profile not there yet.
+        // Registration automatically creates and links an empty profile.
         using var before = await client.SendAsync(
             RequestMessage(HttpMethod.Get, "/api/customers/me", null, customerToken),
             TestContext.Current.CancellationToken);
 
-        before.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        before.StatusCode.Should().Be(HttpStatusCode.OK);
+        var ownProfile = await before.Content.ReadFromJsonAsync<CustomerDto>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, TestContext.Current.CancellationToken);
 
-        // The workshop creates the profile with the SAME email.
-        var createBody = new CreateCustomerRequest(
-            "Linked Customer",
-            "+201234567890",
-            email,
-            [new CreateVehicleRequest("Toyota", "Corolla", 2024, $"LNK-{attempt:0000}", $"1HGCR2F59JA4{attempt:d5}")]);
+        // Staff adds a vehicle to the already linked customer profile.
+        var createBody = new CreateVehicleRequest(
+            "Toyota", "Corolla", 2024, $"LNK-{attempt:0000}", $"1HGCR2F59JA4{attempt:d5}");
 
         using var created = await client.SendAsync(
-            RequestMessage(HttpMethod.Post, "/api/customers", createBody, managerToken),
+            RequestMessage(HttpMethod.Post, $"/api/customers/{ownProfile!.CustomerId}/vehicles", createBody, managerToken),
             TestContext.Current.CancellationToken);
 
         created.StatusCode.Should().Be(HttpStatusCode.Created);

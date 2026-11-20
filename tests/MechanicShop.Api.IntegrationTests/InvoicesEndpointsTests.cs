@@ -183,7 +183,7 @@ public sealed class InvoicesEndpointsTests
     }
 
     [Fact]
-    public async Task Customer_PaysByCard_ClosesInvoice()
+    public async Task Customer_CardPaymentIsRejectedWithoutGateway()
     {
         using var client = _factory.CreateClient();
         var managerToken = await GetAccessTokenAsync(client, ManagerEmail, ManagerPassword);
@@ -204,26 +204,15 @@ public sealed class InvoicesEndpointsTests
                 customerToken),
             TestContext.Current.CancellationToken);
 
-        pay.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        pay.StatusCode.Should().Be(HttpStatusCode.Conflict);
 
         using var detail = await client.SendAsync(
             RequestMessage(HttpMethod.Get, $"/api/portal/invoices/{invoiceId}", null, customerToken),
             TestContext.Current.CancellationToken);
 
         var invoice = await detail.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
-        invoice.GetProperty("status").GetInt32().Should().Be(1); // Paid
-        invoice.GetProperty("paymentMethod").GetInt32().Should().Be(0); // Card
-
-        // Paid is terminal even for the customer.
-        using var again = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                $"/api/portal/invoices/{invoiceId}/pay",
-                new { method = 1 },
-                customerToken),
-            TestContext.Current.CancellationToken);
-
-        again.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        invoice.GetProperty("status").GetInt32().Should().Be(0); // Unpaid
+        invoice.GetProperty("paymentMethod").ValueKind.Should().Be(JsonValueKind.Null);
     }
 
     [Fact]
@@ -297,7 +286,7 @@ public sealed class InvoicesEndpointsTests
             RequestMessage(
                 HttpMethod.Post,
                 $"/api/portal/invoices/{invoiceId}/pay",
-                new { method = 0 },
+                new { method = 1 },
                 strangerToken),
             TestContext.Current.CancellationToken);
 
@@ -454,35 +443,8 @@ public sealed class InvoicesEndpointsTests
         HttpClient client,
         string managerToken)
     {
-        var tag = Guid.NewGuid().ToString("N")[..5].ToUpperInvariant();
-        var email = $"billing-{Guid.NewGuid():N}@mechanicshop.test";
-
-        using var registered = await client.PostAsJsonAsync(
-            "/api/auth/register",
-            new RegisterRequest(email, "Passw0rd!", "Billing Tester", "01000000000"),
-            TestContext.Current.CancellationToken);
-
-        registered.EnsureSuccessStatusCode();
-
-        var token = await GetAccessTokenAsync(client, email, "Passw0rd!");
-
-        using var profile = await client.SendAsync(
-            RequestMessage(
-                HttpMethod.Post,
-                "/api/customers",
-                new CreateCustomerRequest(
-                    "Billing Tester",
-                    "+201234567881",
-                    email,
-                    [new CreateVehicleRequest("Honda", "Civic", 2021, $"BNG-{tag}", $"1HGCR2F59JB2{tag}")]),
-                managerToken),
-            TestContext.Current.CancellationToken);
-
-        profile.EnsureSuccessStatusCode();
-
-        var customer = await ReadCustomer(profile);
-
-        return (customer!.CustomerId, customer.Vehicles[0].VehicleId, token);
+        return await TestCustomerFactory.RegisterWithVehicleAsync(
+            client, managerToken, "Billing Tester", "billing", "Honda", "Civic", "BNG", "1HGCR2F59JB2");
     }
 
     private static async Task<HttpResponseMessage> CreateWorkOrderForVehicleAsync(
